@@ -16,6 +16,7 @@ from . import textner
 from .crypto import pseudonym
 from .detect import LABELLED_RX, RX, Knowledge, digits_only, find_spans, norm_digits
 from .fields import classify_key, classify_path, norm_key
+from .privacy import codes_in
 
 # ----------------------------------------------------------------------------- phonetic keys
 _V = {"अ": "a", "आ": "a", "इ": "i", "ई": "i", "उ": "u", "ऊ": "u", "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au", "ऋ": "ri"}
@@ -127,6 +128,7 @@ class Ev:
     dobs: set = field(default_factory=set)
     villages: set = field(default_factory=set)
     ages: set = field(default_factory=set)
+    codes: set = field(default_factory=set)   # ICD-10 codes in the record (for rare-condition counts)
 
     def person(self) -> bool:
         return bool(self.ids or self.names or self.firsts or self.unk)
@@ -215,6 +217,8 @@ def json_evidence(node, path: tuple, rt, ev: Ev) -> None:
         for v in node:
             json_evidence(v, path, rt, ev)
     elif node is not None:
+        if isinstance(node, str):
+            ev.codes |= codes_in(node)
         cat = classify_path(path, rt)
         if cat is None and isinstance(node, str) and path and norm_key(path[-1]) in ("patient ref", "patient id"):
             cat = "MRN"
@@ -229,6 +233,7 @@ ATT_LINE = re.compile(r"(?i)attendant|relative|guardian|caller|called by|पर�
 
 
 def text_evidence(text: str, ev: Ev, kb: Knowledge | None = None, light: bool = False) -> None:
+    ev.codes |= codes_in(text)
     t = norm_digits(text)
     if not light:
         for line in t.split("\n"):
@@ -423,4 +428,5 @@ class Linker:
             # a pseudonym even when they carry the same name or a vetoed identifier
             key = "rec:" + self.nodes[r][0] + "#" + self.nodes[r][1]
             out.append(pseudonym(key))
+        self.roots = [self.find(i) for i in range(n)]
         return out

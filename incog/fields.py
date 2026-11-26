@@ -26,12 +26,13 @@ _RULES = [
     ("MRN", ["uhid", "mrn", "patient id", "patientid", "pid", "reg no", "registration no", "registration number",
              "reg number", "patient ref", "hospital uhid", "cr no", "opd no", "patient no", "pateint id",
              "record no", "medical record", "पंजीकरण संख्या", "रजि"]),
+    ("TEHSIL", ["tehsil", "taluka", "tahsil", "तहसील"]),
     ("KEEP", ["doctor", "ref doctor", "referred by", "consultant", "reviewed by", "physician", "surgeon",
-              "hospital", "facility", "department", "dept", "ward", "bed", "tehsil", "taluka", "block",
+              "hospital", "facility", "department", "dept", "ward", "bed", "block",
               "district", "jila", "zila", "distt", "state", "country", "gender", "sex", "ling", "relation",
               "rishta", "test", "loinc", "unit", "range", "result", "drug", "strength", "dose", "frequency",
               "duration", "diagnosis", "icd", "procedure", "package", "amount", "status", "category",
-              "रिश्ता", "लिंग", "जिला", "जिले", "तहसील", "राज्य", "विभाग", "डॉक्टर", "चिकित्सक"]),
+              "रिश्ता", "लिंग", "जिला", "जिले", "राज्य", "विभाग", "डॉक्टर", "चिकित्सक"]),
     ("RELATIVE", ["guardian", "relative", "relative name", "father", "father name", "husband", "spouse",
                   "mother", "pita", "pati", "pita pati", "attendant", "next of kin", "kin", "care of", "c o name",
                   "पिता", "पति", "अभिभावक", "परिजन"]),
@@ -136,7 +137,9 @@ def classify_path(path: tuple, resource_type: str | None = None) -> str | None:
     if parent == "address":
         if leaf in {"city", "village"}:
             return "VILLAGE"
-        if leaf in {"district", "state", "country", "tehsil", "use", "type"}:
+        if leaf in {"tehsil", "taluka"}:
+            return "TEHSIL"
+        if leaf in {"district", "state", "country", "use", "type"}:
             return "KEEP"
         if leaf in {"line", "text"}:
             return "ADDRESS"

@@ -4,11 +4,14 @@ from __future__ import annotations
 import re
 
 from .config import POLICY
-from . import textner
+from . import dates, privacy, textner
 from .detect import TAG, Knowledge, find_spans, norm_digits, redact
 
 REL_MARKER = re.compile(r"^\s*((?:[SDWCH]\s?/\s?[Oo]|[SDW]/O|C/O|पुत्र|पुत्री|पत्नी|पति)\.?\s*(?:of)?)\s*", re.I)
-ADDR_KEEP = re.compile(r"(?i)^\s*(?:Tehsil|Teh\.?|Tahsil|Distt?\.?|District|Dist\.?|तहसील|जिला|जि\.)\s")
+_KEEP_TEHSIL = str(POLICY.get("keep_tehsil", "false")).lower() == "true"
+ADDR_KEEP = re.compile(r"(?i)^\s*(?:" + (r"Tehsil|Teh\.?|Tahsil|तहसील|" if _KEEP_TEHSIL else "") +
+                       r"Distt?\.?|District|Dist\.?|जिला|जि\.)\s")
+DOB_MODE = str(POLICY.get("dob", "suppress")).lower()
 PERSON_TITLE = re.compile(r"^\s*(?:Dr|Prof)\.?\s", re.I)
 
 
@@ -18,6 +21,9 @@ class Stats:
 
 
 def age_band(age: int) -> str:
+    top = int(POLICY.get("age_top_code", 80))
+    if age >= top:
+        return f"{top}+"            # very old patients are rare: one open band hides them
     w = int(POLICY.get("age_band_years", 5))
     lo = (age // w) * w
     return f"{lo}-{lo + w - 1}"
@@ -39,6 +45,9 @@ def generalize_age(value):
 
 
 def generalize_dob(value):
+    if DOB_MODE != "year":                 # a birth year pins the age to ~1 year and defeats age bands
+        Stats.generalized += 1
+        return "[DOB]" if value is not None else value
     if not isinstance(value, str):
         return "[DOB]" if value is not None else value
     v = norm_digits(value)
@@ -96,6 +105,17 @@ def clean_text(value, kb: Knowledge | None):
 
 
 def sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
+    out = _sanitize(cat, value, ctx, kb)
+    if isinstance(out, str) and cat in (None, "KEEP", "TEXT"):
+        if kb is not None and kb.rare is not None:
+            out = kb.rare.apply(out)
+        out = privacy.band_ages(out)
+        if ctx.get("shift"):
+            out = dates.shift_text(out, ctx["shift"], ctx.get("order", "dmy"))[0]
+    return out
+
+
+def _sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
     if value is None or isinstance(value, bool) or value == "":
         return value
     if cat in ("KEEP",):
@@ -120,7 +140,12 @@ def sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
         return generalize_address(value, kb)
     if cat == "VILLAGE":
         Stats.generalized += 1
-        return ctx.get("tehsil") or ctx.get("district") or "[VILLAGE]"
+        return (ctx.get("tehsil") if _KEEP_TEHSIL else None) or ctx.get("district") or "[VILLAGE]"
+    if cat == "TEHSIL":
+        if _KEEP_TEHSIL:
+            return value
+        Stats.generalized += 1
+        return ctx.get("district") or "[TEHSIL]"
     if cat == "PIN":
         return generalize_pin(value)
     if cat == "DOB":

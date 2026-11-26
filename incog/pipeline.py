@@ -18,10 +18,10 @@ import sys
 import time
 from pathlib import Path
 
-from . import link, readers, textner
+from . import dates, link, privacy, readers, textner
 from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
-from .sanitize import Stats, clean_text, sanitize
+from .sanitize import DOB_MODE, Stats, clean_text, sanitize
 
 ID_CATS = ("PHONE", "AADHAAR", "ABHA", "PAN", "EMAIL", "INSURANCE")
 
@@ -94,6 +94,8 @@ def learn_value(cat: str | None, value, kb: Knowledge) -> None:
             kb.add_token(rest, "RELATIVE")
     elif cat in (None, "TEXT", "KEEP", "ADDRESS") and isinstance(value, str) and len(s) > 3:
         learn_text(s, kb)
+        if "(" in s:
+            kb.rare.learn_text(s)
 
 
 def learn_admin(key: str, value, kb: Knowledge) -> None:
@@ -132,6 +134,8 @@ def ext_key(node: dict, k: str) -> str:
 def learn_json(node, path: tuple, rt, kb: Knowledge) -> None:
     if isinstance(node, dict):
         rt = node.get("resourceType", rt) if isinstance(node.get("resourceType"), str) else rt
+        if "code" in node and "display" in node:
+            kb.rare.learn_pair(node.get("code"), node.get("display"))
         for k, v in node.items():
             if not isinstance(v, (dict, list)):
                 learn_admin("district" if (resource_type_is_place(rt) and k == "city") else k, v, kb)
@@ -155,6 +159,8 @@ def learn(doc: readers.Doc, kb: Knowledge) -> None:
             for j, v in enumerate(row):
                 if j < len(cats):
                     learn_value(cats[j], v, kb)
+                    if isinstance(v, str) and "(" in v:
+                        kb.rare.learn_text(v)
                     if cats[j] in ("KEEP", None) and j < len(header):
                         learn_admin(header[j], v, kb)
     elif doc.kind == "json":
@@ -163,6 +169,7 @@ def learn(doc: readers.Doc, kb: Knowledge) -> None:
         for obj in doc.lines:
             learn_json(obj, (), None, kb)
     if doc.kind == "text":
+        kb.rare.learn_text(doc.text)
         learn_text(doc.text, kb)
         for s, e, kind in find_spans(doc.text, None):
             if kind == "MRN":
@@ -235,6 +242,10 @@ def link_all(items: list, kb: Knowledge) -> None:
     ps = lk.solve()
     for it in items:
         it["ps"] = {loc: ps[i] for loc, i in it["units"]}
+    for i, ev in enumerate(lk.ev):                     # rare conditions counted per patient cluster
+        for c in ev.codes:
+            kb.rare.count(c, str(lk.roots[i]))
+    kb.rare.finalize()
 
 
 PS_LABEL = re.compile(r"(?i:Patient\s*Name|Pt\.?\s*Name|Name|Naam|मरीज़?\s*का\s*नाम|नाम)\s*[:\-]\s*\[NAME\]")
@@ -288,6 +299,8 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
                     local["district"] = v.strip()
         out, used = {}, set()
         for k, v in node.items():
+            if rt and norm_key(k) == "birth date" and isinstance(v, str) and DOB_MODE != "year":
+                continue   # FHIR birthDate is optional; a placeholder would not be a valid FHIR date
             nk_out = clean_key(k, kb)
             base, i = nk_out, 2
             while nk_out in used:
@@ -297,7 +310,9 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
             rec = ctx.get("_rec") if not path else None
             if rec and k in rec and isinstance(v, list):
                 sub = {kk: vv for kk, vv in local.items() if kk != "_rec"}
-                out[nk_out] = [sanitize_json(x, (k,), rt, {**sub, "pseudonym": rec[k].get(i)}, kb)
+                out[nk_out] = [sanitize_json(x, (k,), rt, {**sub, "pseudonym": rec[k].get(i),
+                                                          "shift": shift_for(rec[k].get(i), ctx.get("_rel", ""),
+                                                                             f"/{_ptr(k)}/{i}")}, kb)
                                for i, x in enumerate(v)]
                 continue
             out[nk_out] = sanitize_json(v, path + (ext_key(node, k),), rt, local, kb)
@@ -317,7 +332,13 @@ def _unptr(k: str) -> str:
     return k.replace("~1", "/").replace("~0", "~")
 
 
-def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict) -> str:
+def shift_for(ps: str | None, rel: str, loc: str) -> int:
+    """One secret offset per patient (pseudonym); unlinked records get their own offset."""
+    return dates.days_for(ps or f"rec:{rel}#{loc}")
+
+
+def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict,
+              order: str = "dmy", rel: str = "") -> str:
     header, body = doc.rows[0], doc.rows[1:]
     cats = csv_categories(header, body)
     new_header = [h if cats[j] is not None else clean_text(h, kb) for j, h in enumerate(header)]
@@ -328,6 +349,8 @@ def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
         ctx = row_ctx(header, row)
         p = ps.get(f"row:{i}")
         ctx["pseudonym"] = p
+        ctx["shift"] = shift_for(p, rel, f"row:{i}")
+        ctx["order"] = order
         out_row = []
         for j, v in enumerate(row):
             cat = cats[j] if j < len(cats) else None
@@ -339,16 +362,20 @@ def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
     return buf.getvalue()
 
 
-def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict) -> str:
+def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict,
+              order: str = "dmy", rel: str = "") -> str:
     if doc.kind == "csv":
-        return write_csv(doc, kb, out_rel, records, ps)
+        return write_csv(doc, kb, out_rel, records, ps, order, rel)
     if doc.kind == "json":
         rec: dict = {}
         for loc, p in ps.items():
             if loc != "doc":
                 k, i = loc[1:].rsplit("/", 1)
                 rec.setdefault(_unptr(k), {})[int(i)] = p
-        ctx = {"_rec": rec} if rec else {"pseudonym": ps.get("doc")}
+        if rec:
+            ctx = {"_rec": rec, "_rel": rel, "shift": shift_for(None, rel, "doc"), "order": order}
+        else:
+            ctx = {"pseudonym": ps.get("doc"), "shift": shift_for(ps.get("doc"), rel, "doc"), "order": order}
         cleaned = sanitize_json(doc.data, (), None, ctx, kb)
         locs = sorted(ps, key=lambda x: (x.rsplit("/", 1)[0], int(x.rsplit("/", 1)[1]) if x != "doc" else 0))
         records += [{"file": out_rel, "loc": loc, "patient": ps[loc]} for loc in locs] or \
@@ -357,11 +384,14 @@ def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
     if doc.kind == "jsonl":
         p = ps.get("doc")
         records.append({"file": out_rel, "loc": "doc", "patient": p})
-        return doc.newline.join(json.dumps(sanitize_json(o, (), None, {"pseudonym": p}, kb), ensure_ascii=False)
+        jctx = {"pseudonym": p, "shift": shift_for(p, rel, "doc"), "order": order}
+        return doc.newline.join(json.dumps(sanitize_json(o, (), None, jctx, kb), ensure_ascii=False)
                                 for o in doc.lines) + doc.newline
     p = ps.get("doc")
     records.append({"file": out_rel, "loc": "doc", "patient": p})
-    return put_pseudonym(clean_text(doc.text, kb), p)
+    text = privacy.band_ages(kb.rare.apply(clean_text(doc.text, kb)))
+    text = dates.shift_text(text, shift_for(p, rel, "doc"), order)[0]
+    return put_pseudonym(text, p)
 
 
 def safe_name(rel: str, kb: Knowledge) -> str:
@@ -393,6 +423,7 @@ def run(inp: Path, out: Path) -> dict:
     san = out / "sanitized"
     san.mkdir(parents=True, exist_ok=True)
     kb = Knowledge()
+    kb.rare = privacy.RareConditions()
     items = []
     for path in sorted((p for p in inp.rglob("*") if p.is_file()), key=lambda p: p.relative_to(inp).as_posix()):
         rel = path.relative_to(inp).as_posix()
@@ -413,6 +444,15 @@ def run(inp: Path, out: Path) -> dict:
             except Exception:  # noqa: BLE001
                 pass
     kb.finalize()
+    votes = dates.OrderVotes()
+    for it in items:
+        if it["doc"] is not None:
+            it["toks"] = dates.source_tokens(it["rel"], it["doc"].text or "")
+            it["hint"] = dates.order_hint(it["doc"].text or "")
+            votes.add(it["toks"], it["hint"])
+    for it in items:
+        if it["doc"] is not None:
+            it["order"] = votes.decide(it["toks"], it["hint"])
     link_all(items, kb)
 
     files, records, used_names = [], [], set()
@@ -432,7 +472,8 @@ def run(inp: Path, out: Path) -> dict:
                 n += 1
             used_names.add(out_rel)
             file_records: list = []
-            result = write_doc(doc, kb, f"sanitized/{out_rel}", file_records, it.get("ps", {}))
+            result = write_doc(doc, kb, f"sanitized/{out_rel}", file_records, it.get("ps", {}),
+                               it.get("order", "dmy"), it["rel"])
             dest = san / out_rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(result, encoding="utf-8", newline="")

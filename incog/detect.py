@@ -65,6 +65,7 @@ class Knowledge:
     names: dict = field(default_factory=dict)         # lowercase full name -> "NAME"/"RELATIVE"
     tokens: dict = field(default_factory=dict)        # single name tokens -> "NAME"/"RELATIVE"/"VILLAGE"
     admin: set = field(default_factory=set)           # tehsil/district names (kept, never redacted)
+    rare: object = None                               # privacy.RareConditions, set by the pipeline
     _mrn_rx: object = None
     _tok_rx: object = None
 
