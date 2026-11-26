@@ -22,19 +22,19 @@ def digits_only(s: str) -> str:
     return re.sub(r"\D", "", norm_digits(s))
 
 
-SEP = r"[\s\-./_]?"
-NOT_DIGIT_BEFORE = r"(?<!\d)(?<!\d[\s\-./_])"
-NOT_DIGIT_AFTER = r"(?![\s\-./_]?\d)"
+SEP = r"[ \t \-./_]?"
+NOT_DIGIT_BEFORE = r"(?<!\d)(?<!\d[ \t \-./_])"
+NOT_DIGIT_AFTER = r"(?![ \t \-./_]?\d)"
 
 RX = {
     "EMAIL": re.compile(r"[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9.-]+)?", re.UNICODE),
-    "ABHA": re.compile(NOT_DIGIT_BEFORE + r"\d{2}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}" + NOT_DIGIT_AFTER),
-    "AADHAAR": re.compile(NOT_DIGIT_BEFORE + r"[2-9]\d{3}[\s-]?\d{4}[\s-]?\d{4}" + NOT_DIGIT_AFTER),
-    "AADHAAR_MASKED": re.compile(r"(?i)(?<![\w])[x*•]{4}[\s-]?[x*•]{4}[\s-]?\d{4}(?!\d)"),
-    "PHONE": re.compile(NOT_DIGIT_BEFORE + r"(?:\+\s?91[\s-]?|91[\s-]|0)?[6-9](?:[\s-]?\d){9}" + NOT_DIGIT_AFTER),
+    "ABHA": re.compile(NOT_DIGIT_BEFORE + r"\d{2}[ \t-]?\d{4}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
+    "AADHAAR": re.compile(NOT_DIGIT_BEFORE + r"[2-9]\d{3}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
+    "AADHAAR_MASKED": re.compile(r"(?i)(?<![\w])[x*•]{4}[ \t-]?[x*•]{4}[ \t-]?\d{4}(?!\d)"),
+    "PHONE": re.compile(NOT_DIGIT_BEFORE + r"(?:\+\s?91[ \t-]?|91[ \t-]|0)?[6-9](?:[ \t-]?\d){9}" + NOT_DIGIT_AFTER),
     "PHONE_MASKED": re.compile(r"(?<!\w)[6-9]\d[xX*]{6}\d{2}(?!\w)"),
     "PAN": re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])"),
-    "INSURANCE": re.compile(r"(?i)(?<![A-Za-z0-9])(?:PMJAY|PM-JAY|AB-?PMJAY)[\s-]?[A-Z]{2}[\s-]?\d{6,14}(?!\d)"
+    "INSURANCE": re.compile(r"(?i)(?<![A-Za-z0-9])(?:PMJAY|PM-JAY|AB-?PMJAY)[ \t-]?[A-Z]{2}[ \t-]?\d{6,14}(?!\d)"
                             r"|(?<![A-Za-z0-9])POL[\s/-]?\d{1,4}[\s/-]\d{5,12}(?!\d)"),
 }
 # label-anchored detectors: (label regex, value regex, kind)
@@ -43,7 +43,7 @@ LABELLED = [
      r"\d{1,4}[/\-.]\d{1,2}[/\-.]\d{1,4}", "DOB"),
     (r"(?i)(?:\bPIN(?:\s*Code)?|Pincode|Zip|पिन(?:\s*कोड)?)\s*[:\-.]?\s*", r"\d{6}(?!\d)", "PIN"),
     (r"(?i)(?:\bUHID|\bIPD\s*No|\bIP\s*No|\bMRN|\bReg(?:istration)?\.?\s*No|\bAdm(?:ission)?\.?\s*No|"
-     r"\bPatient\s*ID|\bCR\s*No|\bOPD\s*No|पंजीकरण\s*(?:सं|संख्या))\.?\s*[:#\-]?\s*",
+     r"\bPatient\s*ID|\bCR\s*No|\bOPD\s*No|पंजीकरण\s*(?:सं|संख्या)|आईपीडी\s*(?:सं|संख्या|नं)|ओपीडी\s*(?:सं|संख्या|नं))\.?\s*[:#\-]?\s*",
      r"(?=[A-Z0-9/\-]*\d{4})[A-Z]{0,6}[/\-]?[A-Z0-9][A-Z0-9/\-]{3,}", "MRN"),
     (r"(?i)(?:Policy\s*(?:No\.?|Number|#)|Member\s*ID|Card\s*No\.?)\s*[:\-]?\s*", r"[A-Z0-9][A-Z0-9/\-]{4,}", "INSURANCE"),
 ]
@@ -63,7 +63,10 @@ class Knowledge:
     exact: dict = field(default_factory=dict)         # lowercase surface -> kind (emails, PAN, ...)
     mrn_shapes: set = field(default_factory=set)      # learned MRN shape regex sources
     names: dict = field(default_factory=dict)         # lowercase full name -> "NAME"/"RELATIVE"
+    tokens: dict = field(default_factory=dict)        # single name tokens -> "NAME"/"RELATIVE"/"VILLAGE"
+    admin: set = field(default_factory=set)           # tehsil/district names (kept, never redacted)
     _mrn_rx: object = None
+    _tok_rx: object = None
 
     _name_rx: object = None
 
@@ -72,11 +75,58 @@ class Knowledge:
         v = REL_PREFIX.sub("", v).strip()
         if len(v) < 3 or len(v) > 60 or re.search(r"\d|\[", v) or len(v.split()) < 2:
             return
+        for t in v.split(" "):
+            self.add_token(t, kind)
         key = v.lower()
         if self.names.get(key) == "NAME":
             return
         self.names[key] = kind
         self._name_rx = None
+
+    def add_token(self, tok: str, kind: str = "NAME") -> None:
+        from .textner import NOT_NAME, DEV_STOP
+        t = tok.strip(" .,:;'\"()").lower()
+        if len(t) < 3 or len(t) > 25 or re.search(r"[^a-z\u0900-\u097F]", t) or t in NOT_NAME or t in DEV_STOP:
+            return
+        old = self.tokens.get(t)
+        if old == kind or old == "NAME" or (old == "RELATIVE" and kind == "VILLAGE"):
+            return
+        self.tokens[t] = kind
+        self._tok_rx = None
+
+    def finalize(self) -> None:
+        """After pass 1: tehsil and district names are kept for utility, so drop them as tokens."""
+        for a in self.admin:
+            self.tokens.pop(a, None)
+        self._tok_rx = None
+
+    def token_rx(self):
+        if self._tok_rx is None and self.tokens:
+            body = "|".join(re.escape(a) for a in sorted(self.tokens, key=len, reverse=True))
+            self._tok_rx = re.compile(r"(?<![A-Za-z\u0900-\u097F])(?:" + body + r")(?![A-Za-z\u0900-\u097F])", re.I)
+        return self._tok_rx
+
+    def redact_tokens(self, text: str, protected: list) -> tuple:
+        rx = self.token_rx()
+        if rx is None:
+            return text, 0
+        out, last, n = [], 0, 0
+        for m in rx.finditer(text):
+            s, e = m.span()
+            w = m.group()
+            if any(a <= s < b for a, b in protected):
+                continue
+            if w.isascii() and w.isupper() and len(w) > 1:      # ASHA, ward codes: not a person mention
+                continue
+            if s > 0 and text[s - 1] == "[":
+                continue
+            kind = self.tokens.get(w.lower(), "NAME")
+            out.append(text[last:s])
+            out.append({"RELATIVE": "[RELATIVE]", "VILLAGE": "[VILLAGE]"}.get(kind, "[NAME]"))
+            last = e
+            n += 1
+        out.append(text[last:])
+        return "".join(out), n
 
     def name_rx(self):
         if self._name_rx is None and self.names:
@@ -137,7 +187,7 @@ def mrn_shape(value: str) -> str | None:
         elif p.isalpha():
             out.append(re.escape(p))
         else:
-            out.append(r"[\s\-./_]?")
+            out.append(r"[ \t \-./_]?")
     src = "".join(out)
     return r"(?<![A-Za-z0-9])" + src + r"(?!\d)"
 
@@ -163,7 +213,7 @@ def find_spans(text: str, kb: Knowledge | None = None) -> list:
                 found.append((m.start(), m.end(), "MRN"))
         if kb.digit_ids or kb.pins:
             # any digit run (with separators) whose digits equal or end with a learned identifier
-            for m in re.finditer(r"\d(?:[\s\-./_]?\d){4,}", t):
+            for m in re.finditer(r"\d(?:[ \t \-./_]?\d){4,}", t):
                 d = re.sub(r"\D", "", m.group())
                 if d in kb.digit_ids or d in kb.pins or any(len(c) >= 6 and d.endswith(c) for c in kb.digit_ids):
                     found.append((m.start(), m.end(), "ID"))

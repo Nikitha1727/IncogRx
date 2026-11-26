@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 
 from .config import POLICY
+from . import textner
 from .detect import TAG, Knowledge, find_spans, norm_digits, redact
 
 REL_MARKER = re.compile(r"^\s*((?:[SDWCH]\s?/\s?[Oo]|[SDW]/O|C/O|पुत्र|पुत्री|पत्नी|पति)\.?\s*(?:of)?)\s*", re.I)
@@ -81,9 +82,14 @@ def clean_text(value, kb: Knowledge | None):
     """Generic free-text cleaner (identifier patterns + learned identifiers + learned names)."""
     if not isinstance(value, str) or not value:
         return value
-    text, n = redact(value, find_spans(value, kb))
+    text, n = textner.apply(value, lambda v: generalize_address(v, kb))
+    text, m = redact(text, find_spans(text, kb))
+    n += m
     if kb is not None and kb.name_rx() is not None:
         text, m = kb.redact_names(text)
+        n += m
+    if kb is not None and kb.token_rx() is not None:
+        text, m = kb.redact_tokens(text, textner.protected_spans(text))
         n += m
     Stats.identifiers += n
     return text

@@ -105,6 +105,10 @@ def classify_path(path: tuple, resource_type: str | None = None) -> str | None:
     if resource_type in _NOT_PERSON_RESOURCES and not ancestors & {"contact", "telecom", "address"}:
         if leaf in {"family", "given", "text", "name", "prefix", "suffix"}:
             return "KEEP"
+    if ancestors & {"relationship", "relation", "coding"} or leaf in {"relationship", "relation"}:
+        return "KEEP"  # "Husband", "Next-of-Kin": a role, not a person
+    if resource_type in _NOT_PERSON_RESOURCES and "address" in ancestors and "contact" not in ancestors:
+        return "KEEP"  # an organisation's or location's own address
     # FHIR / generic structures where the parent decides
     if parent in {"telecom"} and leaf == "value":
         return "PHONE"

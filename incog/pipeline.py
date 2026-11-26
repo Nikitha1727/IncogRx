@@ -18,8 +18,8 @@ import sys
 import time
 from pathlib import Path
 
-from . import readers
-from .detect import Knowledge, find_spans, redact, norm_digits, RX
+from . import readers, textner
+from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
 from .sanitize import Stats, clean_text, sanitize
 
@@ -79,10 +79,45 @@ def learn_value(cat: str | None, value, kb: Knowledge) -> None:
     elif cat in ("EMAIL", "PAN", "INSURANCE"):
         if len(s.strip()) >= 6 and "[" not in s:
             kb.exact[s.strip().lower()] = cat
+    elif cat == "VILLAGE":
+        if len(s) <= 40 and not re.search(r"\d", s):
+            for t in s.split():
+                kb.add_token(t, "VILLAGE")
     elif cat == "NAME":
         kb.add_name(s, "NAME")
+        if len(s.split()) == 1:
+            kb.add_token(s, "NAME")
     elif cat == "RELATIVE":
         kb.add_name(s, "RELATIVE")
+        rest = REL_PREFIX.sub("", s).strip()
+        if len(rest.split()) == 1:
+            kb.add_token(rest, "RELATIVE")
+    elif cat in (None, "TEXT", "KEEP", "ADDRESS") and isinstance(value, str) and len(s) > 3:
+        learn_text(s, kb)
+
+
+def learn_admin(key: str, value, kb: Knowledge) -> None:
+    nk = norm_key(key)
+    if isinstance(value, str) and any(w in nk.split() for w in ("tehsil", "taluka", "district", "distt", "jila", "zila",
+                                                                "जिला", "तहसील", "state")):
+        if len(value) <= 40:
+            for t in value.split():
+                kb.admin.add(t.strip(".,").lower())
+
+
+def learn_text(s: str, kb: Knowledge) -> None:
+    """Learn person and village names from free text using the Phase 2 context detectors."""
+    for t in textner.admin_names(s):
+        kb.admin.add(t.lower())
+    for surf, kind in textner.detect(s).found:
+        if kind in ("NAME", "RELATIVE"):
+            if len(surf.split()) >= 2:
+                kb.add_name(surf, kind)
+            else:
+                kb.add_token(surf, kind)
+        elif kind == "VILLAGE":
+            for t in surf.split():
+                kb.add_token(t, "VILLAGE")
 
 
 def ext_key(node: dict, k: str) -> str:
@@ -98,12 +133,18 @@ def learn_json(node, path: tuple, rt, kb: Knowledge) -> None:
     if isinstance(node, dict):
         rt = node.get("resourceType", rt) if isinstance(node.get("resourceType"), str) else rt
         for k, v in node.items():
+            if not isinstance(v, (dict, list)):
+                learn_admin("district" if (resource_type_is_place(rt) and k == "city") else k, v, kb)
             learn_json(v, path + (ext_key(node, k),), rt, kb)
     elif isinstance(node, list):
         for v in node:
             learn_json(v, path, rt, kb)
     else:
         learn_value(classify_path(path, rt), node, kb)
+
+
+def resource_type_is_place(rt) -> bool:
+    return rt in ("Organization", "Location")
 
 
 def learn(doc: readers.Doc, kb: Knowledge) -> None:
@@ -114,12 +155,15 @@ def learn(doc: readers.Doc, kb: Knowledge) -> None:
             for j, v in enumerate(row):
                 if j < len(cats):
                     learn_value(cats[j], v, kb)
+                    if cats[j] in ("KEEP", None) and j < len(header):
+                        learn_admin(header[j], v, kb)
     elif doc.kind == "json":
         learn_json(doc.data, (), None, kb)
     elif doc.kind == "jsonl":
         for obj in doc.lines:
             learn_json(obj, (), None, kb)
     if doc.kind == "text":
+        learn_text(doc.text, kb)
         for s, e, kind in find_spans(doc.text, None):
             if kind == "MRN":
                 kb.add_mrn(doc.text[s:e])
@@ -264,6 +308,7 @@ def run(inp: Path, out: Path) -> dict:
                 learn(it["doc"], kb)
             except Exception:  # noqa: BLE001
                 pass
+    kb.finalize()
 
     files, records, used_names = [], [], set()
     for it in items:  # pass 2
