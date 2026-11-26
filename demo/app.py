@@ -63,6 +63,26 @@ def safe_rel(path: str) -> Path:
     return Path(*parts)
 
 
+def expand_zip(path: str, data: bytes):
+    """Demo convenience: a dropped .zip is unpacked so its files are processed (the evaluator
+    never sends archives; the scored pipeline itself still quarantines anything it cannot read)."""
+    if not path.lower().endswith(".zip") or not zipfile.is_zipfile(io.BytesIO(data)):
+        yield path, data
+        return
+    stem = path.rsplit("/", 1)[-1][:-4] or "archive"
+    total = 0
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        for info in z.infolist():
+            name = info.filename
+            parts = PurePosixPath(name).parts
+            if info.is_dir() or not parts or parts[0] == "__MACOSX" or parts[-1].startswith("."):
+                continue
+            total += info.file_size
+            if total > MAX_UPLOAD:                  # zip-bomb guard
+                raise ValueError("The zip expands to more than 80 MB.")
+            yield f"{stem}/{name}", z.read(info)
+
+
 def run_job(files: list, secret: str) -> dict:
     work = Path(tempfile.mkdtemp(prefix="incogrx_demo_"))
     inp, out = work / "input", work / "output"
@@ -195,8 +215,11 @@ class Handler(BaseHTTPRequestHandler):
                 files, total = [], 0
                 for f in req.get("files") or []:
                     data = base64.b64decode(f["b64"])
-                    total += len(data)
-                    files.append((str(f["path"]), data))
+                    for rel, member in expand_zip(str(f["path"]), data):
+                        total += len(member)
+                        if total > MAX_UPLOAD:
+                            raise ValueError("Upload is larger than 80 MB.")
+                        files.append((rel, member))
                 if not files:
                     raise ValueError("Choose at least one file.")
                 if total > MAX_UPLOAD:
