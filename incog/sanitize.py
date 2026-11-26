@@ -104,7 +104,7 @@ def sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
         if isinstance(value, str) and PERSON_TITLE.match(value):
             return value
         Stats.identifiers += 1
-        return TAG["NAME"]
+        return ctx.get("pseudonym") or TAG["NAME"]
     if cat == "RELATIVE":
         return relative_value(value)
     if cat in ("MRN",):

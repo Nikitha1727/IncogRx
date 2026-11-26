@@ -18,7 +18,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import readers, textner
+from . import link, readers, textner
 from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
 from .sanitize import Stats, clean_text, sanitize
@@ -169,6 +169,92 @@ def learn(doc: readers.Doc, kb: Knowledge) -> None:
                 kb.add_mrn(doc.text[s:e])
 
 
+# ----------------------------------------------------------------------------- linking units
+def _ptr(k: str) -> str:
+    return k.replace("~", "~0").replace("/", "~1")
+
+
+def units(doc: readers.Doc, kb: Knowledge) -> list:
+    """Return [(loc, Evidence)] for the records of one document, plus the list keys used."""
+    if doc.kind == "csv":
+        header, body = doc.rows[0], doc.rows[1:]
+        cats = csv_categories(header, body)
+        out = []
+        for i, row in enumerate(body):
+            ev = link.Ev()
+            for j, v in enumerate(row):
+                if j < len(cats):
+                    h = header[j] if j < len(header) else ""
+                    cat = cats[j]
+                    if cat is None and norm_key(h) in ("patient ref", "patient id"):
+                        cat = "MRN"
+                    link.add_value(ev, cat, v, link._rel_context([h]))
+                    if cat in (None, "TEXT", "KEEP") and isinstance(v, str) and len(v) > 12:
+                        link.text_evidence(v, ev, light=True)
+            out.append((f"row:{i}", ev))
+        return out
+    if doc.kind == "json":
+        data = doc.data
+        if isinstance(data, dict) and data.get("resourceType") != "Bundle":
+            out = []
+            for k, v in data.items():
+                if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                    evs = []
+                    for x in v:
+                        ev = link.Ev()
+                        link.json_evidence(x, (k,), None, ev)
+                        evs.append(ev)
+                    if any(e.ids or e.names for e in evs):
+                        out += [(f"/{_ptr(k)}/{i}", e) for i, e in enumerate(evs)]
+            if out:
+                return out
+        ev = link.Ev()
+        link.json_evidence(data, (), None, ev)
+        return [("doc", ev)]
+    if doc.kind == "jsonl":
+        ev = link.Ev()
+        for o in doc.lines:
+            link.json_evidence(o, (), None, ev)
+        return [("doc", ev)]
+    ev = link.Ev()
+    link.text_evidence(doc.text, ev, kb)
+    return [("doc", ev)]
+
+
+def link_all(items: list, kb: Knowledge) -> None:
+    lk = link.Linker()
+    for it in items:
+        it["units"] = []
+        if it["doc"] is None:
+            continue
+        try:
+            for loc, ev in units(it["doc"], kb):
+                it["units"].append((loc, lk.add(it["rel"], loc, ev)))
+        except Exception:  # noqa: BLE001
+            it["units"] = []
+    ps = lk.solve()
+    for it in items:
+        it["ps"] = {loc: ps[i] for loc, i in it["units"]}
+
+
+PS_LABEL = re.compile(r"(?i:Patient\s*Name|Pt\.?\s*Name|Name|Naam|मरीज़?\s*का\s*नाम|नाम)\s*[:\-]\s*\[NAME\]")
+
+
+def put_pseudonym(text: str, ps: str | None) -> str:
+    """Write the record's pseudonym into the exported text (consistency check reads it there)."""
+    if not ps:
+        return text
+    if "[MRN]" in text:
+        return text.replace("[MRN]", ps)
+    m = PS_LABEL.search(text)
+    if m:
+        return text[:m.end() - 6] + ps + text[m.end():]
+    if "[NAME]" in text:
+        return text.replace("[NAME]", ps, 1)
+    nl = "\r\n" if "\r\n" in text else "\n"
+    return f"Patient: {ps}{nl}" + text
+
+
 # ----------------------------------------------------------------------------- pass 2: sanitising
 def clean_key(key: str, kb: Knowledge) -> str:
     if classify_key(key) is not None:
@@ -208,6 +294,12 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
                 nk_out = f"{base}#{i}"
                 i += 1
             used.add(nk_out)
+            rec = ctx.get("_rec") if not path else None
+            if rec and k in rec and isinstance(v, list):
+                sub = {kk: vv for kk, vv in local.items() if kk != "_rec"}
+                out[nk_out] = [sanitize_json(x, (k,), rt, {**sub, "pseudonym": rec[k].get(i)}, kb)
+                               for i, x in enumerate(v)]
+                continue
             out[nk_out] = sanitize_json(v, path + (ext_key(node, k),), rt, local, kb)
         return out
     if isinstance(node, list):
@@ -221,17 +313,11 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
     return sanitize(cat, node, ctx, kb)
 
 
-def json_records(data, out_rel: str) -> list:
-    recs = []
-    if isinstance(data, dict) and data.get("resourceType") != "Bundle":
-        for k, v in data.items():
-            if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
-                key = k.replace("~", "~0").replace("/", "~1")
-                recs += [{"file": out_rel, "loc": f"/{key}/{i}", "patient": None} for i in range(len(v))]
-    return recs or [{"file": out_rel, "loc": "doc", "patient": None}]
+def _unptr(k: str) -> str:
+    return k.replace("~1", "/").replace("~0", "~")
 
 
-def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list) -> str:
+def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict) -> str:
     header, body = doc.rows[0], doc.rows[1:]
     cats = csv_categories(header, body)
     new_header = [h if cats[j] is not None else clean_text(h, kb) for j, h in enumerate(header)]
@@ -240,24 +326,42 @@ def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list) -> s
     w.writerow(new_header)
     for i, row in enumerate(body):
         ctx = row_ctx(header, row)
-        w.writerow([sanitize(cats[j] if j < len(cats) else None, v, ctx, kb) for j, v in enumerate(row)])
-        records.append({"file": out_rel, "loc": f"row:{i}", "patient": None})
+        p = ps.get(f"row:{i}")
+        ctx["pseudonym"] = p
+        out_row = []
+        for j, v in enumerate(row):
+            cat = cats[j] if j < len(cats) else None
+            if cat is None and j < len(header) and norm_key(header[j]) in ("patient ref", "patient id") and v.strip():
+                cat = "MRN"
+            out_row.append(sanitize(cat, v, ctx, kb))
+        w.writerow(out_row)
+        records.append({"file": out_rel, "loc": f"row:{i}", "patient": p})
     return buf.getvalue()
 
 
-def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list) -> str:
+def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict) -> str:
     if doc.kind == "csv":
-        return write_csv(doc, kb, out_rel, records)
+        return write_csv(doc, kb, out_rel, records, ps)
     if doc.kind == "json":
-        cleaned = sanitize_json(doc.data, (), None, {}, kb)
-        records += json_records(cleaned, out_rel)
+        rec: dict = {}
+        for loc, p in ps.items():
+            if loc != "doc":
+                k, i = loc[1:].rsplit("/", 1)
+                rec.setdefault(_unptr(k), {})[int(i)] = p
+        ctx = {"_rec": rec} if rec else {"pseudonym": ps.get("doc")}
+        cleaned = sanitize_json(doc.data, (), None, ctx, kb)
+        locs = sorted(ps, key=lambda x: (x.rsplit("/", 1)[0], int(x.rsplit("/", 1)[1]) if x != "doc" else 0))
+        records += [{"file": out_rel, "loc": loc, "patient": ps[loc]} for loc in locs] or \
+            [{"file": out_rel, "loc": "doc", "patient": None}]
         return json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n"
     if doc.kind == "jsonl":
-        records.append({"file": out_rel, "loc": "doc", "patient": None})
-        return doc.newline.join(json.dumps(sanitize_json(o, (), None, {}, kb), ensure_ascii=False)
+        p = ps.get("doc")
+        records.append({"file": out_rel, "loc": "doc", "patient": p})
+        return doc.newline.join(json.dumps(sanitize_json(o, (), None, {"pseudonym": p}, kb), ensure_ascii=False)
                                 for o in doc.lines) + doc.newline
-    records.append({"file": out_rel, "loc": "doc", "patient": None})
-    return clean_text(doc.text, kb)
+    p = ps.get("doc")
+    records.append({"file": out_rel, "loc": "doc", "patient": p})
+    return put_pseudonym(clean_text(doc.text, kb), p)
 
 
 def safe_name(rel: str, kb: Knowledge) -> str:
@@ -309,6 +413,7 @@ def run(inp: Path, out: Path) -> dict:
             except Exception:  # noqa: BLE001
                 pass
     kb.finalize()
+    link_all(items, kb)
 
     files, records, used_names = [], [], set()
     for it in items:  # pass 2
@@ -327,7 +432,7 @@ def run(inp: Path, out: Path) -> dict:
                 n += 1
             used_names.add(out_rel)
             file_records: list = []
-            result = write_doc(doc, kb, f"sanitized/{out_rel}", file_records)
+            result = write_doc(doc, kb, f"sanitized/{out_rel}", file_records, it.get("ps", {}))
             dest = san / out_rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(result, encoding="utf-8", newline="")
