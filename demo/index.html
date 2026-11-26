@@ -733,8 +733,28 @@ const $ = s => document.querySelector(s);
 // Where the engine runs. Served by demo/app.py the token below is replaced with "" (same server).
 // Served as a static page (Vercel), requests go to the hosted engine on Render; ?api=<url> overrides.
 const API_TOKEN = "__INCOGRX_API__";
-const API = (new URLSearchParams(location.search).get("api") ||
-  (API_TOKEN.startsWith("__INCOGRX") ? "https://incogrx-demo.onrender.com" : API_TOKEN)).replace(/\/$/, "");
+// Hosted on Vercel the page is static (token not replaced): the engine is the /api/run function on the
+// same site, and every result comes back inline because nothing is kept between requests.
+const API_PARAM = new URLSearchParams(location.search).get("api");
+const HOSTED = API_TOKEN.startsWith("__INCOGRX") && !API_PARAM;
+const API = (API_PARAM || (HOSTED ? "" : API_TOKEN)).replace(/\/$/, "");
+const HOSTED_MAX = 4.2 * 1048576;
+const blobUrls = [];
+const b64Url = (b64, type) => { const bin = atob(b64), a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  const u = URL.createObjectURL(new Blob([a], {type})); blobUrls.push(u); return u; };
+const typeOf = p => /\.pdf$/i.test(p) ? "application/pdf" : /\.(txt|csv|tsv|json|jsonl|ndjson|md)$/i.test(p) ? "text/plain;charset=utf-8" : "application/octet-stream";
+const WHERE_TXT = (HOSTED || API_PARAM) ? "Processed on the IncogRx server. No external APIs or AI services." : "Processed on this computer. No external APIs.";
+if (HOSTED || API_PARAM) {
+  const st = document.getElementById("status"); if (st) st.textContent = WHERE_TXT;
+  const wk = document.querySelector(".wk p"); if (wk) wk.textContent = "Your files are processed on the IncogRx server and nothing is kept after the run. Results appear here when the engine finishes.";
+}
+function fileUrl(d, p) {
+  if (!d.hosted) return `${API}/api/file/${d.job}/${encodeURI(p)}`;
+  d._urls = d._urls || {};
+  if (!(p in d._urls)) d._urls[p] = d.inline && d.inline[p] ? b64Url(d.inline[p], typeOf(p)) : "#";
+  return d._urls[p];
+}
 // The hosted engine (free plan) sleeps when idle: ping it until it answers before sending records.
 async function wakeEngine() {
   const until = Date.now() + 90000;
@@ -801,7 +821,7 @@ function setPicked(files) {
         <span class="pkn" title="${esc(n)}">${esc(n)}</span><span class="pks">${fmtSize(f.size)}</span>
         <button class="pkx" type="button" data-i="${i}" aria-label="Remove ${esc(n)}">${ICON("x")}</button></div>`; }).join("")}
       ${picked.length > SHOW ? `<div class="pkmore">and ${picked.length - SHOW} more</div>` : ""}</div></div>`;
-  $("#pkClear").onclick = e => { e.stopPropagation(); setPicked([]); status("Processed on this computer. No external APIs."); };
+  $("#pkClear").onclick = e => { e.stopPropagation(); setPicked([]); status(WHERE_TXT); };
   box.querySelectorAll(".pkx").forEach(b => b.onclick = e => { e.stopPropagation(); const i = +b.dataset.i; setPicked(picked.filter((_, j) => j !== i)); });
   if (typeof status === "function") status(`${picked.length} file${picked.length > 1 ? "s" : ""} ready. Press Sanitize records.`);
 }
@@ -828,7 +848,11 @@ $("#run").onclick = async () => {
   btn.disabled = true; btn.classList.add("busy"); btn.querySelector("svg").outerHTML = '<span class="spin"></span>';
   const bytes = mode === "files" ? picked.reduce((a, f) => a + f.size, 0) : new Blob([body.text]).size;
   const nfiles = mode === "files" ? picked.length : 1;
-  if (mode === "files") {
+  if (HOSTED && mode === "files" && bytes > HOSTED_MAX) {
+    btn.disabled = false; btn.classList.remove("busy"); const sp0 = btn.querySelector(".spin"); if (sp0) sp0.outerHTML = ICON("shield");
+    return status(`The hosted site takes up to about 4 MB per run (this batch is ${fmtSize(bytes)}). Split it, or run the local demo: python demo/app.py`, true);
+  }
+  if (mode === "files" && !HOSTED) {
     $("#runLabel").textContent = "Reading files...";
     status(`Reading ${nfiles} file${nfiles > 1 ? "s" : ""} (${fmtSize(bytes)})...`);
     body.files = await Promise.all(picked.map(async f => ({path: relPath(f), b64: await toB64(f)})));
@@ -838,25 +862,34 @@ $("#run").onclick = async () => {
   const t0 = Date.now(), estS = Math.max(3, Math.round(bytes / 1048576 * 5));
   const estTxt = estS < 45 ? "usually under a minute" : `large batch, about ${Math.max(1, Math.round(estS / 60))} min`;
   const clock = () => { const e = Math.round((Date.now() - t0) / 1000), mm = Math.floor(e / 60), ss = String(e % 60).padStart(2, "0");
-    status(`Sanitizing ${nfiles} file${nfiles > 1 ? "s" : ""} on this computer · ${mm}:${ss} elapsed · ${estTxt}`);
+    status(`Sanitizing ${nfiles} file${nfiles > 1 ? "s" : ""} ${(API || HOSTED) ? "on the IncogRx server" : "on this computer"} · ${mm}:${ss} elapsed · ${estTxt}`);
     const wt = $("#wkt"); if (wt) wt.textContent = `${mm}:${ss} elapsed · ${estTxt}`; };
   clock(); const timer = setInterval(clock, 1000);
   const empty = $("#resEmpty"); empty.classList.add("busy");
   step(2); sys("busy", "Processing batch"); ($("#resBadge") || {}).className = "badge busy"; ($("#resBadge") || {}).textContent = "Processing";
   try {
-    if (API) await wakeEngine();
+    if (API_PARAM) await wakeEngine();
     let r;
     try {
+      if (HOSTED) {
+        const fd = new FormData(); fd.append("mode", mode);
+        if (mode === "text") fd.append("text", body.text); else picked.forEach(f => fd.append("file", f, relPath(f)));
+        r = await fetch("/api/run", {method: "POST", body: fd});
+      } else
       r = await fetch(API + "/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     } catch (netErr) {
       throw new Error(API
-        ? `Could not reach the IncogRx engine (${new URL(API).host}). The free server sleeps when idle and takes about a minute to start: wait and press Sanitize again. A very large batch can also exceed the free server's memory; split it, or run the demo locally with python demo/app.py.`
+        ? `Could not reach the IncogRx engine (${new URL(API).host}). If it was asleep, wait a minute and press Sanitize again; for large batches run the demo locally with python demo/app.py.`
+        : HOSTED ? "Could not reach the IncogRx engine on this site. Check your connection and press Sanitize again."
         : "Could not reach the local IncogRx engine. Is demo/app.py still running?");
     }
-    const d = await r.json();
+    let d;
+    try { d = await r.json(); }
+    catch (_) { throw new Error(r.status === 413 ? "This batch is too large for the hosted site (about 4 MB per run). Split it, or run the local demo: python demo/app.py"
+                                                  : `The engine returned an unexpected response (HTTP ${r.status}). Press Sanitize again.`); }
     if (!r.ok) throw new Error(d.error || "Run failed.");
     last = d; render(d, body); step(3); sys("ready", "Engine ready");
-    status(`Done in ${(d.speed && d.speed.total_seconds) || d.wall_seconds}s. ${API ? "Processed on the IncogRx server. No external APIs." : "Processed on this computer."}`);
+    status(`Done in ${(d.speed && d.speed.total_seconds) || d.wall_seconds}s. ${(API || HOSTED) ? "Processed on the IncogRx server. No external APIs or AI services." : "Processed on this computer."}`);
   } catch (e) {
     step(1); sys("err", "Run failed"); ($("#resBadge") || {}).className = "badge"; ($("#resBadge") || {}).textContent = "Awaiting input";
     status(esc(e.message), true);
@@ -881,7 +914,7 @@ function kpi(id, v, sub, cls) {
 }
 function render(d, req) {
   const c = d.view || d.counts, removed = Object.values(d.tags).reduce((a, b) => a + b, 0);
-  const url = p => `${API}/api/file/${d.job}/${encodeURI(p)}`;
+  const url = p => fileUrl(d, p);
   kpi("#k1", c.files_total, `${req.mode === "text" ? "pasted record" : "in this batch"} · ${(d.speed && d.speed.total_seconds) ?? d.timing.seconds ?? d.wall_seconds}s`);
   kpi("#k2", c.files_sanitized, `${removed} personal detail(s) removed`, "ok");
   kpi("#k3", c.files_quarantined, c.files_blocked ? `${c.files_blocked} blocked by the security scan` : c.files_quarantined ? "nothing from them released" : "no file needed it", c.files_quarantined ? "warn" : "");
@@ -890,7 +923,10 @@ function render(d, req) {
   // result panel
   $("#resEmpty").style.display = "none"; $("#resBody").classList.add("on");
   ($("#resBadge") || {}).className = "badge ok"; ($("#resBadge") || {}).textContent = "Release ready";
-  $("#zipBtn").href = `${API}/api/download/${d.job}`;
+  if (d.hosted) { blobUrls.splice(0).forEach(u => URL.revokeObjectURL(u));
+    const zb = $("#zipBtn"); zb.href = d.zip_b64 ? b64Url(d.zip_b64, "application/zip") : "#";
+    zb.setAttribute("download", "incogrx_output.zip"); if (!d.zip_b64) zb.title = d.zip_note || ""; }
+  else $("#zipBtn").href = `${API}/api/download/${d.job}`;
   $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} detail(s) removed`;
   const npdf = (d.pdfs || []).length;
   $("#rpdf").textContent = npdf ? `+ ${npdf} redacted PDF${npdf > 1 ? "s" : ""}` : "";
@@ -940,7 +976,7 @@ function render(d, req) {
 function renderChecks(d) {
   const sp = d.speed || {}, docs = d.documents || [];
   const sec = d.security || {scanned: d.files.length, blocked: [], neutralized: [], clean: d.files.length};
-  const url = p => `${API}/api/file/${d.job}/${encodeURI(p)}`;
+  const url = p => fileUrl(d, p);
   const pages = docs.reduce((a, x) => a + x.pages, 0), ocrPages = docs.reduce((a, x) => a + x.ocr_pages, 0);
   const ocrDocs = docs.filter(x => x.ocr_pages), review = docs.reduce((a, x) => a + (x.review_pages || []).length, 0);
   const confAvg = ocrDocs.length ? Math.round(ocrDocs.reduce((a, x) => a + x.ocr_conf * x.ocr_pages, 0) / ocrPages) : null;
@@ -948,7 +984,7 @@ function renderChecks(d) {
   const ck = (cls, icon, lab, big, small) => `<a class="ck ${cls}" href="#/checks"><span class="ib">${ICON(icon)}</span><span><span class="cl">${lab}</span><b>${big}</b><span class="cs">${small}</span></span></a>`;
   $("#checks").innerHTML =
     ck("good", "cpu", "Speed", pages ? `${pages} pages in ${secs}s` : `${secs}s end to end`,
-       pages ? `${sp.pages_per_second} pages per second` : `${d.counts.files_total} file(s), on this computer`) +
+       pages ? `${sp.pages_per_second} pages per second` : `${d.counts.files_total} file(s), ${(API || HOSTED) ? "on the IncogRx server" : "on this computer"}`) +
     ck(review ? "warn" : "good", "search", "Handwriting & scans", ocrPages ? `${ocrPages} page(s) by OCR` : "No scanned pages",
        ocrPages ? `confidence ${confAvg}% · ${review ? review + " flagged for review" : "none flagged"}` : "typed text read directly") +
     ck(nb ? "bad" : nn ? "warn" : "good", "secure", "Security", nb ? `${nb} file(s) blocked` : nn ? `${nn} file(s) cleaned` : "No threats found",
@@ -966,7 +1002,7 @@ function renderChecks(d) {
     : `<tr><td colspan="6"><span class="muted">No PDFs or images in this batch. ${d.counts.files_sanitized} record file(s) were cleaned in ${secs}s.</span></td></tr>`;
   document.querySelectorAll("#docRows tr.click").forEach(tr => { const go = () => window.open(tr.dataset.href, "_blank", "noopener");
     tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
-  $("#ocrMeta").textContent = sp.ocr_available === false ? "OCR not installed on this computer" : (sp.ocr_langs ? `models: ${sp.ocr_langs.replace("+", " + ")}` : "");
+  $("#ocrMeta").textContent = sp.ocr_available === false ? (HOSTED ? "OCR runs in the local demo (python demo/app.py)" : "OCR not installed on this computer") : (sp.ocr_langs ? `models: ${sp.ocr_langs.replace("+", " + ")}` : "");
   $("#ocrRows").innerHTML = ocrDocs.length ? ocrDocs.map(x => { const c = x.ocr_conf, cls = c >= 85 ? "" : c >= 70 ? "mid" : "low";
       return `<div class="ocrrow"><div class="nm">${esc(x.name)}<small>${x.ocr_pages} of ${x.pages} page(s) read by OCR</small></div>
         <div class="conf ${cls}"><span class="tr"><i style="width:${Math.max(4, Math.min(100, c))}%"></i></span><b>${c}%</b></div>

@@ -2,6 +2,12 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "cleanUrls": false,
+  "functions": {
+    "api/run.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{ui/**,tests/**,docs/**,benchmarks/**,person_a/**,demo/tessdata/**,demo/assets/**,demo/samples/**,**/*.pdf,**/*.png,**/*.jpg}"
+    }
+  },
   "rewrites": [
     { "source": "/", "destination": "/demo/index.html" },
     { "source": "/assets/:file", "destination": "/demo/assets/:file" }
