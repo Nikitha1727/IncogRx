@@ -1,2 +1,5 @@
-# Optional, demo only (not needed by the scored pipeline): lets the demo UI read and redact text PDFs.
+# Optional, demo only (not needed by the scored pipeline): lets the demo UI read, OCR and redact PDFs and images.
+# OCR also needs the tesseract program: brew install tesseract (macOS) or apt install tesseract-ocr (Linux).
 pymupdf>=1.24
+pytesseract>=0.3.10
+pillow>=10.0

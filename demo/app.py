@@ -2,6 +2,7 @@
 """IncogRx demo UI: a local, offline web page to try the firewall on your own files or text.
 
     python demo/app.py            then open http://127.0.0.1:8765
+    (on Render / Railway the platform's PORT is used and the page is served publicly; see Dockerfile)
 
 Standard library only. Every run calls the same `main.py` the evaluator runs (in a separate
 process), so the demo shows exactly what the scored pipeline does. The server listens on
@@ -32,8 +33,9 @@ from pathlib import Path, PurePosixPath
 DEMO = Path(__file__).resolve().parent
 ROOT = DEMO.parent
 MAIN = ROOT / "main.py"
-HOST = "127.0.0.1"
-PORT = int(os.environ.get("INCOGRX_DEMO_PORT", "8765"))
+CLOUD = "PORT" in os.environ          # set by hosting platforms (Render, Railway): serve publicly there
+HOST = os.environ.get("INCOGRX_DEMO_HOST", "0.0.0.0" if CLOUD else "127.0.0.1")
+PORT = int(os.environ.get("PORT") or os.environ.get("INCOGRX_DEMO_PORT", "8765"))
 MAX_UPLOAD = 80 * 1024 * 1024          # bytes of decoded upload per run
 PREVIEW = 30000                         # characters shown per file
 KEEP_JOBS = 5
@@ -105,7 +107,8 @@ def shown_name(path: str) -> str:
 
 def run_job(files: list, secret: str, scans: list | None = None) -> dict:
     """Scan every file, read PDFs and images page by page (OCR where needed), run the engine
-    (the same main.py the evaluator runs), then write redacted copies of the documents."""
+    (the same main.py the evaluator runs) with every page as its own record, then write redacted
+    copies of the documents."""
     t_start = time.time()
     work = Path(tempfile.mkdtemp(prefix="incogrx_demo_"))
     inp, out = work / "input", work / "output"
@@ -209,6 +212,9 @@ def run_job(files: list, secret: str, scans: list | None = None) -> dict:
     res["security"] = {"scanned": len(scans), "blocked": [x for x in scans if x["verdict"] == "blocked"],
                        "neutralized": [x for x in scans if x["verdict"] == "neutralized"],
                        "clean": sum(x["verdict"] == "clean" for x in scans)}
+    released = sum(1 for f in res["files"] if f["status"] == "sanitized" and f.get("output"))
+    res["view"] = {**res["counts"], "files_total": len(scans), "files_sanitized": released,
+                   "files_quarantined": len(scans) - released, "files_blocked": len(res["security"]["blocked"])}
     res["speed"] = {"total_seconds": total_s, "read_seconds": read_s, "engine_seconds": round(wall, 2),
                     "redact_seconds": redact_s, "pages": pages,
                     "pages_per_second": round(pages / total_s, 2) if pages and total_s else None,
@@ -589,7 +595,7 @@ def main() -> int:
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
     url = f"http://{HOST}:{PORT}"
     print(f"IncogRx demo running at {url}  (Ctrl+C to stop)")
-    if "--no-browser" not in sys.argv:
+    if "--no-browser" not in sys.argv and not CLOUD:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:
         httpd.serve_forever()

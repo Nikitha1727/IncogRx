@@ -1,0 +1,7 @@
+.git
+ui
+docs
+person_a
+benchmarks
+**/__pycache__
+*.pyc

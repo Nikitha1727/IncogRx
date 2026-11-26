@@ -55,7 +55,8 @@ FILL = (0.90, 0.93, 0.97)          # light box behind replacement text on typed 
 INK = (0.06, 0.16, 0.27)
 _TOK = re.compile(r"\S+")
 _WORDY = re.compile(r"[A-Za-z0-9ऀ-ॿ]")
-_CAPWORD = re.compile(r"^[A-Z][a-z]+[.,;:]?$|^[A-Z]{2,}[.,;:]?$|^[\u0900-\u097F]+$")
+_CAPWORD = re.compile(r"^[A-Z][a-z]+[.,;:]?$|^[A-Z]{2,}[.,;:]?$|^[ऀ-ॿ]+$")
+_TAGGED = ("[NAME", "[RELATIVE", "PSN-")
 
 
 def ocr_langs() -> str:
@@ -102,8 +103,8 @@ def _ocr_page(png: bytes, langs: str) -> dict:
             conf = float(d["conf"][i])
         except (TypeError, ValueError):
             conf = -1.0
-        words.append((d["left"][i], d["top"][i], d["left"][i] + d["width"][i], d["top"][i] + d["height"][i], w, conf,
-                      key))
+        words.append((d["left"][i], d["top"][i], d["left"][i] + d["width"][i], d["top"][i] + d["height"][i],
+                      w, conf, key))
     if cur:
         lines.append(" ".join(cur))
     confs = [w[5] for w in words if w[5] >= 0]
@@ -185,27 +186,27 @@ def _ocr_masks(page: dict, released: str) -> tuple:
     b_spans = [(m.start(), m.end(), m.group()) for m in _TOK.finditer(released)]
     b = [t for _, _, t in b_spans]
     hide, unsure_b = set(), set()
+    limit = REVIEW_WORD_CONF if page["conf"] < LOW_PAGE_CONF else UNSURE_WORD_CONF
     sm = difflib.SequenceMatcher(None, a, b, autojunk=False)
-    ops = sm.get_opcodes()
-    for op, i1, i2, j1, j2 in ops:
+    for op, i1, i2, j1, j2 in sm.get_opcodes():
         if op in ("replace", "delete"):
             hide.update(range(i1, i2))
             # handwriting is read word by word: when a name was removed, the capitalised words that
             # follow it on the same line ("W/o Mohan | Bisht") are hidden too
-            if any(t.startswith(("[NAME", "[RELATIVE", "PSN-")) for t in b[j1:j2]) or op == "delete":
+            if op == "delete" or any(t.startswith(_TAGGED) for t in b[j1:j2]):
                 k = i2
                 while k < len(words) and words[k][6] == words[i2 - 1][6] and _CAPWORD.match(words[k][4]):
                     hide.add(k)
                     k += 1
         elif op == "equal":
-            limit = REVIEW_WORD_CONF if page["conf"] < LOW_PAGE_CONF else UNSURE_WORD_CONF
             for k in range(i2 - i1):
-                w = words[i1 + k]
-                prev = words[i1 + k - 1] if i1 + k > 0 else None
-                follows_name = (prev is not None and (i1 + k - 1) in hide and prev[6] == w[6]
-                                and _CAPWORD.match(prev[4]) and _CAPWORD.match(w[4]))
-                if follows_name or (0 <= w[5] < limit and len(w[4]) >= 3 and _WORDY.search(w[4])):
-                    hide.add(i1 + k)
+                i = i1 + k
+                w = words[i]
+                prev = words[i - 1] if i > 0 else None
+                follows_name = (prev is not None and (i - 1) in hide and prev[6] == w[6]
+                                and _CAPWORD.match(prev[4]) is not None and _CAPWORD.match(w[4]) is not None)
+                if i in hide or follows_name or (0 <= w[5] < limit and len(w[4]) >= 3 and _WORDY.search(w[4])):
+                    hide.add(i)
                     unsure_b.add(j1 + k)
     out, last = [], 0
     for j, (s, e, _) in enumerate(b_spans):
@@ -232,14 +233,18 @@ def redact(prep: dict, released_text: str) -> tuple:
             if info["kind"] == "ocr":
                 st["conf"] = info["conf"]
                 st["review"] = info["conf"] < LOW_PAGE_CONF
-                hide, rel_masked, unsure = _ocr_masks(info, rel) if per_page else (set(range(len(info["words"]))), "", 0)
+                if per_page:
+                    hide, rel_masked, unsure = _ocr_masks(info, rel)
+                else:                              # cannot align: hide every word on the page
+                    hide, rel_masked, unsure = set(range(len(info["words"]))), "", len(info["words"])
                 st["unsure_hidden"] = unsure
                 sc = info["scale"]
                 for k in sorted(hide):
                     x0, y0, x1, y1 = info["words"][k][:4]
-                    page.add_redact_annot(pymupdf.Rect(x0 * sc - 1, y0 * sc - 1, x1 * sc + 1, y1 * sc + 1), fill=(0, 0, 0))
+                    page.add_redact_annot(pymupdf.Rect(x0 * sc - 1, y0 * sc - 1, x1 * sc + 1, y1 * sc + 1),
+                                          fill=(0, 0, 0))
                     st["boxes"] += 1
-                page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_PIXELS)
+                page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_PIXELS)   # pixels removed, not covered
                 out_texts.append(rel_masked)
             else:
                 pairs = _pairs(info.get("text", ""), rel) if per_page else whole_pairs
@@ -252,16 +257,25 @@ def redact(prep: dict, released_text: str) -> tuple:
                 page.apply_redactions()            # removes the underlying text, not just covers it
                 out_texts.append(rel)
             stats.append(st)
-        try:  # remove JavaScript, auto-actions, embedded files, links, form data, hidden text, metadata
-            doc.scrub(attached_files=True, clean_pages=True, embedded_files=True, hidden_text=True,
-                      javascript=True, metadata=True, redactions=True, remove_links=True, reset_fields=True,
-                      reset_responses=True, thumbnails=True, xml_metadata=True)
-        except Exception:  # noqa: BLE001
-            doc.set_metadata({})
+        # Release a NEW document that receives only the page contents: the original catalog (auto-run
+        # actions, document JavaScript, embedded files, forms, outlines, metadata) is left behind.
+        clean = pymupdf.open()
         try:
-            doc.del_xml_metadata()
+            clean.insert_pdf(doc, links=False, annots=False, widgets=False)
+        except TypeError:                          # older PyMuPDF without the widgets option
+            clean.insert_pdf(doc, links=False, annots=False)
+        try:  # belt and braces: remove anything that could still ride along on the pages
+            clean.scrub(attached_files=True, clean_pages=True, embedded_files=True, hidden_text=True,
+                        javascript=True, metadata=True, redactions=True, remove_links=True, reset_fields=True,
+                        reset_responses=True, thumbnails=True, xml_metadata=True)
         except Exception:  # noqa: BLE001
             pass
-        data = doc.tobytes(garbage=4, deflate=True)
+        clean.set_metadata({})
+        try:
+            clean.del_xml_metadata()
+        except Exception:  # noqa: BLE001
+            pass
+        data = clean.tobytes(garbage=4, deflate=True)
+        clean.close()
     text = ("\n\n" + PAGE_MARK + "\n\n").join(out_texts) if per_page else released_text
     return data, text, stats

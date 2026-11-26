@@ -62,7 +62,7 @@ def scan(name: str, data: bytes) -> dict:
             if sig == b"MZ" and b"PE\x00\x00" not in data[:4096] and b"This program" not in data[:1024]:
                 continue                       # a text file that merely starts with "MZ"
             return _result(name, "blocked", what)
-    if data[:4] == b"PK\x03\x04" and ext not in ("zip",):
+    if data[:4] == b"PK\x03\x04" and ext != "zip":
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as z:
                 if any(n.lower().endswith("vbaproject.bin") for n in z.namelist()):
@@ -95,9 +95,20 @@ def _scan_pdf(name: str, data: bytes) -> dict:
                 return _result(name, "blocked", f"more than {MAX_PAGES} pages (denial-of-service guard)")
             if doc.page_count == 0:
                 return _result(name, "blocked", "empty or damaged PDF")
+            # look at the object dictionaries only (never inside compressed image or text streams,
+            # where these byte patterns occur by chance)
+            objs = []
+            for xref in range(1, doc.xref_length()):
+                try:
+                    objs.append(doc.xref_object(xref, compressed=False))
+                except Exception:  # noqa: BLE001
+                    continue
+            if doc.embfile_count():
+                objs.append("/EmbeddedFile")
     except Exception:  # noqa: BLE001
         return _result(name, "blocked", "damaged PDF that cannot be parsed safely")
-    found = sorted({what for rx, what in PDF_ACTIVE if re.search(rx, data)})
+    blob = "\n".join(objs).encode("latin-1", "replace")
+    found = sorted({what for rx, what in PDF_ACTIVE if re.search(rx, blob)})
     if found:
         return _result(name, "neutralized", "active content removed from the released copy", found)
     return _result(name, "clean", "no active content found")

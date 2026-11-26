@@ -419,6 +419,28 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
 .btn-cream{padding:0 26px;min-height:48px}
 .rsum .btn-cream{padding:0 20px}
 .howgrid{grid-template-columns:1fr 1fr;gap:16px}
+/* speed, OCR and security checks */
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 6px}
+.ck{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--soft);text-decoration:none;color:var(--ink);transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s}
+.ck:hover{transform:translateY(-2px);box-shadow:var(--sh1);border-color:var(--line2)}
+.ck .ib{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--ice);color:var(--accent)}
+.ck .ib svg{width:17px;height:17px}
+.ck .cl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3)}
+.ck b{display:block;font:400 19px/1.25 var(--serif);margin:2px 0 2px}
+.ck .cs{font-size:11.8px;color:var(--ink2)}
+.ck.good .ib{background:var(--greenbg);color:var(--green)}.ck.warn .ib{background:var(--amberbg);color:var(--amber)}.ck.bad .ib{background:var(--coralbg);color:var(--coral)}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.stat{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+.stat .v{font:400 30px/1.1 var(--serif)}.stat .v small{font-size:15px;color:var(--ink2);margin-left:2px}
+.stat .l{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin-top:4px}
+.conf{display:flex;align-items:center;gap:10px}.conf .tr{flex:1;height:8px;border-radius:99px;background:var(--ice);overflow:hidden;min-width:90px}
+.conf .tr i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .8s var(--ease)}
+.conf.mid .tr i{background:var(--amber)}.conf.low .tr i{background:var(--coral)}.conf b{font:400 18px var(--serif);min-width:52px;text-align:right}
+.pill.bad{background:var(--coralbg);color:var(--coral)}.pill.neu{background:var(--amberbg);color:var(--amber)}
+.ocrrow{display:grid;grid-template-columns:1.2fr 1.4fr 1fr;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.ocrrow:first-child{border-top:0}.ocrrow .nm{font-weight:600;font-size:13.5px;word-break:break-all}.ocrrow .nm small{display:block;font-weight:400;color:var(--ink3);font-size:11.5px}
+.note2{font-size:12.3px;color:var(--ink2);margin:14px 0 0;line-height:1.55}
+@media (max-width:900px){.checks,.statrow{grid-template-columns:1fr 1fr}.ocrrow{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -462,6 +484,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
     <nav class="nav" id="nav"><span class="navind" id="navind" aria-hidden="true"></span>
       <a href="#/workspace" title="Hospital workspace" data-route="workspace"><svg class="i"><use href="#i-hosp"/></svg><span class="t">Hospital workspace</span></a>
       <a href="#/reports" title="Processing reports" data-route="reports"><svg class="i"><use href="#i-reports"/></svg><span class="t">Processing reports</span><span class="nb" id="nb-reports"></span></a>
+      <a href="#/checks" title="Speed &amp; security" data-route="checks"><svg class="i"><use href="#i-secure"/></svg><span class="t">Speed &amp; security</span><span class="nb" id="nb-checks"></span></a>
       <a href="#/explorer" title="Dataset explorer" data-route="explorer"><svg class="i"><use href="#i-explore"/></svg><span class="t">Dataset explorer</span><span class="nb" id="nb-explorer"></span></a>
       <a href="#/pipeline" title="Privacy pipeline" data-route="pipeline"><svg class="i"><use href="#i-pipe"/></svg><span class="t">Privacy pipeline</span></a>
     </nav>
@@ -493,7 +516,8 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       <span><svg class="i"><use href="#i-shield"/></svg>Offline privacy engine</span>
       <span><svg class="i"><use href="#i-link"/></svg>Consistent patient pseudonyms</span>
       <span><svg class="i"><use href="#i-steth"/></svg>Clinical context kept</span>
-      <span><svg class="i"><use href="#i-cal"/></svg>Date intervals preserved</span>
+      <span><svg class="i"><use href="#i-file"/></svg>Typed, scanned and handwritten</span>
+      <span><svg class="i"><use href="#i-secure"/></svg>Every upload security-scanned</span>
     </div>
     <section class="sheet" id="release" aria-label="Upload, protect and review">
       <div class="shead rv">
@@ -518,7 +542,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
             <div class="drop" id="drop">
               <div class="up"><svg class="i"><use href="#i-upload"/></svg></div>
               <h4>Drop records here</h4>
-              <div class="hint">CSV, TSV, JSON, JSONL, FHIR, notes, text PDFs or a .zip. Broken files are quarantined, never copied.</div>
+              <div class="hint">CSV, TSV, JSON, FHIR, notes, PDFs (typed, scanned or handwritten), photos of notes, or a .zip. Every file is security-scanned first; anything unsafe is blocked, never opened.</div>
               <div class="btnrow"><button class="btn" id="pickFiles"><svg class="i"><use href="#i-file"/></svg>Choose files</button><button class="btn" id="pickFolder"><svg class="i"><use href="#i-folder"/></svg>Choose a folder</button></div>
               <input type="file" id="fileInput" multiple hidden>
               <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
@@ -553,6 +577,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
             <div class="rsum"><span class="chk"><svg class="i"><use href="#i-check"/></svg></span><div><h4 id="rTitle">Release ready</h4><p id="rsum"></p></div>
               <a class="btn-cream" id="zipBtn" href="#">Download all</a></div>
             <div class="rfmt"><span>Organisers' format:</span><code>sanitized/</code><code>report.json</code><code>records.jsonl</code><span id="rpdf"></span></div>
+            <div class="checks" id="checks"></div>
             <div class="tiles" id="tiles"></div>
             <pre class="rel" id="relText" hidden></pre>
             <div id="textPsn"></div>
@@ -584,8 +609,39 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       </div>
     </div>
 
+    <div class="page" data-page="checks" data-title="Speed &amp; security">
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-secure"/></svg></span><div class="phx"><div class="kick"><span>03</span><span class="rule"></span><span>Speed &amp; security</span></div>
+        <h2>Fast, careful, <i>closed to attack.</i></h2></div><p>For the latest batch: how fast every page was cleaned, how scanned and handwritten pages were read, and what the security scan stopped before anything was opened.</p></div>
+      <div class="sheet plain">
+      <div class="box" id="ckEmpty"><div class="tempty"><svg class="i"><use href="#i-secure"/></svg><h4>No batch yet.</h4><p>Drop typed or scanned PDFs, photos of handwritten notes, or any record files on the workspace page.</p><a class="btn" href="#/workspace" style="margin-top:14px">Go to workspace</a></div></div>
+      <div class="later" id="later3">
+        <div class="box" id="speedBox">
+          <div class="bh"><div><div class="lab">Speed and accuracy</div><h3>Every page, timed</h3></div><span class="pmeta" id="spMeta"></span></div>
+          <div class="statrow" id="spStats"></div>
+          <div class="tscroll" style="margin-top:14px"><table><thead><tr><th>Document</th><th>Pages</th><th>Typed</th><th>Scanned or handwritten</th><th>Items hidden</th><th>Time</th></tr></thead>
+            <tbody id="docRows"></tbody></table></div>
+        </div>
+        <div class="box" id="ocrBox">
+          <div class="bh"><div><div class="lab">Handwriting and scans</div><h3>Read by OCR, checked by confidence</h3></div><span class="pmeta" id="ocrMeta"></span></div>
+          <div id="ocrRows" style="margin-top:10px"></div>
+          <p class="note2">Pages without a text layer are read offline with Tesseract (English and Hindi models, a few MB, no AI service). Words the engine removes are blacked out in the image itself, the pixels underneath are deleted, and the copy is rebuilt as a new PDF. Words the OCR is unsure of are blacked out too, and pages with low confidence are flagged for a human check: when in doubt, IncogRx hides rather than leaks.</p>
+        </div>
+        <div class="box" id="secBox">
+          <div class="bh"><div><div class="lab">Security scan</div><h3>Checked before anything is opened</h3></div><span class="pmeta" id="secMeta"></span></div>
+          <div class="tscroll" style="margin-top:14px"><table><thead><tr><th>File</th><th>Verdict</th><th>Reason</th></tr></thead><tbody id="secRows"></tbody></table></div>
+          <div class="secgrid" style="margin-top:16px">
+            <div class="sec"><span class="si"><svg class="i"><use href="#i-alert"/></svg></span><div><b>Malware and executables</b><span>EICAR signature, EXE, ELF, Mach-O, scripts, double extensions</span></div></div>
+            <div class="sec"><span class="si"><svg class="i"><use href="#i-lock"/></svg></span><div><b>Encrypted content</b><span>Password-protected PDFs and archive entries are refused</span></div></div>
+            <div class="sec"><span class="si"><svg class="i"><use href="#i-file"/></svg></span><div><b>Active content</b><span>PDF JavaScript, auto-actions, embedded files, macros removed or blocked</span></div></div>
+            <div class="sec"><span class="si"><svg class="i"><use href="#i-folder"/></svg></span><div><b>Archive attacks</b><span>Zip-slip paths, zip bombs, nested archives, image bombs</span></div></div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
     <div class="page" data-page="explorer" data-title="Dataset explorer">
-      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-explore"/></svg></span><div class="phx"><div class="kick"><span>03</span><span class="rule"></span><span>Dataset explorer</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-explore"/></svg></span><div class="phx"><div class="kick"><span>04</span><span class="rule"></span><span>Dataset explorer</span></div>
         <h2>Who is <i>in this release.</i></h2></div><p>One pseudonym per patient, with what their records still say after removal. Real names and numbers never appear.</p></div>
       <div class="sheet plain">
       <div class="box pempty" id="pplEmpty"><div class="tempty"><svg class="i"><use href="#i-users"/></svg><h4>No patients yet.</h4><p>Run a batch on the workspace page to explore each patient's released records here.</p><a class="btn" href="#/workspace" style="margin-top:14px">Go to workspace</a></div></div>
@@ -602,18 +658,18 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
     </div>
 
     <div class="page" data-page="pipeline" data-title="Privacy pipeline">
-      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-pipe"/></svg></span><div class="phx"><div class="kick"><span>04</span><span class="rule"></span><span>Privacy pipeline</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-pipe"/></svg></span><div class="phx"><div class="kick"><span>05</span><span class="rule"></span><span>Privacy pipeline</span></div>
         <h2>Four steps, <i>no guesswork.</i></h2></div><p>How a record is cleaned, the guarantees behind it, and how it performed on the organisers' practice data.</p></div>
       <div class="sheet plain">
       <div class="box" id="pipeline">
             <div class="bh"><div><div class="lab">Behind the workspace</div><h3>Privacy pipeline</h3></div></div>
             <div class="pipe" role="tablist" aria-label="Pipeline steps">
-              <button class="pstep on" data-d="Read every supported file. Anything broken, mislabelled or scanned is quarantined and never copied."><span class="pc"><svg class="i"><use href="#i-file"/></svg></span>Ingest</button>
+              <button class="pstep on" data-d="Scan every upload for malware and active content, then read every supported file: PDFs page by page, scans and handwriting by OCR. Anything broken or unsafe is quarantined or blocked, never copied."><span class="pc"><svg class="i"><use href="#i-file"/></svg></span>Ingest</button>
               <button class="pstep" data-d="Find names, relatives, phones, Aadhaar, ABHA and addresses in English, हिन्दी and Hinglish, by rules and patterns only."><span class="pc"><svg class="i"><use href="#i-search"/></svg></span>Detect</button>
               <button class="pstep" data-d="Join one patient's records across files and scripts on strong evidence, and give them one keyed pseudonym."><span class="pc"><svg class="i"><use href="#i-link"/></svg></span>Link</button>
               <button class="pstep" data-d="Replace identifiers, band ages, keep districts, generalise rare conditions and shift dates per patient."><span class="pc"><svg class="i"><use href="#i-lock"/></svg></span>Protect</button>
             </div>
-            <p class="pdesc" id="pdesc">Read every supported file. Anything broken, mislabelled or scanned is quarantined and never copied.</p>
+            <p class="pdesc" id="pdesc">Scan every upload for malware and active content, then read every supported file: PDFs page by page, scans and handwriting by OCR. Anything broken or unsafe is quarantined or blocked, never copied.</p>
           </div>
       <div class="box" style="margin-top:16px">
         <div class="bh"><div><div class="lab">Worked example</div><h3>How IncogRx cleans a record</h3></div></div>
@@ -660,14 +716,14 @@ Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i
         <div><div class="v">0</div><div class="l">of 3,230 personal details left visible</div></div>
         <div><div class="v">1.00</div><div class="l">patient linking across files and scripts</div></div>
         <div><div class="v">12,554</div><div class="l">date intervals kept exactly</div></div>
-        <div><div class="v">2.2<sup>s</sup></div><div class="l">for all 200 files on a laptop CPU</div></div>
+        <div><div class="v">1.3<sup>s</sup></div><div class="l">for all 200 files on a laptop CPU</div></div>
       </div>
       </div>
     </div>
 
     
 
-    <footer><b>Incog<i>Rx</i>.</b><span>Team Knull Void · DevForge26 · Secret Wards</span><span>Independent local preview · Talks only to 127.0.0.1</span></footer>
+    <footer><b>Incog<i>Rx</i>.</b><span>Team Knull Void · DevForge26 · Secret Wards</span><span>Runs on its own server · No external APIs or AI services</span></footer>
   </main>
 </div>
 
@@ -778,7 +834,7 @@ $("#run").onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Run failed.");
     last = d; render(d, body); step(3); sys("ready", "Engine ready");
-    status(`Done in ${d.wall_seconds}s. Processed on this computer.`);
+    status(`Done in ${(d.speed && d.speed.total_seconds) || d.wall_seconds}s. Processed on this computer.`);
   } catch (e) {
     step(1); sys("err", "Run failed"); ($("#resBadge") || {}).className = "badge"; ($("#resBadge") || {}).textContent = "Awaiting input";
     status(esc(e.message), true);
@@ -802,11 +858,11 @@ function kpi(id, v, sub, cls) {
   requestAnimationFrame(tick);
 }
 function render(d, req) {
-  const c = d.counts, removed = Object.values(d.tags).reduce((a, b) => a + b, 0);
+  const c = d.view || d.counts, removed = Object.values(d.tags).reduce((a, b) => a + b, 0);
   const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
-  kpi("#k1", c.files_total, `${req.mode === "text" ? "pasted record" : "in this batch"} · ${d.timing.seconds ?? d.wall_seconds}s`);
+  kpi("#k1", c.files_total, `${req.mode === "text" ? "pasted record" : "in this batch"} · ${(d.speed && d.speed.total_seconds) ?? d.timing.seconds ?? d.wall_seconds}s`);
   kpi("#k2", c.files_sanitized, `${removed} personal detail(s) removed`, "ok");
-  kpi("#k3", c.files_quarantined, c.files_quarantined ? "nothing from them released" : "no file needed it", c.files_quarantined ? "warn" : "");
+  kpi("#k3", c.files_quarantined, c.files_blocked ? `${c.files_blocked} blocked by the security scan` : c.files_quarantined ? "nothing from them released" : "no file needed it", c.files_quarantined ? "warn" : "");
   kpi("#k4", c.records_processed, `${d.patients.length} patient(s), one pseudonym each`);
 
   // result panel
@@ -841,6 +897,9 @@ function render(d, req) {
       <td>${ok ? '<span class="pill ok">Sanitized</span>' : `<span class="pill q">Quarantined</span><span class="why">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
       <td>${f.removed ?? "-"}</td>
       <td>${ok ? `<span class="act">${f.pdf ? "Open PDF" : "Open"} ${ICON("out")}</span>` : '<span class="muted">Not released</span>'}</td></tr>`; }).join("");
+  $("#files").innerHTML += ((d.security || {}).blocked || []).map(x => `<tr><td>${esc(x.name)}</td>
+      <td><span class="ftype">${esc(ext(x.name.split("/").pop()))}</span></td>
+      <td><span class="pill bad">Blocked</span><span class="why">${esc(x.reason)}</span></td><td>-</td><td><span class="muted">Never opened</span></td></tr>`).join("");
   document.querySelectorAll("#files tr.click").forEach(tr => { const go = () => window.open(tr.dataset.href, "_blank", "noopener");
     tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
 
@@ -852,7 +911,51 @@ function render(d, req) {
   $("#nexts").classList.add("on");
   $("#nb-reports").textContent = c.files_total; $("#nb-explorer").textContent = d.patients.length;
   renderPeople(d);
+  renderChecks(d);
   document.querySelector(".duo").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+}
+
+function renderChecks(d) {
+  const sp = d.speed || {}, docs = d.documents || [];
+  const sec = d.security || {scanned: d.files.length, blocked: [], neutralized: [], clean: d.files.length};
+  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
+  const pages = docs.reduce((a, x) => a + x.pages, 0), ocrPages = docs.reduce((a, x) => a + x.ocr_pages, 0);
+  const ocrDocs = docs.filter(x => x.ocr_pages), review = docs.reduce((a, x) => a + (x.review_pages || []).length, 0);
+  const confAvg = ocrDocs.length ? Math.round(ocrDocs.reduce((a, x) => a + x.ocr_conf * x.ocr_pages, 0) / ocrPages) : null;
+  const nb = sec.blocked.length, nn = sec.neutralized.length, secs = sp.total_seconds ?? d.wall_seconds;
+  const ck = (cls, icon, lab, big, small) => `<a class="ck ${cls}" href="#/checks"><span class="ib">${ICON(icon)}</span><span><span class="cl">${lab}</span><b>${big}</b><span class="cs">${small}</span></span></a>`;
+  $("#checks").innerHTML =
+    ck("good", "cpu", "Speed", pages ? `${pages} pages in ${secs}s` : `${secs}s end to end`,
+       pages ? `${sp.pages_per_second} pages per second` : `${d.counts.files_total} file(s), on this computer`) +
+    ck(review ? "warn" : "good", "search", "Handwriting & scans", ocrPages ? `${ocrPages} page(s) by OCR` : "No scanned pages",
+       ocrPages ? `confidence ${confAvg}% · ${review ? review + " flagged for review" : "none flagged"}` : "typed text read directly") +
+    ck(nb ? "bad" : nn ? "warn" : "good", "secure", "Security", nb ? `${nb} file(s) blocked` : nn ? `${nn} file(s) cleaned` : "No threats found",
+       `${sec.scanned} scanned · ${nn} with active content removed`);
+  $("#ckEmpty").style.display = "none"; $("#later3").classList.add("on");
+  $("#nb-checks").textContent = nb ? nb : "";
+  const stat = (v, unit, l) => `<div class="stat"><div class="v">${v}${unit ? `<small>${unit}</small>` : ""}</div><div class="l">${l}</div></div>`;
+  $("#spStats").innerHTML = stat(secs, "s", "total time") + stat(pages || d.counts.files_total, "", pages ? "pages" : "files") +
+    stat(pages ? sp.pages_per_second : (d.counts.files_total / Math.max(secs, 0.01)).toFixed(1), "", pages ? "pages per second" : "files per second") +
+    stat(d.counts.identifiers_detected ?? Object.values(d.tags).reduce((a, b) => a + b, 0), "", "identifiers removed");
+  $("#spMeta").textContent = sp.engine_seconds != null ? `reading ${sp.read_seconds}s · engine ${sp.engine_seconds}s · redaction ${sp.redact_seconds}s` : "";
+  $("#docRows").innerHTML = docs.length ? docs.map(x => `<tr class="click" data-href="${url(x.output)}" tabindex="0">
+      <td>${esc(x.name)}<span class="why">released as ${esc(x.output.replace(/^sanitized\//, ""))}</span></td><td>${x.pages}</td><td>${x.typed_pages}</td><td>${x.ocr_pages}</td>
+      <td>${x.boxes}</td><td>${(x.read_seconds + x.redact_seconds).toFixed(2)}s</td></tr>`).join("")
+    : `<tr><td colspan="6"><span class="muted">No PDFs or images in this batch. ${d.counts.files_sanitized} record file(s) were cleaned in ${secs}s.</span></td></tr>`;
+  document.querySelectorAll("#docRows tr.click").forEach(tr => { const go = () => window.open(tr.dataset.href, "_blank", "noopener");
+    tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
+  $("#ocrMeta").textContent = sp.ocr_available === false ? "OCR not installed on this computer" : (sp.ocr_langs ? `models: ${sp.ocr_langs.replace("+", " + ")}` : "");
+  $("#ocrRows").innerHTML = ocrDocs.length ? ocrDocs.map(x => { const c = x.ocr_conf, cls = c >= 85 ? "" : c >= 70 ? "mid" : "low";
+      return `<div class="ocrrow"><div class="nm">${esc(x.name)}<small>${x.ocr_pages} of ${x.pages} page(s) read by OCR</small></div>
+        <div class="conf ${cls}"><span class="tr"><i style="width:${Math.max(4, Math.min(100, c))}%"></i></span><b>${c}%</b></div>
+        <div>${(x.review_pages || []).length ? `<span class="pill neu">Review pages ${x.review_pages.join(", ")}</span>` : '<span class="pill ok">No page flagged</span>'}
+          <span class="why">${x.unsure_hidden} unsure word(s) hidden</span></div></div>`; }).join("")
+    : '<div class="tempty" style="padding:18px 10px"><h4>No scanned or handwritten pages.</h4><p>Every page in this batch had a text layer, so it was read directly.</p></div>';
+  const rows = [...sec.blocked.map(x => [x, '<span class="pill bad">Blocked</span>', x.reason]),
+                ...sec.neutralized.map(x => [x, '<span class="pill neu">Cleaned</span>', `${x.reason}: ${x.findings.join(", ")}`])];
+  $("#secMeta").textContent = `${sec.scanned} file(s) scanned · ${nb} blocked · ${nn} cleaned · ${sec.clean} clean`;
+  $("#secRows").innerHTML = rows.map(([x, pill, why]) => `<tr><td>${esc(x.name)}</td><td>${pill}</td><td><span class="why" style="margin:0">${esc(why)}</span></td></tr>`).join("") +
+    `<tr><td>${sec.clean} other file(s)</td><td><span class="pill ok">Clean</span></td><td><span class="why" style="margin:0">no executable, script, macro, encryption or active content found</span></td></tr>`;
 }
 
 const SINGULAR = {NAME:"Patient name", RELATIVE:"Relative", PHONE:"Phone", AADHAAR:"Aadhaar", ABHA:"ABHA", PAN:"PAN",

@@ -1,0 +1,8 @@
+# Render blueprint for the live demo website (the graded run uses raksha.toml, not this).
+services:
+  - type: web
+    name: incogrx-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
