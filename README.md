@@ -144,7 +144,22 @@ Practice data (200 files, 48 patients, 4 hospitals), `RAKSHA_SECRET=practice`:
 
 ---
 
-## 7. Repository layout
+## 7. Demo UI (optional, not part of the graded run)
+
+A local web page to try IncogRx on your own files, folders or pasted text:
+
+```bash
+python demo/app.py            # opens http://127.0.0.1:8765
+```
+
+* Standard library only, offline, listens on 127.0.0.1 only. It calls the same `main.py` the evaluator runs, in a separate process, so it shows exactly what gets scored.
+* Three ways in: upload files or a whole folder, paste a note (English, Hindi or Hinglish), or run the built-in invented sample in `demo/samples/`.
+* Shows files released or quarantined (with the reason), what was removed by type, every patient pseudonym with the files it links, a side-by-side original and released view per file, and a zip download of the full release.
+* Uploads and results live in a temporary folder that is deleted when the server stops; nothing is logged.
+
+---
+
+## 8. Repository layout
 ```
 main.py               entry point (contract: --input / --output, RAKSHA_SECRET)
 raksha.toml           track run configuration
@@ -160,5 +175,6 @@ incog/dates.py        per-patient date shifting in every date format
 incog/privacy.py      rare-condition generalisation, age banding in text
 incog/sanitize.py     per-category sanitisers
 incog/pipeline.py     two learning passes, linking, sanitising, report and records
+demo/                 optional local demo UI (app.py, index.html, invented samples)
 docs/                 Project Brief (PDF)
 ```

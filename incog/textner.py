@@ -35,7 +35,8 @@ NOT_NAME = {
 }
 DEV_STOP = {"को", "का", "की", "के", "है", "ने", "से", "में", "और", "आयु", "उम्र", "ग्राम", "पता", "मोबाइल",
             "वर्ष", "साल", "पुत्र", "पुत्री", "पत्नी", "पति", "पिता", "माता", "निवासी", "जी", "मरीज़", "मरीज",
-            "डॉक्टर", "डॉ", "अस्पताल", "बुखार", "दिन", "तहसील", "जिला"}
+            "डॉक्टर", "डॉ", "अस्पताल", "बुखार", "दिन", "तहसील", "जिला", "रात", "सुबह", "शाम", "आज", "कल", "था",
+            "थी", "हैं", "भी", "ही", "तो", "पर", "लिए", "साथ", "नाम", "का", "की", "के"}
 
 
 def _trim_name(v: str) -> str:
@@ -58,7 +59,9 @@ REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Na
               r"पिता(?:\s*का\s*नाम)?|पति(?:\s*का\s*नाम)?|माता(?:\s*का\s*नाम)?|पिता/पति(?:\s*का\s*नाम)?|परिजन(?:\s*का\s*नाम)?|अभिभावक)")
 NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({ANY_NAME})")
 REL_LBL_RX = re.compile(rf"(?i:{REL_LABELS}){LBL_END}({ANY_NAME})")
-ADDR_LBL_RX = re.compile(r"(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence|Resident\s+of|R/o)|पता|निवासी|निवास)\s*[:\-–]?\s*([^\n]+)")
+ADDR_LBL_RX = re.compile(r"(?:(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence))|(?<![\u0900-\u097F])(?:पता|निवासी|निवास)(?![\u0900-\u097F]))"
+                         r"\s*(?:\([^()\n]{1,30}\))?\s*[:\-–]\s*([^\n]+)"
+                         r"|(?i:\b(?:Resident\s+of|R/o))\.?\s+([^\n]+)")
 
 HOUSE_RX = re.compile(r"(?i:\b(?:House|H\.?\s?No|Makan|Ghar)\.?\s*(?:No\.?|Number|#)?\s*[:\-]?\s*)\d+[A-Za-z]?(?:[/\-]\d+[A-Za-z]?)?"
                       r"|मकान\s*(?:नं|न|संख्या|नंबर)\.?\s*[:\-]?\s*[0-9०-९]+")
@@ -66,7 +69,7 @@ MOHALLA_RX = re.compile(rf"(?i:\bMohalla|\bMohalla|\bMuhalla|\bColony\s+No)\s+{L
 LANDMARK_RX = re.compile(rf"(?i:\b(?:near|opp\.?|opposite|behind|beside|next\s+to|in\s+front\s+of))\s+(?:the\s+)?{LAT_NAME}"
                          rf"|(?:[{DEV}]+\s+){{1,3}}के\s+(?:पास|सामने|पीछे|बगल\s+में)")
 VILLAGE_RX = re.compile(rf"(?i:\b(?:Village|Vill\.?|Gram|Gaon|Gaanv|Mauza))\s*[:\-]?\s*({LAT_NAME})"
-                        rf"|(?:ग्राम|गांव|गाँव|मौजा)\s*[:\-]?\s*({DEV_NAME})")
+                        rf"|(?<![{DEV}])(?:ग्राम|गांव|गाँव|मौजा)(?![{DEV}])\s*[:\-]?\s*({DEV_NAME})")
 
 # ----------------------------------------------------------------------------- context patterns
 REL_MARK_RX = re.compile(rf"(?<![A-Za-z])((?:[SDW]\s?/\s?[Oo]|[SDW]/O)\.?|(?i:son|wife|daughter|husband)\s+of|"
@@ -80,6 +83,10 @@ POSS_RX = re.compile(rf"(?<![A-Za-z.])({LAT_NAME})'s\s+(?i:(?=attendant|husband|
                      r"sister|family|relative|sample|report|bed|file))")
 CUE_RX = re.compile(rf"(?i:\b(?:called|visited|brought|accompanied|escorted|informed|received|collected|signed|"
                     rf"consented|witnessed|attended|sent)\s+by|\bcaller|\bvisitor|\bcontact\s+person)\s*[:\-]?\s+({LAT_NAME}|{DEV_NAME})")
+REL_NOUN_RX = re.compile(rf"(?<![A-Za-z])(?i:son|daughter|wife|husband|father|mother|nephew|niece|grandson|"
+                         rf"granddaughter|beta|beti|bahu|pati|patni|bhai|behen|bahen|saas|sasur|devar|nanad|damad|jija)"
+                         rf"(?:\s+(?i:of\s+patient|named|is|was))?\s+({LAT_NAME})"
+                         rf"|(?<![{DEV}])(?:बेटा|बेटी|बहू|पति|पत्नी|भाई|बहन|सास|ससुर|दामाद)(?!\s*(?:का|की|के|ने|को|से|[:\-]))\s+([{DEV}]+(?:[ ][{DEV}]+)?)")
 LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s*[(,])")
 LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b)")
 TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s*:?\s+({LAT_NAME})")
@@ -147,9 +154,10 @@ def detect(text: str, address_fn=None) -> Finder:
     f.edits.extend(protected)                       # placeholders: block edits inside protected spans
     # addresses first (whole value), then parts that appear outside an address line
     for m in ADDR_LBL_RX.finditer(text):
-        val = m.group(1)
+        g = 1 if m.group(1) is not None else 2
+        val = m.group(g)
         if address_fn and re.search(r"\d|,|[A-Z][a-z]|[" + DEV + "]", val):
-            f.add(m.start(1), m.end(1), address_fn(val), "ADDRESS")
+            f.add(m.start(g), m.end(g), address_fn(val), "ADDRESS")
     for m in HOUSE_RX.finditer(text):
         f.add(m.start(), m.end(), "[HOUSE]", "HOUSE")
     for m in MOHALLA_RX.finditer(text):
@@ -171,6 +179,8 @@ def detect(text: str, address_fn=None) -> Finder:
         _name_group(f, m, 1, "[NAME]", "NAME")
     for m in WA_RX.finditer(text):
         _name_group(f, m, 1, "[RELATIVE]", "RELATIVE")
+    for m in REL_NOUN_RX.finditer(text):
+        _name_group(f, m, 1 if m.group(1) else 2, "[RELATIVE]", "RELATIVE")
     for rx in (HONOR_RX, DEV_HONOR_RX, POSS_RX, CUE_RX, LOG_RX, TITLE_RX):
         for m in rx.finditer(text):
             _name_group(f, m, 1, "[NAME]", "NAME")

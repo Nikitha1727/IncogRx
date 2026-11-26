@@ -1,0 +1,15 @@
+{
+  "_export_meta": {"hospital": "Shanti Vihar Hospital", "exported_by": "opd-desk", "generated_at": "2026-06-01T09:00:00+05:30"},
+  "visits": [
+    {"visit_id": "OPD/26/05/0311", "patient_ref": "SVH-0045187", "patient_name": "Raghav Mishra", "visit_date": "2026-05-18",
+     "doctor": "Dr. Alok Saxena", "complaints": "C/O chest heaviness on exertion x 2 weeks",
+     "diagnosis": [{"code": "I20.9", "display": "Angina pectoris, unspecified"}],
+     "rx": [{"drug": "Aspirin", "strength": "75 mg", "frequency": "0-1-0", "duration": "30 days"}],
+     "remarks": "Accompanied by son Vivek Mishra, mob 9988776655"},
+    {"visit_id": "OPD/26/05/0342", "patient_ref": "SVH-0045201", "patient_name": "Meher Siddiqui", "visit_date": "2026-05-21",
+     "doctor": "Dr. Nandini Rao", "complaints": "C/O headache x 3 days",
+     "diagnosis": [{"code": "G44.2", "display": "Tension-type headache"}],
+     "rx": [{"drug": "Paracetamol", "strength": "650 mg", "frequency": "1-0-1", "duration": "5 days"}],
+     "remarks": "Meher behenji ko rest advise kiya. Referred by ASHA worker."}
+  ]
+}

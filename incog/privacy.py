@@ -13,7 +13,7 @@ from .config import POLICY
 from .detect import norm_digits
 
 ICD_RX = re.compile(r"(?<![A-Za-z0-9\-/])([A-TV-Z]\d{2}(?:\.\d{1,2})?)(?![A-Za-z0-9\-/])")
-DISPLAY_CODE_RX = re.compile(r"([A-Za-z\u0900-\u097F][^;:()\n\[\]]{2,80}?)\s*\(([A-TV-Z]\d{2}(?:\.\d{1,2})?)\)")
+DISPLAY_CODE_RX = re.compile(r"([A-Za-z\u0900-\u097F](?:[^;:()\n\[\]]|\([^()\n]{1,30}\)){2,80}?)\s*\(([A-TV-Z]\d{2}(?:\.\d{1,2})?)\)")
 
 CHAPTERS = [
     ("A00", "B99", "Certain infectious and parasitic diseases"), ("C00", "D48", "Neoplasms"),
