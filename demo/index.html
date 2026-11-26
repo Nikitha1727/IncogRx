@@ -349,6 +349,26 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
 @media(max-width:900px){.pagehead p{text-align:left}}
 .sheet.plain #security>.bh,.sheet.plain #pipeline>.bh{display:none}
 .sheet.plain #pipeline .pipe{margin-top:6px}
+
+/* empty result: light sketch of a record being masked */
+.eviz{width:min(100%,340px);margin:0 auto 20px}
+.paper2{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px 12px;box-shadow:var(--sh2);transform:rotate(-1.5deg);animation:hover 6s ease-in-out infinite}
+@keyframes hover{50%{transform:rotate(-1.5deg) translateY(-6px)}}
+.ptop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pdot{width:22px;height:22px;border-radius:7px;background:var(--ice)}
+.ptag{margin-left:auto;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+.paper2 .row{display:flex;align-items:center;gap:12px;height:20px}
+.sk{display:block;height:7px;border-radius:6px;background:#edf1f5}
+.sk.l{background:#f2f4f7}
+.sk.x{position:relative;overflow:hidden;background:#f7ded8}
+.sk.x:after{content:"";position:absolute;inset:0;border-radius:6px;background:var(--navy);transform:scaleX(0);transform-origin:left;animation:mask 5s var(--ease) infinite;animation-delay:var(--d,0s)}
+@keyframes mask{0%,12%{transform:scaleX(0)}32%,78%{transform:scaleX(1)}92%,100%{transform:scaleX(0)}}
+.pfoot{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:11px;color:var(--green)}
+.pfoot svg{width:14px;height:14px}
+.empty p{max-width:300px}
+.outs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.out{display:inline-flex;align-items:center;gap:6px;font:12px var(--mono);color:var(--ink2);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.out svg{width:14px;height:14px;color:var(--accent)}
 </style>
 </head>
 <body>
@@ -464,18 +484,14 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
         <div class="panel rv fromR" style="--d:.12s" aria-live="polite">
           <div class="ph"><div><div class="lab">Your result</div><h3>Sanitized output</h3></div><span class="badge" id="resBadge">Awaiting input</span></div>
           <div class="empty" id="resEmpty">
-            <div class="doc" id="heroDoc" aria-label="Animated example with invented data">
-              <div class="dh"><span>Discharge summary</span><em>Invented</em></div>
-              <div class="ln"><span class="k">Patient&nbsp;</span> <span class="r"><span class="a">Meera Iyer</span><span class="b">[NAME]</span></span> <span class="k">Age</span> <span class="r"><span class="a">52 F</span><span class="b">50-59 F</span></span></div>
-              <div class="ln"><span class="k">UHID&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="r"><span class="a">AHC-0012345</span><span class="b">PSN-R10M7K</span></span></div>
-              <div class="ln"><span class="k">Mobile&nbsp;&nbsp;</span> <span class="r"><span class="a">98450 12345</span><span class="b">[PHONE]</span></span></div>
-              <div class="ln"><span class="k">W/o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="r"><span class="a">Suresh Iyer</span><span class="b">[RELATIVE]</span></span></div>
-              <div class="ln"><span class="k">Admitted</span> <span class="r"><span class="a">03/03/2026</span><span class="b">05/05/2026</span></span></div>
-              <div class="ln"><span class="k">Dx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> Dengue fever · PCM 650 mg</div>
-              <div class="df"><span id="heroState"><b>Original</b></span><span>IncogRx</span></div>
-              <div class="beam"></div>
+            <div class="eviz" aria-hidden="true">
+              <div class="paper2"><div class="ptop"><span class="pdot"></span><span class="sk" style="width:110px;height:9px"></span><span class="ptag">Invented</span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk v" style="width:46px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk x" style="width:120px;--d:0.0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk v" style="width:64px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk x" style="width:98px;--d:0.35s"></span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk x" style="width:84px;--d:0.7s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk v" style="width:150px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk x" style="width:70px;--d:1.05s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk v" style="width:132px;--d:0s"></span></div>
+                <div class="pfoot"><svg class="i"><use href="#i-shield"/></svg><span>Identifiers masked, care kept</span></div></div>
             </div>
-            <h4>Ready when you are.</h4><p>Your sanitized files and processing report will appear here.</p></div>
+            <h4>Ready when you are.</h4>
+            <p>Drop records on the left. Your cleaned release appears here, in the organisers' format:</p>
+            <div class="outs"><span class="out"><svg class="i"><use href="#i-folder"/></svg>sanitized/</span><span class="out"><svg class="i"><use href="#i-report"/></svg>report.json</span><span class="out"><svg class="i"><use href="#i-file"/></svg>records.jsonl</span></div>
+          </div>
           <div class="rbody" id="resBody">
             <div class="rsum"><span class="chk"><svg class="i"><use href="#i-check"/></svg></span><div><h4 id="rTitle">Release ready</h4><p id="rsum"></p></div>
               <a class="btn-cream" id="zipBtn" href="#">Download all <span class="ar"><svg class="i"><use href="#i-down"/></svg></span></a></div>
