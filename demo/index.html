@@ -584,7 +584,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
           </div>
         </div>
       </div>
-      <p class="rv note">Review sanitized records before reuse. Clinical details may be generalised by the engine's privacy policy: ages to 10-year bands, addresses to district, rare conditions to their ICD chapter.</p>
+      <p class="rv note">Review sanitized records before reuse. Clinical details may be generalised by the engine's privacy policy: ages to 20-year bands, addresses to district, rare conditions to their ICD chapter.</p>
       <div class="nexts" id="nexts">
         <a class="next" href="#/reports"><span class="ni"><svg class="i"><use href="#i-reports"/></svg></span><span><b>Processing report</b><small>Every file, its status and what was removed</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
         <a class="next" href="#/explorer"><span class="ni"><svg class="i"><use href="#i-explore"/></svg></span><span><b>Dataset explorer</b><small>Each patient's released records, by pseudonym</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
@@ -735,6 +735,15 @@ const $ = s => document.querySelector(s);
 const API_TOKEN = "__INCOGRX_API__";
 const API = (new URLSearchParams(location.search).get("api") ||
   (API_TOKEN.startsWith("__INCOGRX") ? "https://incogrx-demo.onrender.com" : API_TOKEN)).replace(/\/$/, "");
+// The hosted engine (free plan) sleeps when idle: ping it until it answers before sending records.
+async function wakeEngine() {
+  const until = Date.now() + 90000;
+  while (Date.now() < until) {
+    try { await fetch(API + "/", {mode: "no-cors", cache: "no-store"}); return; }
+    catch (e) { status("Starting the IncogRx engine (the free server sleeps when idle, up to a minute)..."); }
+    await new Promise(r => setTimeout(r, 4000));
+  }
+}
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LABELS = {NAME:"Patient names", RELATIVE:"Relatives", PHONE:"Phone numbers", AADHAAR:"Aadhaar", ABHA:"ABHA numbers",
   PAN:"PAN", EMAIL:"Emails", MRN:"Hospital IDs", ID:"Other IDs", INSURANCE_ID:"Insurance IDs", DOB:"Dates of birth",
@@ -835,7 +844,15 @@ $("#run").onclick = async () => {
   const empty = $("#resEmpty"); empty.classList.add("busy");
   step(2); sys("busy", "Processing batch"); ($("#resBadge") || {}).className = "badge busy"; ($("#resBadge") || {}).textContent = "Processing";
   try {
-    const r = await fetch(API + "/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    if (API) await wakeEngine();
+    let r;
+    try {
+      r = await fetch(API + "/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    } catch (netErr) {
+      throw new Error(API
+        ? `Could not reach the IncogRx engine (${new URL(API).host}). The free server sleeps when idle and takes about a minute to start: wait and press Sanitize again. A very large batch can also exceed the free server's memory; split it, or run the demo locally with python demo/app.py.`
+        : "Could not reach the local IncogRx engine. Is demo/app.py still running?");
+    }
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Run failed.");
     last = d; render(d, body); step(3); sys("ready", "Engine ready");
