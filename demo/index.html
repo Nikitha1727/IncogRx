@@ -494,7 +494,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       <div class="rv stepper" aria-label="Progress"><span class="s on" id="st1"><i></i>Input</span><span class="bar"></span><span class="s" id="st2"><i></i>Process</span><span class="bar"></span><span class="s" id="st3"><i></i>Review &amp; export</span></div>
       <div class="duo">
         <div class="panel rv fromL">
-          <div class="ph"><div><div class="lab">Your source</div><h3>Clinical records</h3></div><span class="badge">Synthetic data only</span></div>
+          <div class="ph"><div><div class="lab">Your source</div><h3>Clinical records</h3></div></div>
           <div class="tabs" role="tablist"><span class="tabline" id="tabline" aria-hidden="true"></span>
             <button class="tab on" data-pane="p-files" role="tab">Upload files</button>
             <button class="tab" data-pane="p-text" role="tab">Paste a record</button>
@@ -522,10 +522,10 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
         </div>
 
         <div class="panel rv fromR" style="--d:.12s" aria-live="polite">
-          <div class="ph"><div><div class="lab">Your result</div><h3>Sanitized output</h3></div><span class="badge" id="resBadge">Awaiting input</span></div>
+          <div class="ph"><div><div class="lab">Your result</div><h3>Sanitized output</h3></div></div>
           <div class="empty" id="resEmpty">
             <div class="eviz" aria-hidden="true">
-              <div class="paper2"><div class="ptop"><span class="pdot"></span><span class="sk" style="width:110px;height:9px"></span><span class="ptag">Invented</span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk v" style="width:46px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk x" style="width:120px;--d:0.0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk v" style="width:64px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk x" style="width:98px;--d:0.35s"></span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk x" style="width:84px;--d:0.7s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk v" style="width:150px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk x" style="width:70px;--d:1.05s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk v" style="width:132px;--d:0s"></span></div>
+              <div class="paper2"><div class="ptop"><span class="pdot"></span><span class="sk" style="width:110px;height:9px"></span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk v" style="width:46px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk x" style="width:120px;--d:0.0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk v" style="width:64px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk x" style="width:98px;--d:0.35s"></span></div><div class="row"><span class="sk l" style="width:40px"></span><span class="sk x" style="width:84px;--d:0.7s"></span></div><div class="row"><span class="sk l" style="width:47px"></span><span class="sk v" style="width:150px;--d:0s"></span></div><div class="row"><span class="sk l" style="width:54px"></span><span class="sk x" style="width:70px;--d:1.05s"></span></div><div class="row"><span class="sk l" style="width:61px"></span><span class="sk v" style="width:132px;--d:0s"></span></div>
                 <div class="pfoot"><svg class="i"><use href="#i-shield"/></svg><span>Identifiers masked, care kept</span></div></div>
             </div>
             <h4>Ready when you are.</h4>
@@ -556,7 +556,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
         <h2>Every file, <i>accounted for.</i></h2></div><p>The latest batch: what came in, what was released, what was quarantined and why.</p></div>
       <div class="sheet plain">
       <div class="box rv fromL" id="activity">
-          <div class="bh"><div><div class="lab">Your latest batch</div><h3>Processing activity</h3></div><span class="badge" id="actBadge">No batch yet</span></div>
+          <div class="bh"><div><div class="lab">Your latest batch</div><h3>Processing activity</h3></div></div>
           <div class="tscroll" style="margin-top:14px"><table><thead><tr><th>File</th><th>Type</th><th>Status</th><th>Removed</th><th>Action</th></tr></thead>
             <tbody id="files"><tr><td colspan="5"><div class="tempty"><svg class="i"><use href="#i-report"/></svg><h4>A clear record of every file.</h4><p>Process a batch to see sanitized outputs and quarantine reasons here.</p></div></td></tr></tbody></table></div>
         </div>
@@ -599,7 +599,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
             <p class="pdesc" id="pdesc">Read every supported file. Anything broken, mislabelled or scanned is quarantined and never copied.</p>
           </div>
       <div class="box" style="margin-top:16px">
-        <div class="bh"><div><div class="lab">Worked example</div><h3>How IncogRx cleans a record</h3></div><span class="inv">Invented data</span></div>
+        <div class="bh"><div><div class="lab">Worked example</div><h3>How IncogRx cleans a record</h3></div></div>
         <div class="howgrid">
           <div class="hcol"><div class="hl">Record as received</div>
 <pre class="ex">Patient Name: <i class="h n">Meera Iyer</i>      Age/Sex: <i class="h g">52</i> Yrs/F
@@ -743,7 +743,7 @@ $("#run").onclick = async () => {
   }
   const btn = $("#run");
   btn.disabled = true; btn.classList.add("busy"); $("#runLabel").textContent = "Sanitizing..."; btn.querySelector("svg").outerHTML = '<span class="spin"></span>';
-  step(2); sys("busy", "Processing batch"); $("#resBadge").className = "badge busy"; $("#resBadge").textContent = "Processing";
+  step(2); sys("busy", "Processing batch"); ($("#resBadge") || {}).className = "badge busy"; ($("#resBadge") || {}).textContent = "Processing";
   try {
     const r = await fetch("/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     const d = await r.json();
@@ -751,7 +751,7 @@ $("#run").onclick = async () => {
     last = d; render(d, body); step(3); sys("ready", "Engine ready");
     status(`Done in ${d.wall_seconds}s. Processed on this computer.`);
   } catch (e) {
-    step(1); sys("err", "Run failed"); $("#resBadge").className = "badge"; $("#resBadge").textContent = "Awaiting input";
+    step(1); sys("err", "Run failed"); ($("#resBadge") || {}).className = "badge"; ($("#resBadge") || {}).textContent = "Awaiting input";
     status(esc(e.message), true);
   } finally {
     btn.disabled = false; btn.classList.remove("busy"); $("#runLabel").textContent = "Sanitize records";
@@ -781,7 +781,7 @@ function render(d, req) {
 
   // result panel
   $("#resEmpty").style.display = "none"; $("#resBody").classList.add("on");
-  $("#resBadge").className = "badge ok"; $("#resBadge").textContent = "Release ready";
+  ($("#resBadge") || {}).className = "badge ok"; ($("#resBadge") || {}).textContent = "Release ready";
   $("#zipBtn").href = `/api/download/${d.job}`;
   $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} detail(s) removed`;
   const npdf = (d.pdfs || []).length;
@@ -802,7 +802,7 @@ function render(d, req) {
   else { rt.hidden = true; $("#textPsn").innerHTML = ""; }
 
   // activity table
-  $("#actBadge").textContent = `${c.files_total} file(s)`;
+  ($("#actBadge") || {}).textContent = `${c.files_total} file(s)`;
   $("#files").innerHTML = d.files.map(f => { const ok = f.status === "sanitized" && f.output;
     const name = f.input.split("/").pop();
     return `<tr class="${ok ? "click" : ""}" ${ok ? `data-href="${url(f.output)}" tabindex="0"` : ""}>
