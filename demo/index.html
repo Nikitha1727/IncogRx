@@ -390,13 +390,6 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       <a href="#/pipeline" title="Privacy pipeline" data-route="pipeline"><svg class="i"><use href="#i-flow"/></svg><span class="t">Privacy pipeline</span></a>
       <a href="#/security" title="Security overview" data-route="security"><svg class="i"><use href="#i-shield"/></svg><span class="t">Security overview</span></a>
     </nav>
-    <div class="status" id="sys" data-s="ready" role="status" aria-live="polite">
-      <div class="shield"><svg class="i"><use href="#i-shield"/></svg></div>
-      <b class="t">System status</b>
-      <span class="st"><span class="dot"></span><span id="sysText">Engine ready</span></span>
-      <small class="t">Private local workspace</small>
-    </div>
-    <div class="team t">Team Knull Void<br>DevForge26 · Secret Wards</div>
   </aside>
 
   <main class="main">
@@ -667,7 +660,7 @@ const toB64 = f => new Promise((res, rej) => { const r = new FileReader();
 
 
 // ---------- workspace state: system status, stepper, run button ----------
-function sys(s, text) { $("#sys").dataset.s = s; $("#sysText").textContent = text; }
+function sys(s, text) { const el = $("#sys"); if (el) { el.dataset.s = s; $("#sysText").textContent = text; } }
 function step(n) { [1, 2, 3].forEach(i => { const el = $("#st" + i); el.classList.toggle("on", i === n); el.classList.toggle("done", i < n); });
   document.querySelectorAll(".stepper .bar").forEach((b, i) => b.classList.toggle("fill", i < n - 1)); }
 function status(html, err) { const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
@@ -816,7 +809,7 @@ function renderPeople(d) {
   const links = [...document.querySelectorAll("#nav a")], ind = document.getElementById("navind");
   links.forEach((a, i) => a.style.animationDelay = (0.15 + i * 0.06) + "s");
   document.querySelector(".side .brand").style.animationDelay = ".05s";
-  document.querySelector(".side .status").style.animationDelay = ".6s";
+  
   const placeInd = () => { const on = document.querySelector("#nav a.on") || links[0];
     ind.style.transform = `translateY(${on.offsetTop}px)`; ind.style.height = on.offsetHeight + "px"; };
   new MutationObserver(placeInd).observe(document.getElementById("nav"), {attributes: true, subtree: true, attributeFilter: ["class"]});
