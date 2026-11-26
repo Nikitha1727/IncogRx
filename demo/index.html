@@ -369,6 +369,18 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
 .outs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}
 .out{display:inline-flex;align-items:center;gap:6px;font:12px var(--mono);color:var(--ink2);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .out svg{width:14px;height:14px;color:var(--accent)}
+
+/* page icons */
+.nav a svg{width:20px;height:20px;transition:transform .35s var(--ease)}
+.nav a:hover svg{transform:translateY(-1px) scale(1.1)}
+.nav a.on svg{transform:scale(1.04)}
+.app.mini .navind{left:50%;right:auto;width:52px;margin-left:-26px}
+.app.mini .nav a{height:48px}
+.pagehead{justify-content:flex-start}
+.pagehead .phx{flex:1}
+.phi{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;flex:none;align-self:center;background:var(--navy);color:#fff;box-shadow:0 12px 26px rgba(18,38,60,.22);animation:popin .7s var(--ease) both}
+.phi svg{width:30px;height:30px;stroke-width:1.5}
+.next .ni svg{width:21px;height:21px}
 </style>
 </head>
 <body>
@@ -396,6 +408,11 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
   <symbol id="i-steth" viewBox="0 0 24 24"><path d="M6 3v6a5 5 0 0 0 10 0V3"/><path d="M11 14v2a4 4 0 0 0 8 0v-2"/><circle cx="19" cy="12" r="2"/></symbol>
+  <symbol id="i-hosp" viewBox="0 0 24 24"><path d="M4.5 21V8.5L12 4l7.5 4.5V21"/><path d="M2.5 21h19"/><path d="M12 8.6v5M9.5 11.1h5"/><path d="M10 21v-3.2h4V21"/></symbol>
+  <symbol id="i-reports" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><path d="M9.5 3h5v3h-5z"/><path d="m8.6 11 1.3 1.3 2.4-2.5"/><path d="M14.2 11.2h2.2"/><path d="m8.6 16 1.3 1.3 2.4-2.5"/><path d="M14.2 16.2h2.2"/></symbol>
+  <symbol id="i-explore" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.3 2.8-5.2 5.5-5.2 1.1 0 2.1.3 3 .9"/><circle cx="16.6" cy="15.6" r="3"/><path d="m18.8 17.8 2.4 2.4"/></symbol>
+  <symbol id="i-pipe" viewBox="0 0 24 24"><circle cx="3.3" cy="12" r="1.8"/><path d="M5.1 12h2.3"/><path d="M12 4.8 16.6 6.7v4.2c0 3-2 5.4-4.6 6.2-2.6-.8-4.6-3.2-4.6-6.2V6.7z"/><path d="m10.1 11 1.4 1.4 2.5-2.6"/><path d="M16.6 12h2.3"/><circle cx="20.7" cy="12" r="1.8"/></symbol>
+  <symbol id="i-secure" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.6c0 4.6 3.2 8.4 7.5 9.4 4.3-1 7.5-4.8 7.5-9.4V6z"/><rect x="9" y="11" width="6" height="5" rx="1.2"/><path d="M10.3 11V9.7a1.7 1.7 0 0 1 3.4 0V11"/></symbol>
 </svg>
 
 <div class="app">
@@ -404,11 +421,11 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       <button class="burger" id="burger" aria-label="Collapse menu" aria-expanded="true"><span></span><span></span><span></span></button></div>
     <div class="navlab t">Your hospital workspace</div>
     <nav class="nav" id="nav"><span class="navind" id="navind" aria-hidden="true"></span>
-      <a href="#/workspace" title="Hospital workspace" data-route="workspace"><svg class="i"><use href="#i-home"/></svg><span class="t">Hospital workspace</span></a>
-      <a href="#/reports" title="Processing reports" data-route="reports"><svg class="i"><use href="#i-report"/></svg><span class="t">Processing reports</span><span class="nb" id="nb-reports"></span></a>
-      <a href="#/explorer" title="Dataset explorer" data-route="explorer"><svg class="i"><use href="#i-users"/></svg><span class="t">Dataset explorer</span><span class="nb" id="nb-explorer"></span></a>
-      <a href="#/pipeline" title="Privacy pipeline" data-route="pipeline"><svg class="i"><use href="#i-flow"/></svg><span class="t">Privacy pipeline</span></a>
-      <a href="#/security" title="Security overview" data-route="security"><svg class="i"><use href="#i-shield"/></svg><span class="t">Security overview</span></a>
+      <a href="#/workspace" title="Hospital workspace" data-route="workspace"><svg class="i"><use href="#i-hosp"/></svg><span class="t">Hospital workspace</span></a>
+      <a href="#/reports" title="Processing reports" data-route="reports"><svg class="i"><use href="#i-reports"/></svg><span class="t">Processing reports</span><span class="nb" id="nb-reports"></span></a>
+      <a href="#/explorer" title="Dataset explorer" data-route="explorer"><svg class="i"><use href="#i-explore"/></svg><span class="t">Dataset explorer</span><span class="nb" id="nb-explorer"></span></a>
+      <a href="#/pipeline" title="Privacy pipeline" data-route="pipeline"><svg class="i"><use href="#i-pipe"/></svg><span class="t">Privacy pipeline</span></a>
+      <a href="#/security" title="Security overview" data-route="security"><svg class="i"><use href="#i-secure"/></svg><span class="t">Security overview</span></a>
     </nav>
   </aside>
 
@@ -504,15 +521,15 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       </div>
       <p class="rv note">Review sanitized records before reuse. Clinical details may be generalised by the engine's privacy policy: ages to 10-year bands, addresses to district, rare conditions to their ICD chapter.</p>
       <div class="nexts" id="nexts">
-        <a class="next" href="#/reports"><span class="ni"><svg class="i"><use href="#i-report"/></svg></span><span><b>Processing report</b><small>Every file, its status and what was removed</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
-        <a class="next" href="#/explorer"><span class="ni"><svg class="i"><use href="#i-users"/></svg></span><span><b>Dataset explorer</b><small>Each patient's released records, by pseudonym</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
-        <a class="next" href="#/pipeline"><span class="ni"><svg class="i"><use href="#i-flow"/></svg></span><span><b>How it works</b><small>The pipeline and a worked example</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
+        <a class="next" href="#/reports"><span class="ni"><svg class="i"><use href="#i-reports"/></svg></span><span><b>Processing report</b><small>Every file, its status and what was removed</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
+        <a class="next" href="#/explorer"><span class="ni"><svg class="i"><use href="#i-explore"/></svg></span><span><b>Dataset explorer</b><small>Each patient's released records, by pseudonym</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
+        <a class="next" href="#/pipeline"><span class="ni"><svg class="i"><use href="#i-pipe"/></svg></span><span><b>How it works</b><small>The pipeline and a worked example</small></span><svg class="i go"><use href="#i-arrow"/></svg></a>
       </div>
     </section>
     </div>
 
     <div class="page" data-page="reports" data-title="Processing reports">
-      <div class="pagehead rv"><div><div class="kick"><span>02</span><span class="rule"></span><span>Processing reports</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-reports"/></svg></span><div class="phx"><div class="kick"><span>02</span><span class="rule"></span><span>Processing reports</span></div>
         <h2>Every file, <i>accounted for.</i></h2></div><p>The latest batch: what came in, what was released, what was quarantined and why.</p></div>
       <div class="sheet plain">
       <div class="box rv fromL" id="activity">
@@ -528,7 +545,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
     </div>
 
     <div class="page" data-page="explorer" data-title="Dataset explorer">
-      <div class="pagehead rv"><div><div class="kick"><span>03</span><span class="rule"></span><span>Dataset explorer</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-explore"/></svg></span><div class="phx"><div class="kick"><span>03</span><span class="rule"></span><span>Dataset explorer</span></div>
         <h2>Who is <i>in this release.</i></h2></div><p>One pseudonym per patient, with what their records still say after removal. Real names and numbers never appear.</p></div>
       <div class="sheet plain">
       <div class="box pempty" id="pplEmpty"><div class="tempty"><svg class="i"><use href="#i-users"/></svg><h4>No patients yet.</h4><p>Run a batch on the workspace page to explore each patient's released records here.</p><a class="btn" href="#/workspace" style="margin-top:14px">Go to workspace</a></div></div>
@@ -545,7 +562,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
     </div>
 
     <div class="page" data-page="pipeline" data-title="Privacy pipeline">
-      <div class="pagehead rv"><div><div class="kick"><span>04</span><span class="rule"></span><span>Privacy pipeline</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-pipe"/></svg></span><div class="phx"><div class="kick"><span>04</span><span class="rule"></span><span>Privacy pipeline</span></div>
         <h2>Four steps, <i>no guesswork.</i></h2></div><p>Rules and patterns only, no language model. Keyed by a release secret, so the same input always gives the same release.</p></div>
       <div class="sheet plain">
       <div class="box" id="pipeline">
@@ -593,7 +610,7 @@ Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i
     </div>
 
     <div class="page" data-page="security" data-title="Security overview">
-      <div class="pagehead rv"><div><div class="kick"><span>05</span><span class="rule"></span><span>Security overview</span></div>
+      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-secure"/></svg></span><div class="phx"><div class="kick"><span>05</span><span class="rule"></span><span>Security overview</span></div>
         <h2>Clear <i>by design.</i></h2></div><p>What the engine does with your data, and how it performed on the organisers' practice set.</p></div>
       <div class="sheet plain">
       <div class="box" id="security">
