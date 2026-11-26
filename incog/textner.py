@@ -97,7 +97,7 @@ REL_NOUN_RX = re.compile(rf"(?<![A-Za-z])(?i:son|daughter|wife|husband|father|mo
                          rf"(?:\s+(?i:of\s+patient|named|is|was))?\s+({LAT_NAME})"
                          rf"|(?<![{DEV}])(?:बेटा|बेटी|बहू|पति|पत्नी|भाई|बहन|सास|ससुर|दामाद)(?!\s*(?:का|की|के|ने|को|से|[:\-]))\s+([{DEV}]+(?:[ ][{DEV}]+)?)")
 LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s*[(,])")
-LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b)")
+LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),?\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b)")
 TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s*:?\s+({LAT_NAME})")
 WA_RX = re.compile(rf"(?m)^\[[^\]]+\]\s*({LAT_NAME}(?:[ ](?i:{HONOR}))?)\s*:")
 

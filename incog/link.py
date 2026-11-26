@@ -110,6 +110,18 @@ def dob_key(v: str) -> str | None:
     return "-".join(sorted(str(int(p)) for p in parts))
 
 
+def _births(keys) -> set:
+    """Only well-formed birth dates (a 1900-2026 year plus day and month) are trusted for a veto."""
+    out = set()
+    for k in keys:
+        p = [int(x) for x in k.split("-")]
+        years = [x for x in p if 1900 <= x <= 2026]
+        rest = [x for x in p if not 1900 <= x <= 2026]
+        if len(years) == 1 and len(rest) == 2 and all(1 <= x <= 31 for x in rest) and min(rest) <= 12:
+            out.add(k)
+    return out
+
+
 def age_val(v) -> int | None:
     m = re.search(r"\d{1,3}", norm_digits(str(v)))
     if m and 0 < int(m.group()) < 120:
@@ -312,6 +324,10 @@ def text_evidence(text: str, ev: Ev, kb: Knowledge | None = None, light: bool = 
         nm = textner._trim_name(m.group(1))
         if textner._valid(nm):
             add_value(ev, "NAME", nm)
+    for m in textner.HING_NAME_RX.finditer(text):
+        nm = textner._trim_name(m.group(1))
+        if textner._valid(nm):
+            add_value(ev, "NAME", nm)
     for m in textner.REL_LBL_RX.finditer(text):
         add_value(ev, "RELATIVE", textner._trim_name(m.group(1)))
     for m in textner.REL_MARK_RX.finditer(text):
@@ -369,14 +385,20 @@ class Linker:
             i = self.parent[i]
         return i
 
-    def _conflict(self, a: Ev, b: Ev, by_name: bool) -> bool:
+    def _conflict(self, a: Ev, b: Ev, by_name: bool, phone: bool = False) -> bool:
+        # a phone is often shared by a family: a phone link never joins two different birth dates
+        if phone:
+            da, db = _births(a.dobs), _births(b.dobs)
+            if da and db and not da & db:
+                return True
         for p in ("A:", "H:"):
             x = {i for i in a.ids if i.startswith(p)}
             y = {i for i in b.ids if i.startswith(p)}
             if x and y and not x & y:
                 return True
         if by_name:
-            if a.dobs and b.dobs and not a.dobs & b.dobs:
+            da, db = _births(a.dobs), _births(b.dobs)
+            if da and db and not da & db:
                 return True
             mx = {i for i in a.ids if i.startswith("M:")}
             my = {i for i in b.ids if i.startswith("M:")}
@@ -391,11 +413,11 @@ class Linker:
                 return True
         return False
 
-    def union(self, i: int, j: int, cev: dict, by_name: bool = False) -> bool:
+    def union(self, i: int, j: int, cev: dict, by_name: bool = False, phone: bool = False) -> bool:
         ri, rj = self.find(i), self.find(j)
         if ri == rj:
             return True
-        if self._conflict(cev[ri], cev[rj], by_name):
+        if self._conflict(cev[ri], cev[rj], by_name, phone):
             return False
         if rj < ri:
             ri, rj = rj, ri
@@ -425,7 +447,7 @@ class Linker:
         for k in sorted(idx):
             members = idx[k]
             for j in members[1:]:
-                self.union(members[0], j, cev)
+                self.union(members[0], j, cev, phone=k.startswith("P:"))
         # 2) same name + second clue
         for _round in range(2):
             keys: dict = {}
