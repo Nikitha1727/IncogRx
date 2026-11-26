@@ -18,7 +18,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import dates, link, privacy, readers, textner
+from . import dates, link, privacy, readers, sniff, textner
 from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
 from .sanitize import DOB_MODE, Stats, clean_text, sanitize
@@ -40,14 +40,8 @@ def sniff_column(values: list) -> str | None:
     return None
 
 
-def csv_categories(header: list, body: list) -> list:
-    cats = []
-    for j, h in enumerate(header):
-        cat = classify_key(h)
-        if cat is None:
-            cat = sniff_column([r[j] for r in body if j < len(r)])
-        cats.append(cat)
-    return cats
+def csv_categories(header: list, body: list, kb: Knowledge | None = None) -> list:
+    return sniff.csv_categories(header, body, kb)
 
 
 def row_ctx(header: list, row: list) -> dict:
@@ -144,7 +138,7 @@ def learn_json(node, path: tuple, rt, kb: Knowledge) -> None:
         for v in node:
             learn_json(v, path, rt, kb)
     else:
-        learn_value(classify_path(path, rt), node, kb)
+        learn_value(sniff.path_cat(path, rt), node, kb)
 
 
 def resource_type_is_place(rt) -> bool:
@@ -154,7 +148,7 @@ def resource_type_is_place(rt) -> bool:
 def learn(doc: readers.Doc, kb: Knowledge) -> None:
     if doc.kind == "csv":
         header, body = doc.rows[0], doc.rows[1:]
-        cats = csv_categories(header, body)
+        cats = csv_categories(header, body, kb)
         for row in body:
             for j, v in enumerate(row):
                 if j < len(cats):
@@ -164,10 +158,14 @@ def learn(doc: readers.Doc, kb: Knowledge) -> None:
                     if cats[j] in ("KEEP", None) and j < len(header):
                         learn_admin(header[j], v, kb)
     elif doc.kind == "json":
+        sniff.CURRENT = sniff.json_map(doc.data, kb)
         learn_json(doc.data, (), None, kb)
+        sniff.CURRENT = {}
     elif doc.kind == "jsonl":
+        sniff.CURRENT = sniff.json_map(doc.lines, kb)
         for obj in doc.lines:
             learn_json(obj, (), None, kb)
+        sniff.CURRENT = {}
     if doc.kind == "text":
         kb.rare.learn_text(doc.text)
         learn_text(doc.text, kb)
@@ -185,7 +183,7 @@ def units(doc: readers.Doc, kb: Knowledge) -> list:
     """Return [(loc, Evidence)] for the records of one document, plus the list keys used."""
     if doc.kind == "csv":
         header, body = doc.rows[0], doc.rows[1:]
-        cats = csv_categories(header, body)
+        cats = csv_categories(header, body, kb)
         out = []
         for i, row in enumerate(body):
             ev = link.Ev()
@@ -201,31 +199,54 @@ def units(doc: readers.Doc, kb: Knowledge) -> list:
             out.append((f"row:{i}", ev))
         return out
     if doc.kind == "json":
-        data = doc.data
-        if isinstance(data, dict) and data.get("resourceType") != "Bundle":
-            out = []
-            for k, v in data.items():
-                if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
-                    evs = []
-                    for x in v:
-                        ev = link.Ev()
-                        link.json_evidence(x, (k,), None, ev)
-                        evs.append(ev)
-                    if any(e.ids or e.names for e in evs):
-                        out += [(f"/{_ptr(k)}/{i}", e) for i, e in enumerate(evs)]
-            if out:
-                return out
-        ev = link.Ev()
-        link.json_evidence(data, (), None, ev)
-        return [("doc", ev)]
+        sniff.CURRENT = sniff.json_map(doc.data, kb)
+        try:
+            return json_units(doc.data)
+        finally:
+            sniff.CURRENT = {}
     if doc.kind == "jsonl":
+        sniff.CURRENT = sniff.json_map(doc.lines, kb)
         ev = link.Ev()
         for o in doc.lines:
             link.json_evidence(o, (), None, ev)
-        return [("doc", ev)]
+        sniff.CURRENT = {}
+        return [("doc", link.single_person(ev))]
     ev = link.Ev()
     link.text_evidence(doc.text, ev, kb)
     return [("doc", ev)]
+
+
+def _record_like(v: list) -> bool:
+    """A list of similar dicts (rows of an export), not a list of sub-structures like lab panels."""
+    if len(v) < 2:
+        return False
+    keysets = [frozenset(x) for x in v]
+    common = max(set(keysets), key=keysets.count)
+    return keysets.count(common) / len(keysets) >= 0.5 and len(common) >= 3
+
+
+def json_units(data) -> list:
+    if isinstance(data, dict) and data.get("resourceType") != "Bundle":
+        top = link.Ev()
+        for k, v in data.items():
+            if not (isinstance(v, list) and v and all(isinstance(x, dict) for x in v)):
+                link.json_evidence(v, (k,), None, top)
+        out = []
+        for k, v in data.items():
+            if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                evs = []
+                for x in v:
+                    ev = link.Ev()
+                    link.json_evidence(x, (k,), None, ev)
+                    evs.append(ev)
+                person_rows = any(e.ids or e.names for e in evs)
+                if person_rows or (_record_like(v) and not (top.ids or top.names)):
+                    out += [(f"/{_ptr(k)}/{i}", e) for i, e in enumerate(evs)]
+        if out:
+            return out
+    ev = link.Ev()
+    link.json_evidence(data, (), None, ev)
+    return [("doc", link.single_person(ev))]
 
 
 def link_all(items: list, kb: Knowledge) -> None:
@@ -243,6 +264,8 @@ def link_all(items: list, kb: Knowledge) -> None:
     for it in items:
         it["ps"] = {loc: ps[i] for loc, i in it["units"]}
     for i, ev in enumerate(lk.ev):                     # rare conditions counted per patient cluster
+        if not ev.person():
+            continue
         for c in ev.codes:
             kb.rare.count(c, str(lk.roots[i]))
     kb.rare.finalize()
@@ -321,7 +344,7 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
         return [sanitize_json(v, path, rt, ctx, kb) for v in node]
     if isinstance(node, str) and len(path) >= 2 and norm_key(path[-1]) == "data" and norm_key(path[-2]) == "attachment":
         return clean_b64(node, kb)
-    cat = classify_path(path, rt)
+    cat = sniff.path_cat(path, rt)
     if cat is None and isinstance(node, str) and path and norm_key(path[-1]) == "name":
         if kb.name_rx() is not None and kb.name_rx().fullmatch(node.strip()):
             cat = "NAME"
@@ -340,7 +363,7 @@ def shift_for(ps: str | None, rel: str, loc: str) -> int:
 def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: dict,
               order: str = "dmy", rel: str = "") -> str:
     header, body = doc.rows[0], doc.rows[1:]
-    cats = csv_categories(header, body)
+    cats = csv_categories(header, body, kb)
     new_header = [h if cats[j] is not None else clean_text(h, kb) for j, h in enumerate(header)]
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=doc.delimiter, lineterminator=doc.newline)
@@ -376,20 +399,27 @@ def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
             ctx = {"_rec": rec, "_rel": rel, "shift": shift_for(None, rel, "doc"), "order": order}
         else:
             ctx = {"pseudonym": ps.get("doc"), "shift": shift_for(ps.get("doc"), rel, "doc"), "order": order}
-        cleaned = sanitize_json(doc.data, (), None, ctx, kb)
+        sniff.CURRENT = sniff.json_map(doc.data, kb)
+        try:
+            cleaned = sanitize_json(doc.data, (), None, ctx, kb)
+        finally:
+            sniff.CURRENT = {}
         locs = sorted(ps, key=lambda x: (x.rsplit("/", 1)[0], int(x.rsplit("/", 1)[1]) if x != "doc" else 0))
         records += [{"file": out_rel, "loc": loc, "patient": ps[loc]} for loc in locs] or \
             [{"file": out_rel, "loc": "doc", "patient": None}]
-        return json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n"
+        return json.dumps(cleaned, ensure_ascii=False, indent=2) + ("\n" if doc.text.endswith("\n") else "")
     if doc.kind == "jsonl":
         p = ps.get("doc")
         records.append({"file": out_rel, "loc": "doc", "patient": p})
         jctx = {"pseudonym": p, "shift": shift_for(p, rel, "doc"), "order": order}
+        sniff.CURRENT = sniff.json_map(doc.lines, kb)
         return doc.newline.join(json.dumps(sanitize_json(o, (), None, jctx, kb), ensure_ascii=False)
                                 for o in doc.lines) + doc.newline
     p = ps.get("doc")
     records.append({"file": out_rel, "loc": "doc", "patient": p})
-    text = privacy.band_ages(kb.rare.apply(clean_text(doc.text, kb)))
+    text = clean_text(doc.text, kb)
+    if p:                                       # rare-condition and age handling only for patient records
+        text = privacy.band_ages(kb.rare.apply(text))
     text = dates.shift_text(text, shift_for(p, rel, "doc"), order)[0]
     return put_pseudonym(text, p)
 
@@ -437,13 +467,14 @@ def run(inp: Path, out: Path) -> dict:
             item["reason"] = type(exc).__name__
         items.append(item)
 
-    for it in items:  # pass 1
-        if it["doc"] is not None:
-            try:
-                learn(it["doc"], kb)
-            except Exception:  # noqa: BLE001
-                pass
-    kb.finalize()
+    for _round in range(2):  # pass 1 (twice: the 2nd round sniffs unfamiliar columns with what round 1 learned)
+        for it in items:
+            if it["doc"] is not None:
+                try:
+                    learn(it["doc"], kb)
+                except Exception:  # noqa: BLE001
+                    pass
+        kb.finalize()
     votes = dates.OrderVotes()
     for it in items:
         if it["doc"] is not None:
@@ -453,7 +484,11 @@ def run(inp: Path, out: Path) -> dict:
     for it in items:
         if it["doc"] is not None:
             it["order"] = votes.decide(it["toks"], it["hint"])
-    link_all(items, kb)
+    try:
+        link_all(items, kb)
+    except Exception:  # noqa: BLE001  fail safe: release without links rather than crash
+        for it in items:
+            it["ps"] = {}
 
     files, records, used_names = [], [], set()
     for it in items:  # pass 2

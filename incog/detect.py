@@ -52,6 +52,9 @@ LABELLED_RX = [(re.compile(lab + "(" + val + ")"), kind) for lab, val, kind in L
 PIN_TAIL = re.compile(r"(?<=[A-Za-z\u0900-\u097F\.]\s[-–]\s)\d{6}(?!\d)|(?<=[A-Za-z\u0900-\u097F],\s)\d{6}(?!\d)")
 
 
+# generic name parts: never identifying on their own, so never redacted as a single token
+GENERIC_TOKENS = {"kumar", "kumari", "devi", "singh", "kaur", "bano", "begum", "khatoon", "khatun", "bai", "lal", "ram",
+                  "prasad", "chand", "nath", "md", "mohd", "mohammad", "mohammed", "sri", "shri", "smt", "ji", "das"}
 REL_PREFIX = re.compile(r"^\s*(?:[SDWC]\s?/\s?[Oo]|पुत्र|पुत्री|पत्नी)\.?\s*", re.I)
 
 
@@ -87,7 +90,8 @@ class Knowledge:
     def add_token(self, tok: str, kind: str = "NAME") -> None:
         from .textner import NOT_NAME, DEV_STOP
         t = tok.strip(" .,:;'\"()").lower()
-        if len(t) < 3 or len(t) > 25 or re.search(r"[^a-z\u0900-\u097F]", t) or t in NOT_NAME or t in DEV_STOP:
+        if len(t) < 3 or len(t) > 25 or re.search(r"[^a-z\u0900-\u097F]", t) or t in NOT_NAME or t in DEV_STOP \
+                or t in GENERIC_TOKENS:
             return
         old = self.tokens.get(t)
         if old == kind or old == "NAME" or (old == "RELATIVE" and kind == "VILLAGE"):

@@ -33,6 +33,22 @@ class Doc:
     lines: list = field(default_factory=list)  # jsonl objects
 
 
+def sniff_delimiter(text: str, default: str) -> str:
+    """Pick the delimiter that splits the header and the first rows into the same number of fields."""
+    lines = [ln for ln in text.splitlines()[:20] if ln.strip()]
+    if not lines:
+        return default
+    best, score = default, 0
+    for d in (default, ",", "\t", ";", "|"):
+        counts = [ln.count(d) for ln in lines]
+        if counts[0] == 0:
+            continue
+        sc = sum(1 for c in counts if c == counts[0]) * 10 + counts[0]
+        if sc > score:
+            best, score = d, sc
+    return best
+
+
 def decode(raw: bytes) -> str:
     if raw.startswith(b"\xef\xbb\xbf"):
         return raw[3:].decode("utf-8")
@@ -96,7 +112,7 @@ def load(path: Path, rel: str, raw: bytes) -> Doc:
     if ext in CSV_EXT | TSV_EXT:
         if stripped[:1] in "{[":
             raise Quarantine("format_mismatch")
-        delim = "\t" if ext in TSV_EXT else ","
+        delim = sniff_delimiter(text, "\t" if ext in TSV_EXT else ",")
         rows = list(csv.reader(io.StringIO(text, newline=""), delimiter=delim))
         if not rows:
             raise Quarantine("empty_file")

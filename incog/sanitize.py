@@ -107,9 +107,10 @@ def clean_text(value, kb: Knowledge | None):
 def sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
     out = _sanitize(cat, value, ctx, kb)
     if isinstance(out, str) and cat in (None, "KEEP", "TEXT"):
-        if kb is not None and kb.rare is not None:
-            out = kb.rare.apply(out)
-        out = privacy.band_ages(out)
+        if ctx.get("pseudonym"):              # patient records only; reference documents stay intact
+            if kb is not None and kb.rare is not None:
+                out = kb.rare.apply(out)
+            out = privacy.band_ages(out)
         if ctx.get("shift"):
             out = dates.shift_text(out, ctx["shift"], ctx.get("order", "dmy"))[0]
     return out

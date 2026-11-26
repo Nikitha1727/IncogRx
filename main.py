@@ -17,7 +17,11 @@ def main() -> int:
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
     a = ap.parse_args()
-    rep = run(Path(a.input), Path(a.output))
+    try:
+        rep = run(Path(a.input), Path(a.output))
+    except Exception as exc:  # noqa: BLE001  a traceback could print file names, which may hold PII
+        print(f"incogrx: failed ({type(exc).__name__})", file=sys.stderr)
+        return 1
     c = rep["counts"]
     print(f"files {c['files_total']} sanitized {c['files_sanitized']} quarantined {c['files_quarantined']} "
           f"records {c['records_processed']}")

@@ -50,13 +50,15 @@ def _trim_name(v: str) -> str:
 # ----------------------------------------------------------------------------- label patterns
 LBL_END = r"\s*[:\-–]\s*"
 NAME_LABELS = (r"(?:Patient(?:'s)?\s*Name|Pt\.?\s*Name|Name\s+of\s+(?:the\s+)?Patient|Mareez\s+ka\s+Naam|"
-               r"Patient\s+ka\s+Naam|मरीज़?\s*का\s*नाम|रोगी\s*का\s*नाम|(?m:^\s*)(?:Name|Naam|नाम))")
+               r"Patient\s+ka\s+Naam|Rogi(?:\s+ka\s+Naam)?|Beneficiary(?:\s+Name)?|मरीज़?\s*का\s*नाम|रोगी(?:\s*का\s*नाम)?|"
+               r"(?m:^\s*)(?:Name|Naam|नाम|मरीज़?))")
 REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Name|Guardian(?:'s)?\s*(?:Name)?|"
               r"Attendant(?:'s)?\s*(?:Name)?|Next\s+of\s+Kin|NOK|Informant|Pita\s*(?:ka|/Pati\s*ka)?\s*Naam|"
-              r"Pati\s*ka\s*Naam|पिता\s*का\s*नाम|पति\s*का\s*नाम|माता\s*का\s*नाम|पिता/पति\s*का\s*नाम|परिजन(?:\s*का\s*नाम)?)")
+              r"Pati\s*ka\s*Naam|Accompanied\s+by|Escort(?:ed\s+by)?|Care\s*taker|Abhibhavak|"
+              r"पिता(?:\s*का\s*नाम)?|पति(?:\s*का\s*नाम)?|माता(?:\s*का\s*नाम)?|पिता/पति(?:\s*का\s*नाम)?|परिजन(?:\s*का\s*नाम)?|अभिभावक)")
 NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({ANY_NAME})")
 REL_LBL_RX = re.compile(rf"(?i:{REL_LABELS}){LBL_END}({ANY_NAME})")
-ADDR_LBL_RX = re.compile(r"(?i:\b(?:Address|Addr\.?|Pata|Residence|Resident\s+of|R/o)|पता|निवासी)\s*[:\-–]?\s*([^\n]+)")
+ADDR_LBL_RX = re.compile(r"(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence|Resident\s+of|R/o)|पता|निवासी|निवास)\s*[:\-–]?\s*([^\n]+)")
 
 HOUSE_RX = re.compile(r"(?i:\b(?:House|H\.?\s?No|Makan|Ghar)\.?\s*(?:No\.?|Number|#)?\s*[:\-]?\s*)\d+[A-Za-z]?(?:[/\-]\d+[A-Za-z]?)?"
                       r"|मकान\s*(?:नं|न|संख्या|नंबर)\.?\s*[:\-]?\s*[0-9०-९]+")
@@ -67,7 +69,8 @@ VILLAGE_RX = re.compile(rf"(?i:\b(?:Village|Vill\.?|Gram|Gaon|Gaanv|Mauza))\s*[:
                         rf"|(?:ग्राम|गांव|गाँव|मौजा)\s*[:\-]?\s*({DEV_NAME})")
 
 # ----------------------------------------------------------------------------- context patterns
-REL_MARK_RX = re.compile(rf"(?<![A-Za-z])((?:[SDW]\s?/\s?[Oo]|[SDW]/O)\.?)\s+({LAT_NAME}|{DEV_NAME})")
+REL_MARK_RX = re.compile(rf"(?<![A-Za-z])((?:[SDW]\s?/\s?[Oo]|[SDW]/O)\.?|(?i:son|wife|daughter|husband)\s+of|"
+                         rf"पुत्र|पुत्री|पत्नी)\s+({LAT_NAME}|{DEV_NAME})")
 CO_RX = re.compile(rf"(?<![A-Za-z])(C/[Oo]\.?)\s+({LAT_NAME})")
 HONOR = (r"ji|jee|sahab|saheb|sahib|didi|bhaiya|bhaiyya|bhai|behenji|behen|bahenji|amma|ammi|chacha|chachu|chachi|"
          r"mama|mami|mamaji|papa|uncle|aunty|aunti|bhabhi|dada|dadi|nana|nani|babu|kaka|kaki|tau|tai|bua")
@@ -78,8 +81,8 @@ POSS_RX = re.compile(rf"(?<![A-Za-z.])({LAT_NAME})'s\s+(?i:(?=attendant|husband|
 CUE_RX = re.compile(rf"(?i:\b(?:called|visited|brought|accompanied|escorted|informed|received|collected|signed|"
                     rf"consented|witnessed|attended|sent)\s+by|\bcaller|\bvisitor|\bcontact\s+person)\s*[:\-]?\s+({LAT_NAME}|{DEV_NAME})")
 LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s*[(,])")
-LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),\s*(?=[SDW]\s?/\s?[Oo])")
-TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s+({LAT_NAME})")
+LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b)")
+TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s*:?\s+({LAT_NAME})")
 WA_RX = re.compile(rf"(?m)^\[[^\]]+\]\s*({LAT_NAME}(?:[ ](?i:{HONOR}))?)\s*:")
 
 # protected spans: doctors, organisations, ASHA worker role

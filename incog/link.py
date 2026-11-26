@@ -17,6 +17,7 @@ from .crypto import pseudonym
 from .detect import LABELLED_RX, RX, Knowledge, digits_only, find_spans, norm_digits
 from .fields import classify_key, classify_path, norm_key
 from .privacy import codes_in
+from . import sniff
 
 # ----------------------------------------------------------------------------- phonetic keys
 _V = {"अ": "a", "आ": "a", "इ": "i", "ई": "i", "उ": "u", "ऊ": "u", "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au", "ऋ": "ri"}
@@ -219,7 +220,7 @@ def json_evidence(node, path: tuple, rt, ev: Ev) -> None:
     elif node is not None:
         if isinstance(node, str):
             ev.codes |= codes_in(node)
-        cat = classify_path(path, rt)
+        cat = sniff.path_cat(path, rt)
         if cat is None and isinstance(node, str) and path and norm_key(path[-1]) in ("patient ref", "patient id"):
             cat = "MRN"
         add_value(ev, cat, node, _rel_context(path[:-1]) or _rel_context(path[-1:]))
@@ -292,6 +293,17 @@ def text_evidence(text: str, ev: Ev, kb: Knowledge | None = None, light: bool = 
             if v:
                 add_value(ev, "VILLAGE", textner._trim_name(v))
                 break
+
+
+def single_person(ev: Ev) -> Ev:
+    """A whole document that mentions several patients (two different IDs of one kind, or
+    several full names) must not be linked as one person: keep it unlinked."""
+    for p in ("M:", "P:", "A:", "H:"):
+        if len({i for i in ev.ids if i.startswith(p)}) > (4 if p == "M:" else 1):
+            return Ev()
+    if len(ev.names) > 3:
+        return Ev()
+    return ev
 
 
 # ----------------------------------------------------------------------------- clustering
