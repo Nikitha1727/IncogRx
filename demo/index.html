@@ -70,6 +70,7 @@ th{text-align:left;color:var(--ink2);font-weight:600;font-size:12.5px;padding:8p
 td{padding:9px 10px;border-bottom:1px solid #eef1f5;vertical-align:top}
 tr.click{cursor:pointer} tr.click:hover td{background:#f6f9fc}
 .psn{font:600 13px var(--mono);color:var(--red);background:var(--redbg);padding:1px 7px;border-radius:5px;white-space:nowrap}
+.plink{font-size:12.5px;font-weight:600;color:var(--navy2);margin-left:6px}
 .fchip{display:inline-block;font-size:12px;background:#eef3f9;color:var(--navy2);border-radius:5px;padding:1px 7px;margin:2px 4px 2px 0}
 .pill{font-size:12px;font-weight:650;border-radius:999px;padding:2px 9px;white-space:nowrap}
 .pill.ok{background:var(--greenbg);color:var(--green)} .pill.q{background:var(--amberbg);color:var(--amber)}
@@ -114,7 +115,7 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
     <div class="pane on" id="p-files">
       <div class="drop" id="drop">
         <div><b>Drop files or a folder here</b></div>
-        <div class="muted" style="font-size:13px">CSV, TSV, JSON, JSONL, FHIR bundles, TXT notes, or a .zip of them. Broken or unsupported files are quarantined, never copied.</div>
+        <div class="muted" style="font-size:13px">CSV, TSV, JSON, JSONL, FHIR bundles, TXT notes, text PDFs, or a .zip of them. Broken or unsupported files are quarantined, never copied.</div>
         <div class="btns">
           <button class="btn" id="pickFiles">Choose files</button>
           <button class="btn" id="pickFolder">Choose a folder</button>
@@ -277,7 +278,7 @@ function render(d, req) {
     : '<tr><td colspan="3" class="muted">No patients linked.</td></tr>';
   $("#unlinked").textContent = d.unlinked ? `${d.unlinked} record(s) left unlinked (no patient, or evidence too weak).` : "";
   $("#files").innerHTML = d.files.map((f, i) => `<tr class="click" data-i="${i}"><td>${esc(f.input)}</td>
-    <td>${f.status === "sanitized" ? '<span class="pill ok">Released</span>' : `<span class="pill q">Quarantined</span> <span class="muted">${esc(REASONS[f.reason] || f.reason)}</span>`}</td>
+    <td>${f.status === "sanitized" ? '<span class="pill ok">Released</span>' + (f.pdf ? ` <a class="plink" href="/api/file/${d.job}/${encodeURI(f.pdf)}" target="_blank" onclick="event.stopPropagation()">redacted PDF</a>` : "") : `<span class="pill q">Quarantined</span> <span class="muted">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
     <td>${f.output ? esc(f.output.replace(/^sanitized\//, "")) : '<span class="muted">not released</span>'}</td><td>${f.removed ?? "-"}</td></tr>`).join("");
   document.querySelectorAll("#files tr.click").forEach(tr => tr.onclick = () => showFile(d.files[+tr.dataset.i]));
   $("#fileView").classList.remove("on");
@@ -293,9 +294,10 @@ function showFile(f) {
   const v = $("#fileView"); v.classList.add("on");
   $("#fvName").textContent = f.input + (f.output ? "  →  " + f.output.replace(/^sanitized\//, "") : "");
   $("#fvBefore").textContent = f.before ?? "(not readable)";
-  $("#fvAfter").innerHTML = f.output ? mark(f.after || "") : `<span class="muted">Quarantined: ${esc(REASONS[f.reason] || f.reason)}. Nothing from this file was released.</span>`;
-  $("#fvPsn").innerHTML = (f.pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
-  $("#fvNote").textContent = f.truncated ? "Long file: showing the first part only. The download contains everything." : "";
+  $("#fvAfter").innerHTML = f.output ? mark(f.after || "") : `<span class="muted">Quarantined: ${esc(f.note || REASONS[f.reason] || f.reason)} Nothing from this file was released.</span>`;
+  $("#fvPsn").innerHTML = (f.pdf ? `<a class="btn navy" href="/api/file/${last.job}/${encodeURI(f.pdf)}" target="_blank">Open redacted PDF</a> ` : "")
+    + (f.pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
+  $("#fvNote").textContent = [f.note || "", f.truncated ? "Long file: showing the first part only. The download contains everything." : ""].filter(Boolean).join(" ");
   v.scrollIntoView({behavior: "smooth", block: "start"});
 }
 </script>

@@ -153,8 +153,9 @@ python demo/app.py            # opens http://127.0.0.1:8765
 ```
 
 * Standard library only, offline, listens on 127.0.0.1 only. It calls the same `main.py` the evaluator runs, in a separate process, so it shows exactly what gets scored.
-* Two ways in: upload files, a whole folder or a .zip (unpacked by the demo), or paste a note (English, Hindi or Hinglish). `demo/samples/` holds a small invented dataset to upload with "Choose a folder".
+* Two ways in: upload files, a whole folder, a .zip (unpacked by the demo) or a text PDF, or paste a note (English, Hindi or Hinglish). `demo/samples/` holds a small invented dataset to upload with "Choose a folder".
 * Shows files released or quarantined (with the reason), what was removed by type, every patient pseudonym with the files it links, a side-by-side original and released view per file, and a zip download of the full release.
+* PDFs: with the optional `pip install -r demo/requirements-demo.txt` (PyMuPDF), the demo extracts a PDF's text, cleans it with the same engine and returns a redacted copy of the same PDF (the underlying text is removed, not just covered; metadata is wiped). Scanned PDFs without a text layer need OCR and stay quarantined. The scored pipeline itself does not read PDFs: it quarantines them, which the track allows.
 * Uploads and results live in a temporary folder that is deleted when the server stops; nothing is logged.
 
 ---

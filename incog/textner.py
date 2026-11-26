@@ -63,6 +63,8 @@ ADDR_LBL_RX = re.compile(r"(?:(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence))|(?
                          r"\s*(?:\([^()\n]{1,30}\))?\s*[:\-–]\s*([^\n]+)"
                          r"|(?i:\b(?:Resident\s+of|R/o))\.?\s+([^\n]+)")
 
+ADDR_CONT_RX = re.compile(r"(?i:\b(?:Distt?\.?|District|Tehsil|Teh\.|Pin(?:\s*code)?)\b)|जिला|तहसील|(?<!\d)\d{6}(?!\d)")
+NEW_LABEL_RX = re.compile(r"\s*[A-Za-z\u0900-\u097F][\w\u0900-\u097F ./()]{0,30}:")
 HOUSE_RX = re.compile(r"(?i:\b(?:House|H\.?\s?No|Makan|Ghar)\.?\s*(?:No\.?|Number|#)?\s*[:\-]?\s*)\d+[A-Za-z]?(?:[/\-]\d+[A-Za-z]?)?"
                       r"|मकान\s*(?:नं|न|संख्या|नंबर)\.?\s*[:\-]?\s*[0-9०-९]+")
 MOHALLA_RX = re.compile(rf"(?i:\bMohalla|\bMohalla|\bMuhalla|\bColony\s+No)\s+{LAT_NAME}|मोहल्ला\s+{DEV_NAME}")
@@ -155,9 +157,18 @@ def detect(text: str, address_fn=None) -> Finder:
     # addresses first (whole value), then parts that appear outside an address line
     for m in ADDR_LBL_RX.finditer(text):
         g = 1 if m.group(1) is not None else 2
-        val = m.group(g)
+        start, end = m.start(g), m.end(g)
+        # a wrapped address continues on the next line when that line carries address markers
+        # (district, tehsil, PIN) and does not start a new "Label:"
+        nl = text.find("\n", end)
+        if nl == end:
+            nxt_end = text.find("\n", nl + 1)
+            nxt = text[nl + 1:nxt_end if nxt_end >= 0 else len(text)]
+            if ADDR_CONT_RX.search(nxt) and not NEW_LABEL_RX.match(nxt):
+                end = nl + 1 + len(nxt)
+        val = text[start:end]
         if address_fn and re.search(r"\d|,|[A-Z][a-z]|[" + DEV + "]", val):
-            f.add(m.start(g), m.end(g), address_fn(val), "ADDRESS")
+            f.add(start, end, address_fn(val.replace("\n", ", ")), "ADDRESS")
     for m in HOUSE_RX.finditer(text):
         f.add(m.start(), m.end(), "[HOUSE]", "HOUSE")
     for m in MOHALLA_RX.finditer(text):

@@ -39,6 +39,8 @@ KEEP_JOBS = 5
 
 sys.path.insert(0, str(ROOT))
 from incog.readers import decode  # noqa: E402  (same decoder as the pipeline, for the "before" view)
+sys.path.insert(0, str(DEMO))
+import pdf_support  # noqa: E402  (demo-only: text PDFs -> redacted PDF)
 
 TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|"
                     r"LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]")
@@ -87,8 +89,19 @@ def run_job(files: list, secret: str) -> dict:
     work = Path(tempfile.mkdtemp(prefix="incogrx_demo_"))
     inp, out = work / "input", work / "output"
     inp.mkdir()
+    pdfs, notes = {}, {}
     for rel, data in files:
-        dst = inp / safe_rel(rel)
+        rel = safe_rel(rel).as_posix()
+        if rel.lower().endswith(".pdf"):
+            text = pdf_support.extract_text(data)
+            if text is not None:               # text PDF: run its text through the engine
+                pdfs[rel + ".txt"] = (rel, data, text)
+                rel, data = rel + ".txt", text.encode("utf-8")
+            elif not pdf_support.AVAILABLE:
+                notes[rel] = "PDF support needs PyMuPDF: run  pip install pymupdf  and restart the demo."
+            else:
+                notes[rel] = "Scanned or image-only PDF (no text layer): it would need OCR, so it stays quarantined."
+        dst = inp / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_bytes(data)
     env = dict(os.environ, RAKSHA_SECRET=secret or "demo-secret")
@@ -99,13 +112,28 @@ def run_job(files: list, secret: str) -> dict:
     if proc.returncode != 0 or not (out / "report.json").exists():
         shutil.rmtree(work, ignore_errors=True)
         raise RuntimeError("The pipeline could not process this input.")
+    pdf_out = {}
+    if pdfs:
+        report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+        by_sha = {f["input_sha256"]: f for f in report["files"]}
+        for txt_rel, (pdf_rel, data, text) in pdfs.items():
+            f = by_sha.get(hashlib.sha256((inp / txt_rel).read_bytes()).hexdigest())
+            if not f or not f.get("output"):
+                continue
+            released = (out / f["output"]).read_text(encoding="utf-8")
+            out_pdf = f["output"][:-4] if f["output"].endswith(".txt") else f["output"] + ".pdf"
+            try:
+                (out / out_pdf).write_bytes(pdf_support.redact(data, text, released))
+                pdf_out[txt_rel] = (pdf_rel, out_pdf)
+            except Exception:  # noqa: BLE001  keep the text release even if redaction fails
+                notes[pdf_rel] = "The text was cleaned, but the redacted PDF could not be produced."
     job = uuid.uuid4().hex[:12]
     with LOCK:
         JOBS[job] = work
         while len(JOBS) > KEEP_JOBS:
             old = next(iter(JOBS))
             shutil.rmtree(JOBS.pop(old), ignore_errors=True)
-    return summarize(job, inp, out, wall)
+    return summarize(job, inp, out, wall, pdf_out, notes)
 
 
 def _read_text(p: Path) -> str:
@@ -115,7 +143,9 @@ def _read_text(p: Path) -> str:
         return "(binary or unreadable file)"
 
 
-def summarize(job: str, inp: Path, out: Path, wall: float) -> dict:
+def summarize(job: str, inp: Path, out: Path, wall: float, pdf_out: dict | None = None,
+              notes: dict | None = None) -> dict:
+    pdf_out, notes = pdf_out or {}, notes or {}
     report = json.loads((out / "report.json").read_text(encoding="utf-8"))
     records = [json.loads(x) for x in (out / "records.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
     sha2in = {hashlib.sha256(p.read_bytes()).hexdigest(): p for p in inp.rglob("*") if p.is_file()}
@@ -136,6 +166,12 @@ def summarize(job: str, inp: Path, out: Path, wall: float) -> dict:
             entry["truncated"] = len(after) > PREVIEW
             entry["removed"] = len(found)
             entry["pseudonyms"] = sorted(set(PSN_RX.findall(after)))
+        if entry["input"] in pdf_out:          # show a text PDF under its own name, with its redacted copy
+            pdf_rel, out_pdf = pdf_out[entry["input"]]
+            entry.update(input=pdf_rel, pdf=out_pdf, output=out_pdf,
+                         note="Text extracted from the PDF, cleaned by IncogRx, and written back as a redacted copy of the same PDF.")
+        if entry["input"] in notes:
+            entry["note"] = notes[entry["input"]]
         files.append(entry)
     files.sort(key=lambda e: (e["status"] != "sanitized", e["input"]))
     pats = defaultdict(lambda: {"records": 0, "files": set()})
@@ -149,6 +185,19 @@ def summarize(job: str, inp: Path, out: Path, wall: float) -> dict:
             "resources": report.get("resources", {}), "wall_seconds": round(wall, 2),
             "tags": dict(tags.most_common()), "files": files, "patients": patients,
             "unlinked": sum(1 for r in records if not r.get("patient"))}
+
+
+def job_file(job: str, rel: str) -> bytes | None:
+    from urllib.parse import unquote
+    with LOCK:
+        work = JOBS.get(job)
+    if work is None:
+        return None
+    root = (work / "output").resolve()
+    p = (root / unquote(rel)).resolve()
+    if root not in p.parents or not p.is_file():   # stay inside this job's output folder
+        return None
+    return p.read_bytes()
 
 
 def zip_job(job: str) -> bytes | None:
@@ -186,6 +235,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if self.path in ("/", "/index.html"):
             self._send(200, (DEMO / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path.startswith("/api/file/"):
+            job, _, rel = self.path[len("/api/file/"):].partition("/")
+            data = job_file(job, rel)
+            if data is None:
+                self._json(404, {"error": "File not found or expired."})
+            else:
+                name = rel.rsplit("/", 1)[-1]
+                self._send(200, data, "application/pdf" if name.lower().endswith(".pdf") else "application/octet-stream",
+                           {"Content-Disposition": f'inline; filename="{name}"'})
         elif self.path.startswith("/api/download/"):
             data = zip_job(self.path.rsplit("/", 1)[-1])
             if data is None:

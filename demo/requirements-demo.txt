@@ -1,0 +1,2 @@
+# Optional, demo only (not needed by the scored pipeline): lets the demo UI read and redact text PDFs.
+pymupdf>=1.24
