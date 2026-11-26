@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+# Local runs and outputs (never commit outputs or practice data)
+out/
+my_output/
+output/
+*_output/
+dev/
+logs/
+*.log
+# Secrets
+.env
+# OS
+.DS_Store
