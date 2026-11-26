@@ -106,10 +106,35 @@ def relative_value(value):
     return (m.group(1).strip() + " " if m else "") + TAG["RELATIVE"]
 
 
+CACHE_MAX_LEN = 200     # short values repeat a lot (labels, codes, names); long notes are unique
+
+
 def clean_text(value, kb: Knowledge | None):
-    """Generic free-text cleaner (identifier patterns + learned identifiers + learned names)."""
+    """Generic free-text cleaner (identifier patterns + learned identifiers + learned names).
+
+    Once learning is finished (kb.frozen), the result for a short value depends only on the value, so it
+    is computed once and reused; the report counters are replayed exactly as the first call changed them."""
     if not isinstance(value, str) or not value:
         return value
+    cache = getattr(kb, "clean_cache", None) if kb is not None and getattr(kb, "frozen", False) else None
+    if cache is None or len(value) > CACHE_MAX_LEN:
+        return _clean_text(value, kb)
+    hit = cache.get(value)
+    if hit is not None:
+        text, d_ids, d_gen, d_ent = hit
+        Stats.identifiers += d_ids
+        Stats.generalized += d_gen
+        Stats.entities.update(d_ent)
+        return text
+    ids0, gen0, ent0 = Stats.identifiers, Stats.generalized, Counter(Stats.entities)
+    text = _clean_text(value, kb)
+    d_ent = Counter(Stats.entities)
+    d_ent.subtract(ent0)
+    cache[value] = (text, Stats.identifiers - ids0, Stats.generalized - gen0, +d_ent)
+    return text
+
+
+def _clean_text(value, kb: Knowledge | None):
     text, n = textner.apply(value, lambda v: generalize_address(v, kb))
     text, m = redact(text, find_spans(text, kb))
     n += m

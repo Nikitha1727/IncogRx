@@ -95,6 +95,11 @@ class Knowledge:
     def add_token(self, tok: str, kind: str = "NAME") -> None:
         from .textner import NOT_NAME, DEV_STOP
         t = tok.strip(" .,:;'\"()").lower()
+        if "-" in t:                                   # hyphenated names: "Kenzie-Leigh" -> kenzie, leigh
+            for part in t.split("-"):
+                if part:
+                    self.add_token(part, kind)
+            return
         if len(t) < 3 or len(t) > 25 or re.search(r"[^a-z\u0900-\u097F]", t) or t in NOT_NAME or t in DEV_STOP \
                 or t in GENERIC_TOKENS:
             return
@@ -120,11 +125,14 @@ class Knowledge:
         if not self.tokens:
             return text, 0
         out, last, n = [], 0, 0
-        for m in WORD_RUN.finditer(text):
+        runs = list(WORD_RUN.finditer(text))
+        for idx, m in enumerate(runs):
             w = m.group()
             if w.lower() not in self.tokens:
                 continue
             s, e = m.span()
+            if w.isascii() and w.isupper() and len(w) > 1 and self._caps_name(text, runs, idx):
+                w = w.title()          # "OKKES REILLY": a run of learned name words, not an acronym like "ASHA"
             if any(a <= s < b for a, b in protected):
                 continue
             if w.isascii() and w.isupper() and len(w) > 1:      # ASHA, ward codes: not a person mention
@@ -138,6 +146,15 @@ class Knowledge:
             n += 1
         out.append(text[last:])
         return "".join(out), n
+
+    def _caps_name(self, text: str, runs: list, idx: int) -> bool:
+        """True when an ALL-CAPS word touches another learned name word (spaces or a hyphen between)."""
+        for j in (idx - 1, idx + 1):
+            if 0 <= j < len(runs):
+                a, b = (runs[j].end(), runs[idx].start()) if j < idx else (runs[idx].end(), runs[j].start())
+                if re.fullmatch(r" {1,2}|-", text[a:b]) and runs[j].group().lower() in self.tokens:
+                    return True
+        return False
 
     def name_rx(self):
         if self._name_rx is None and self.names:

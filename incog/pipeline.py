@@ -104,9 +104,10 @@ def learn_admin(key: str, value, kb: Knowledge) -> None:
 
 def learn_text(s: str, kb: Knowledge) -> None:
     """Learn person and village names from free text using the Phase 2 context detectors."""
-    for t in textner.admin_names(s):
+    short = len(s) <= 200                   # short values repeat a lot; long notes are unique, so not cached
+    for t in (textner.admin_names_cached(s) if short else textner.admin_names(s)):
         kb.admin.add(t.lower())
-    for surf, kind in textner.detect(s).found:
+    for surf, kind in (textner.detect_found(s) if short else textner.detect(s).found):
         if kind in ("NAME", "RELATIVE"):
             if len(surf.split()) >= 2:
                 kb.add_name(surf, kind)
@@ -528,6 +529,7 @@ def run(inp: Path, out: Path) -> dict:
         for it in items:
             it["ps"] = {}
 
+    kb.frozen, kb.clean_cache = True, {}       # learning is over: cleaning results can be reused
     files, records, used_names = [], [], set()
     for it in items:  # pass 2
         entry = {"input_sha256": it["sha"]}

@@ -7,6 +7,7 @@ learned in pass 1. Doctors ("Dr. X"), organisations ("X Hospital") and the ASHA 
 are protected."""
 from __future__ import annotations
 
+import functools
 import re
 
 DEV = "\u0900-\u097F"
@@ -22,6 +23,8 @@ ANY_NAME = rf"(?:{LAT_NAME}|{DEV_NAME})"
 
 # words that look like names (capitalised) but are not
 NOT_NAME = {
+    "caregiver", "caregivers", "carer", "healthcare", "other", "others", "organization", "organisation",
+    "provider", "staff", "clinician", "practitioner", "unknown", "contact", "subtype", "category", "label",
     "name", "patient", "admitted", "discharged", "attendant", "mob", "mobile", "address", "age", "sex",
     "male", "female", "ward", "bed", "date", "the", "and", "with", "for", "from", "report", "sample",
     "test", "tab", "cap", "inj", "syp", "dr", "doctor", "hospital", "clinic", "pathology", "lab",
@@ -207,6 +210,17 @@ def apply(text: str, address_fn=None) -> tuple:
 
 ADMIN_RX = re.compile(rf"(?i:\b(?:Tehsil|Teh\.?|Tahsil|Distt?\.?|District|Dist\.?|Jila|Zila))\s*[:\-]?\s*({LAT_NAME})"
                       rf"|(?:तहसील|जिला|ज़िला)\s*[:\-]?\s*({DEV_NAME})")
+
+
+@functools.lru_cache(maxsize=65536)
+def detect_found(text: str) -> tuple:
+    """(surface, kind) findings for learning. Pure function of the text, so repeated values reuse it."""
+    return tuple(detect(text).found)
+
+
+@functools.lru_cache(maxsize=65536)
+def admin_names_cached(text: str) -> tuple:
+    return tuple(admin_names(text))
 
 
 def admin_names(text: str) -> list:
