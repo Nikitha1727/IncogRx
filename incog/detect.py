@@ -27,7 +27,7 @@ NOT_DIGIT_BEFORE = r"(?<!\d)(?<!\d[ \t \-./_])"
 NOT_DIGIT_AFTER = r"(?![ \t \-./_]?\d)"
 
 RX = {
-    "EMAIL": re.compile(r"[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9.-]+)?", re.UNICODE),
+    "EMAIL": re.compile(r"(?<![\w.+-])[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9.-]+)?", re.UNICODE),  # start of a token only: linear on long runs
     "ABHA": re.compile(NOT_DIGIT_BEFORE + r"\d{2}[ \t-]?\d{4}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR": re.compile(NOT_DIGIT_BEFORE + r"[2-9]\d{3}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR_MASKED": re.compile(r"(?i)(?<![\w])[x*•]{4}[ \t-]?[x*•]{4}[ \t-]?\d{4}(?!\d)"),

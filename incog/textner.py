@@ -69,7 +69,7 @@ HOUSE_RX = re.compile(r"(?i:\b(?:House|H\.?\s?No|Makan|Ghar)\.?\s*(?:No\.?|Numbe
                       r"|मकान\s*(?:नं|न|संख्या|नंबर)\.?\s*[:\-]?\s*[0-9०-९]+")
 MOHALLA_RX = re.compile(rf"(?i:\bMohalla|\bMohalla|\bMuhalla|\bColony\s+No)\s+{LAT_NAME}|मोहल्ला\s+{DEV_NAME}")
 LANDMARK_RX = re.compile(rf"(?i:\b(?:near|opp\.?|opposite|behind|beside|next\s+to|in\s+front\s+of))\s+(?:the\s+)?{LAT_NAME}"
-                         rf"|(?:[{DEV}]+\s+){{1,3}}के\s+(?:पास|सामने|पीछे|बगल\s+में)")
+                         rf"|(?<![{DEV}])(?:[{DEV}]+\s+){{1,3}}के\s+(?:पास|सामने|पीछे|बगल\s+में)")  # word start only: linear on long runs
 VILLAGE_RX = re.compile(rf"(?i:\b(?:Village|Vill\.?|Gram|Gaon|Gaanv|Mauza))\s*[:\-]?\s*({LAT_NAME})"
                         rf"|(?<![{DEV}])(?:ग्राम|गांव|गाँव|मौजा)(?![{DEV}])\s*[:\-]?\s*({DEV_NAME})")
 
