@@ -31,7 +31,6 @@ from pathlib import Path, PurePosixPath
 DEMO = Path(__file__).resolve().parent
 ROOT = DEMO.parent
 MAIN = ROOT / "main.py"
-SAMPLES = DEMO / "samples"
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("INCOGRX_DEMO_PORT", "8765"))
 MAX_UPLOAD = 80 * 1024 * 1024          # bytes of decoded upload per run
@@ -167,9 +166,6 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if self.path in ("/", "/index.html"):
             self._send(200, (DEMO / "index.html").read_bytes(), "text/html; charset=utf-8")
-        elif self.path == "/api/samples":
-            names = sorted(p.relative_to(SAMPLES).as_posix() for p in SAMPLES.rglob("*") if p.is_file())
-            self._json(200, {"samples": names})
         elif self.path.startswith("/api/download/"):
             data = zip_job(self.path.rsplit("/", 1)[-1])
             if data is None:
@@ -205,9 +201,6 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Choose at least one file.")
                 if total > MAX_UPLOAD:
                     raise ValueError("Upload is larger than 80 MB.")
-            elif mode == "sample":
-                files = [(p.relative_to(SAMPLES).as_posix(), p.read_bytes())
-                         for p in sorted(SAMPLES.rglob("*")) if p.is_file()]
             else:
                 raise ValueError("Unknown mode.")
             self._json(200, run_job(files, secret))

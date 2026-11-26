@@ -109,7 +109,6 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
     <div class="tabs" role="tablist">
       <button class="tab on" data-pane="p-files">Upload files</button>
       <button class="tab" data-pane="p-text">Paste text</button>
-      <button class="tab" data-pane="p-sample">Try the sample</button>
     </div>
 
     <div class="pane on" id="p-files">
@@ -135,10 +134,6 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
       </div>
     </div>
 
-    <div class="pane" id="p-sample">
-      <p class="sub" style="margin:0">Runs a small invented dataset: one patient (Sunaina Verma) appears in a registration CSV, an English discharge summary, a Hindi prescription and a Hinglish WhatsApp forward, plus an OPD export and one deliberately broken file. Watch her get a single pseudonym everywhere.</p>
-      <div class="chosen" id="sampleList"></div>
-    </div>
 
     <div class="runbar">
       <label class="secret" title="Same secret gives the same pseudonyms and date shifts; a new secret changes them all.">Release secret <input id="secret" value="demo-secret" autocomplete="off"></label>
@@ -210,7 +205,7 @@ let mode = "files", picked = [], last = null;
 document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
   document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === t.dataset.pane));
-  mode = {"p-files":"files","p-text":"text","p-sample":"sample"}[t.dataset.pane];
+  mode = {"p-files":"files","p-text":"text"}[t.dataset.pane];
 });
 document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { $("#text").value = EXAMPLES[b.dataset.ex]; });
 $("#pickFiles").onclick = () => $("#fileInput").click();
@@ -243,7 +238,6 @@ const toB64 = f => new Promise((res, rej) => { const r = new FileReader();
   r.onload = () => { const b = new Uint8Array(r.result); let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); res(btoa(s)); };
   r.onerror = rej; r.readAsArrayBuffer(f); });
 
-fetch("/api/samples").then(r => r.json()).then(d => { $("#sampleList").innerHTML = d.samples.map(s => `<span class="fchip">${esc(s)}</span>`).join(""); }).catch(() => {});
 
 $("#run").onclick = async () => {
   const body = {mode, secret: $("#secret").value.trim()};

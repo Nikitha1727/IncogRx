@@ -153,7 +153,7 @@ python demo/app.py            # opens http://127.0.0.1:8765
 ```
 
 * Standard library only, offline, listens on 127.0.0.1 only. It calls the same `main.py` the evaluator runs, in a separate process, so it shows exactly what gets scored.
-* Three ways in: upload files or a whole folder, paste a note (English, Hindi or Hinglish), or run the built-in invented sample in `demo/samples/`.
+* Two ways in: upload files or a whole folder, or paste a note (English, Hindi or Hinglish). `demo/samples/` holds a small invented dataset to upload with "Choose a folder".
 * Shows files released or quarantined (with the reason), what was removed by type, every patient pseudonym with the files it links, a side-by-side original and released view per file, and a zip download of the full release.
 * Uploads and results live in a temporary folder that is deleted when the server stops; nothing is logged.
 
