@@ -735,8 +735,8 @@ const $ = s => document.querySelector(s);
 const API_TOKEN = "__INCOGRX_API__";
 // Hosted on Vercel the page is static (token not replaced): the engine is the /api/run function on the
 // same site, and every result comes back inline because nothing is kept between requests.
-// Full engine with OCR (handwriting, scans, PDFs) on a Hugging Face Space; empty = not configured.
-const OCR_ENGINE = "";
+// Full engine with OCR (handwriting, scans, PDFs) on Render (render.yaml); empty = not configured.
+const OCR_ENGINE = "https://incogrx-demo.onrender.com";
 const API_PARAM = new URLSearchParams(location.search).get("api");
 const STATIC = API_TOKEN.startsWith("__INCOGRX");          // page served by Vercel, not by demo/app.py
 const REMOTE = (API_PARAM || (STATIC ? OCR_ENGINE : "")).replace(/\/$/, "");
