@@ -56,6 +56,10 @@ INK = (0.06, 0.16, 0.27)
 _TOK = re.compile(r"\S+")
 _WORDY = re.compile(r"[A-Za-z0-9ऀ-ॿ]")
 _CAPWORD = re.compile(r"^[A-Z][a-z]+[.,;:]?$|^[A-Z]{2,}[.,;:]?$|^[ऀ-ॿ]+$")
+# characters a PDF draws without saying which letters they are (font with no Unicode map):
+# nobody can check them, so they are hidden in the image and marked in the text
+_UNMAPPED = re.compile(r"[\x00\ufffd]+(?:[ ]+[\x00\ufffd]+)*")
+UNREADABLE = "[UNREADABLE]"
 _TAGGED = ("[NAME", "[RELATIVE", "PSN-")
 
 
@@ -130,7 +134,7 @@ def prepare(name: str, data: bytes) -> dict | None:
         pages, todo = [], []
         langs = ocr_langs()
         for page in doc:
-            text = page.get_text("text")
+            text = _UNMAPPED.sub(UNREADABLE, page.get_text("text"))
             if len(text.strip()) >= MIN_TEXT:
                 pages.append({"kind": "text", "text": text.strip("\n")})
             elif OCR_AVAILABLE:
@@ -218,6 +222,26 @@ def _ocr_masks(page: dict, released: str) -> tuple:
     return hide, "".join(out), len(unsure_b)
 
 
+def _unmapped_rects(page) -> list:
+    """Boxes around runs of glyphs that carry no Unicode (cannot be read, so cannot be cleared)."""
+    rects = []
+    for block in page.get_text("rawdict").get("blocks", []):
+        for line in block.get("lines", []):
+            for span in line.get("spans", []):
+                run = None
+                for ch in span.get("chars", []):
+                    c = ch.get("c", "")
+                    if c in ("\x00", "\ufffd") or (c == " " and run is not None):
+                        r = pymupdf.Rect(ch["bbox"])
+                        run = r if run is None else run | r
+                    elif run is not None:
+                        rects.append(run)
+                        run = None
+                if run is not None:
+                    rects.append(run)
+    return [r for r in rects if not r.is_empty]
+
+
 def redact(prep: dict, released_text: str) -> tuple:
     """Redacted, scrubbed PDF bytes; the released text (with unsure OCR words hidden); and per-page stats."""
     parts = released_text.split(PAGE_MARK)
@@ -254,6 +278,9 @@ def redact(prep: dict, released_text: str) -> tuple:
                         page.add_redact_annot(rect, text=rep, fontname="helv", fontsize=size,
                                               fill=FILL, text_color=INK, align=0)
                         st["boxes"] += 1
+                for rect in _unmapped_rects(page):
+                    page.add_redact_annot(rect, fill=(0, 0, 0))
+                    st["boxes"] += 1
                 page.apply_redactions()            # removes the underlying text, not just covers it
                 out_texts.append(rel)
             stats.append(st)

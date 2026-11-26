@@ -238,6 +238,8 @@ def _clean_text(value, kb: Knowledge | None):
     if kb is not None and kb.token_rx() is not None:
         text, m = kb.redact_tokens(text, textner.protected_spans(text))
         n += m
+    text, m = textner.redact_aliases(text)
+    n += m
     Stats.identifiers += n
     _count_new_tags(value, text)
     return text

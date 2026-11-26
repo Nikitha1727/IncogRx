@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,6 +16,24 @@ JSON_EXT = {".json", ".fhir"}
 JSONL_EXT = {".jsonl", ".ndjson"}
 MAX_JSON_DEPTH = 120
 csv.field_size_limit(10_000_000)
+
+
+# Files that must never be released, whatever their extension: the antivirus test
+# signature (and anything carrying it), and cryptographic key material. Matching is
+# on bytes, so the check holds before any decoding and never echoes the content.
+_AV_SIGNATURE = re.compile(rb"X5O!P%@AP\[4\\PZX54\(P\^\)7CC\)7\}\$EICAR|EICAR-STANDARD-ANTIVIRUS-TEST-FILE")
+_KEY_MATERIAL = re.compile(
+    rb"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----"
+    rb"|(?i:\b(?:aes|enc|encryption|private|secret|master|session|data)?[_ -]?"
+    rb"(?:key|nonce|iv|secret)(?:[_ -]?(?:hex|b64|base64))?\b)\s*[=:]\s*[\"']?"
+    rb"(?:[0-9A-Fa-f]{24,}|[A-Za-z0-9+/]{32,}={0,2})(?![0-9A-Za-z])")
+
+
+def security_gate(raw: bytes) -> None:
+    if _AV_SIGNATURE.search(raw):
+        raise Quarantine("malware_signature")
+    if _KEY_MATERIAL.search(raw):
+        raise Quarantine("key_material")
 
 
 class Quarantine(Exception):
@@ -103,6 +122,7 @@ def load(path: Path, rel: str, raw: bytes) -> Doc:
     ext = path.suffix.lower()
     if not raw.strip():
         raise Quarantine("empty_file")
+    security_gate(raw)
     known = TEXT_EXT | CSV_EXT | TSV_EXT | JSON_EXT | JSONL_EXT
     if ext not in known:
         raise Quarantine("unsupported_format")

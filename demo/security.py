@@ -36,6 +36,12 @@ PDF_ACTIVE = [(rb"/JavaScript|/JS\b", "JavaScript"), (rb"/OpenAction", "auto-run
               (rb"/EmbeddedFile", "embedded file"), (rb"/RichMedia", "rich media"), (rb"/XFA", "XFA form"),
               (rb"/SubmitForm", "form that sends data out"), (rb"/URI\b", "external link")]
 SCRIPT_TEXT = re.compile(rb"(?i)<script\b|javascript:|vbscript:|onload\s*=|<iframe\b")
+OPAQUE_EXT = {"aesgcm", "aes", "enc", "encrypted", "gpg", "pgp", "age", "p7m", "kdbx", "vault", "crypt"}
+KEY_MATERIAL = re.compile(
+    rb"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----"
+    rb"|(?i:\b(?:aes|enc|encryption|private|secret|master|session|data)?[_ -]?"
+    rb"(?:key|nonce|iv|secret)(?:[_ -]?(?:hex|b64|base64))?\b)\s*[=:]\s*[\"']?"
+    rb"(?:[0-9A-Fa-f]{24,}|[A-Za-z0-9+/]{32,}={0,2})(?![0-9A-Za-z])")
 IMAGE_EXT = {"jpg", "jpeg", "png", "tif", "tiff", "bmp", "webp", "gif"}
 
 
@@ -55,6 +61,10 @@ def scan(name: str, data: bytes) -> dict:
         return _result(name, "blocked", f"file larger than {MAX_FILE // (1024 * 1024)} MB")
     if EICAR in data:
         return _result(name, "blocked", "matches the EICAR anti-virus test signature (treated as malware)")
+    if KEY_MATERIAL.search(data[:2_000_000]):
+        return _result(name, "blocked", "cryptographic key material: never logged, never released")
+    if ext in OPAQUE_EXT or _opaque(data, ext):
+        return _result(name, "blocked", "encrypted or opaque payload: it cannot be inspected, so it is not released")
     if ext in EXEC_EXT:
         return _result(name, "blocked", f"executable, script or macro file type (.{ext})")
     for sig, what in MAGIC:
@@ -76,6 +86,25 @@ def scan(name: str, data: bytes) -> dict:
     if ext in IMAGE_EXT:
         return _scan_image(name, data)
     return _result(name, "clean", "no executable or active content found")
+
+
+def _opaque(data: bytes, ext: str) -> bool:
+    """High-entropy bytes that are neither text nor a known document/image format (ciphertext, packed data)."""
+    if ext in IMAGE_EXT or ext == "pdf" or data[:5] == b"%PDF-" or len(data) < 64:
+        return False
+    head = data[:65536]
+    try:
+        head.decode("utf-8")
+        return False
+    except UnicodeDecodeError:
+        pass
+    import math
+    counts = [0] * 256
+    for b in head:
+        counts[b] += 1
+    n = len(head)
+    ent = -sum(c / n * math.log2(c / n) for c in counts if c)
+    return ent > 7.2 or (n < 4096 and ent > 0.75 * math.log2(min(n, 256)) + 0.5 and sum(counts[32:127]) < 0.7 * n)
 
 
 def _scan_pdf(name: str, data: bytes) -> dict:

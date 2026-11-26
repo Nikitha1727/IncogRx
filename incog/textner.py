@@ -247,3 +247,44 @@ def admin_names(text: str) -> list:
 
 def protected_spans(text: str) -> list:
     return [(m.start(), m.end()) for m in PROTECT_RX.finditer(text)]
+
+
+# ----------------------------------------------------------------------------- script aliases
+# "Aarav Menon (आरव मेनन)", "[NAME] / मीरा नायर": a name written again in the other script,
+# right beside a name already replaced, is the same person and goes too.
+_TAG = rf"\[(?:NAME|RELATIVE)\](?:[ ](?i:{HONOR}))?"
+_ALIAS = rf"(?:[{DEV}]+(?:[ ][{DEV}]+){{0,2}}|{LAT_TOK}(?:[ ]{LAT_TOK}){{1,2}})"
+ALIAS_RX = re.compile(
+    rf"({_TAG})(\s*\(\s*)({_ALIAS})(?=\s*\))"
+    rf"|({_TAG})(\s*/\s*)({_ALIAS})(?![{L}])"
+    rf"|(?<![{L}])({_ALIAS})(\s*/\s*)({_TAG})"
+    rf"|(?<![{L}])({_ALIAS})(\s*\(\s*)({_TAG})(?=\s*\))")
+
+
+def _alias_ok(name: str) -> bool:
+    return _valid(name) and not any(t.lower().strip(".") in NOT_NAME or t in DEV_STOP for t in name.split(" "))
+
+
+def redact_aliases(text: str) -> tuple:
+    if "[" not in text:
+        return text, 0
+    n = 0
+
+    def sub(m):
+        nonlocal n
+        g = m.groups()
+        if g[0] is not None:
+            tag, sep, name, lead = g[0], g[1], g[2], True
+        elif g[3] is not None:
+            tag, sep, name, lead = g[3], g[4], g[5], True
+        elif g[6] is not None:
+            name, sep, tag, lead = g[6], g[7], g[8], False
+        else:
+            name, sep, tag, lead = g[9], g[10], g[11], False
+        if not _alias_ok(name):
+            return m.group(0)
+        n += 1
+        mark = tag.split("]")[0] + "]"
+        return tag + sep + mark if lead else mark + sep + tag
+    return ALIAS_RX.sub(sub, text), n
+
