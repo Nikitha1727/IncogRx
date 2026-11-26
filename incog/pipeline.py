@@ -208,16 +208,20 @@ def units(doc: readers.Doc, kb: Knowledge) -> list:
             return json_units(doc.data)
         finally:
             sniff.CURRENT = {}
-    if doc.kind == "jsonl":
+    if doc.kind == "jsonl":                     # one record per line, located like an array: /0, /1, ...
         sniff.CURRENT = sniff.json_map(doc.lines, kb)
-        ev = link.Ev()
-        for o in doc.lines:
-            link.json_evidence(o, (), None, ev)
-        sniff.CURRENT = {}
-        return [("doc", link.single_person(ev))]
+        try:
+            out = []
+            for i, o in enumerate(doc.lines):
+                ev = link.Ev()
+                link.json_evidence(o, (), None, ev)
+                out.append((f"/{i}", link.single_person(ev)))
+            return out or [("doc", link.Ev())]
+        finally:
+            sniff.CURRENT = {}
     ev = link.Ev()
     link.text_evidence(doc.text, ev, kb)
-    return [("doc", ev)]
+    return [("doc", link.single_person(ev))]     # a register or roster of many patients stays unlinked
 
 
 def _record_like(v: list) -> bool:
@@ -331,10 +335,48 @@ def put_pseudonym(text: str, ps: str | None) -> str:
 
 
 # ----------------------------------------------------------------------------- pass 2: sanitising
+# A JSON key shaped like a person's name ("Vihana_Bisht", "Zainab Siddiqui") used as an index of
+# records. Keys built from ordinary field, clinical or admin words never match.
+_NAME_KEY_RX = re.compile(r"^(?:[A-Z][a-z]{2,}(?:[_ .\-][A-Z][a-z]{2,}){1,2}|"
+                          r"[\u0900-\u097F]{2,}(?:[_ ][\u0900-\u097F]{2,}){1,2})$")
+_KEY_WORDS = {
+    "blood", "pressure", "sugar", "lab", "labs", "result", "results", "report", "reports", "summary", "discharge",
+    "admission", "visit", "visits", "record", "records", "patient", "patients", "ward", "census", "export", "meta",
+    "data", "general", "medicine", "surgery", "department", "total", "count", "value", "values", "reference",
+    "range", "ranges", "normal", "high", "low", "unit", "units", "test", "tests", "panel", "profile", "history",
+    "family", "social", "chief", "complaint", "complaints", "plan", "notes", "note", "order", "orders", "item",
+    "items", "list", "index", "name", "names", "details", "info", "information", "contact", "address",
+    "insurance", "claim", "claims", "billing", "bill", "amount", "payment", "drug", "drugs", "dose", "frequency",
+    "duration", "vital", "vitals", "sign", "signs", "heart", "rate", "body", "temperature", "weight", "height",
+    "liver", "kidney", "function", "thyroid", "lipid", "urine", "serum", "complete", "follow", "next", "last",
+    "first", "date", "time", "status", "type", "code", "source", "version", "created", "updated", "hospital",
+    "clinic", "facility", "doctor", "nurse", "staff", "room", "bed", "block", "district", "state", "city",
+    "village", "mohalla", "house", "random", "fasting", "haemoglobin", "hemoglobin", "white", "red", "cell",
+    "cells", "platelet", "platelets", "glucose", "sodium", "potassium", "creatinine", "urea", "culture",
+    "outpatient", "inpatient", "emergency", "primary", "secondary", "diagnosis", "treatment", "advice",
+    "prescription", "medication", "medications", "allergy", "allergies", "immunization", "procedure",
+    "procedures", "observation", "observations", "encounter", "bundle", "resource", "entry", "extension",
+    "identifier", "telecom", "gender", "birth", "deceased", "marital", "language", "communication"}
+
+
+def _name_key(key: str, kb: Knowledge | None = None) -> bool:
+    if not _NAME_KEY_RX.match(key):
+        return False
+    words = [w.lower() for w in re.split(r"[_ .\-]", key)]
+    from .textner import NOT_NAME, DEV_STOP
+    admin = getattr(kb, "admin", set()) if kb is not None else set()   # districts and tehsils seen in the data
+    return not any(w in _KEY_WORDS or w in NOT_NAME or w in DEV_STOP or w in admin for w in words)
+
+
 def clean_key(key: str, kb: Knowledge) -> str:
     if classify_key(key) is not None:
         return key
-    return clean_meta(key, kb)
+    out = clean_meta(key, kb)
+    if out == key and _name_key(key, kb):
+        Stats.identifiers += 1
+        Stats.entities["PATIENT_NAME"] += 1
+        return "[NAME]"
+    return out
 
 
 def clean_b64(value: str, kb: Knowledge) -> str:
@@ -455,12 +497,20 @@ def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
             [{"file": out_rel, "loc": "doc", "patient": None}]
         return json.dumps(cleaned, ensure_ascii=False, indent=2) + ("\n" if doc.text.endswith("\n") else "")
     if doc.kind == "jsonl":
-        p = ps.get("doc")
-        records.append({"file": out_rel, "loc": "doc", "patient": p})
-        jctx = {"pseudonym": p, "shift": shift_for(p, rel, "doc"), "order": order}
         sniff.CURRENT = sniff.json_map(doc.lines, kb)
-        return doc.newline.join(json.dumps(sanitize_json(o, (), None, jctx, kb), ensure_ascii=False)
-                                for o in doc.lines) + doc.newline
+        lines = []
+        try:
+            for i, o in enumerate(doc.lines):
+                loc = f"/{i}"
+                p = ps.get(loc, ps.get("doc"))
+                records.append({"file": out_rel, "loc": loc, "patient": p})
+                jctx = {"pseudonym": p, "shift": shift_for(p, rel, loc), "order": order}
+                lines.append(json.dumps(sanitize_json(o, (), None, jctx, kb), ensure_ascii=False))
+        finally:
+            sniff.CURRENT = {}
+        if not lines:
+            records.append({"file": out_rel, "loc": "doc", "patient": None})
+        return doc.newline.join(lines) + doc.newline
     p = ps.get("doc")
     records.append({"file": out_rel, "loc": "doc", "patient": p})
     text = clean_text(doc.text, kb)
@@ -493,6 +543,9 @@ def peak_rss_mb() -> float:
         return 0.0
 
 
+MAX_INPUT_BYTES = 1024 * 1024 * 1024     # 1 GB per file: well past any real export, far below the 4 GB RAM cap
+
+
 def run(inp: Path, out: Path) -> dict:
     t0 = time.monotonic()
     sys.setrecursionlimit(10000)
@@ -503,6 +556,18 @@ def run(inp: Path, out: Path) -> dict:
     items = []
     for path in sorted((p for p in inp.rglob("*") if p.is_file()), key=lambda p: p.relative_to(inp).as_posix()):
         rel = path.relative_to(inp).as_posix()
+        # a link can point anywhere on the machine (/etc/passwd, another patient folder): never
+        # follow it into the release; an oversized file is not loaded into memory at all
+        linked = path.is_symlink() or any((inp / d).is_symlink() for d in path.relative_to(inp).parents
+                                          if str(d) != ".")
+        if linked or path.stat().st_size > MAX_INPUT_BYTES:
+            h = hashlib.sha256()
+            with open(path, "rb") as fh:
+                for chunk in iter(lambda: fh.read(1 << 20), b""):
+                    h.update(chunk)
+            items.append({"rel": rel, "sha": h.hexdigest(), "doc": None,
+                          "reason": "symlink" if linked else "file_too_large"})
+            continue
         raw = path.read_bytes()
         item = {"rel": rel, "sha": hashlib.sha256(raw).hexdigest(), "doc": None, "reason": None}
         try:

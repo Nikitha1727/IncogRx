@@ -31,9 +31,17 @@ def main() -> int:
     if dst.exists() and any(dst.iterdir()):
         print("incogrx-docs: output folder must be new or empty", file=sys.stderr)
         return 2
-    files = [(p.relative_to(src).as_posix(), p.read_bytes()) for p in sorted(src.rglob("*")) if p.is_file()]
+    files, links = [], []
+    for p in sorted(src.rglob("*")):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(src).as_posix()
+        if p.is_symlink() or any((src / d).is_symlink() for d in p.relative_to(src).parents if str(d) != "."):
+            links.append(app.security._result(rel, "blocked", "symbolic link: never followed outside the input"))
+            continue
+        files.append((rel, p.read_bytes()))
     t0 = time.time()
-    res = app.run_job(files, os.environ.get("RAKSHA_SECRET", ""))
+    res = app.run_job(files, os.environ.get("RAKSHA_SECRET", ""), scans=links)
     work = app.JOBS.pop(res["job"])
     shutil.copytree(work / "output", dst, dirs_exist_ok=True)
     shutil.rmtree(work, ignore_errors=True)
@@ -52,6 +60,8 @@ def main() -> int:
         review = f" | review pages {d['review_pages']}" if d["review_pages"] else ""
         print(f"  DOCUMENT     {d['name']}: {d['pages']} pages ({kind}) | {d['boxes']} redaction boxes | "
               f"read {d['read_seconds']}s, redact {d['redact_seconds']}s{review}")
+        for c in d.get("clinical_checks", []):
+            print(f"    CHECK page {c['page']}: {c['issue']} (released text not changed)")
     eng = [f for f in res["files"] if f["status"] != "sanitized"]
     for f in eng:
         name = f.get("input", "?")

@@ -222,6 +222,46 @@ def _ocr_masks(page: dict, released: str) -> tuple:
     return hide, "".join(out), len(unsure_b)
 
 
+# ----------------------------------------------------------------------------- clinical OCR checks
+# OCR can drop a decimal point ("Hb 112 g/dL") or read "µL" as "uL". The released text is never
+# changed to a guessed value: the page is flagged for human review with the reason instead.
+_NUM = r"(\d{1,4}(?:[.,]\d{1,3})?)"
+_PLAUSIBLE = [
+    ("Hb", re.compile(r"(?i)\b(?:Hb|Ha?emoglobin)\b\s*[:=]?\s*" + _NUM + r"\s*g\s*/\s*dL"), 3.0, 25.0, "g/dL"),
+    ("platelets", re.compile(r"(?i)platelets?\s*[:=]?\s*" + _NUM + r"\s*lakh"), 0.05, 15.0, "lakh/µL"),
+    ("creatinine", re.compile(r"(?i)creatinine\s*[:=]?\s*" + _NUM + r"\s*mg\s*/\s*dL"), 0.1, 20.0, "mg/dL"),
+    ("SpO2", re.compile(r"(?i)SpO\s?2\s*[:=]?\s*" + _NUM + r"\s*%"), 50.0, 100.0, "%"),
+    ("pulse", re.compile(r"(?i)\bpulse\s*[:=]?\s*" + _NUM + r"\s*/\s*min"), 20.0, 250.0, "/min"),
+]
+_BP = re.compile(r"(?i)\bBP\b\s*[:=]?\s*(\d{2,3})\s*/\s*(\d{2,3})")
+_UNIT_SUSPECT = [
+    (re.compile(r"(?<![A-Za-z])uL\b"), "'uL' is probably 'µL' (micro sign lost by OCR)"),
+    (re.compile(r"(?<![A-Za-z])ug\b"), "'ug' is probably 'µg'"),
+    (re.compile(r"(?i)\bmg\s*l\s*dL\b|\bmgldL\b|\bg\s*l\s*dL\b"), "unit looks like a misread 'mg/dL' or 'g/dL'"),
+    (re.compile(r"(?i)\bmm\s*H\s*9\b|\bmmHq\b"), "unit looks like a misread 'mmHg'"),
+    (re.compile(r"\b\d+\s*(?:rng|mq)\b"), "unit looks like a misread 'mg'"),
+    (re.compile(r"\b\d+\s*mcq\b"), "unit looks like a misread 'mcg'"),
+]
+
+
+def clinical_checks(text: str) -> list:
+    """Reasons a released OCR page needs a human look at its clinical values (values are not PII)."""
+    out = []
+    for name, rx, lo, hi, unit in _PLAUSIBLE:
+        for m in rx.finditer(text):
+            v = float(m.group(1).replace(",", "."))
+            if not lo <= v <= hi:
+                out.append(f"{name} {m.group(1)} {unit} is outside {lo:g} to {hi:g}: possible OCR error (decimal point?)")
+    for m in _BP.finditer(text):
+        sy, di = int(m.group(1)), int(m.group(2))
+        if not (50 <= sy <= 260 and 30 <= di <= 160 and di < sy):
+            out.append(f"BP {sy}/{di} is implausible: possible OCR error")
+    for rx, why in _UNIT_SUSPECT:
+        if rx.search(text):
+            out.append(why)
+    return out
+
+
 def _unmapped_rects(page) -> list:
     """Boxes around runs of glyphs that carry no Unicode (cannot be read, so cannot be cleared)."""
     rects = []
@@ -269,6 +309,9 @@ def redact(prep: dict, released_text: str) -> tuple:
                                           fill=(0, 0, 0))
                     st["boxes"] += 1
                 page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_PIXELS)   # pixels removed, not covered
+                st["clinical_checks"] = clinical_checks(rel_masked)
+                if st["clinical_checks"]:
+                    st["review"] = True
                 out_texts.append(rel_masked)
             else:
                 pairs = _pairs(info.get("text", ""), rel) if per_page else whole_pairs

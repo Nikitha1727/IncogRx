@@ -1,5 +1,5 @@
 # Privacy rules. main.py reads simple "key: value" lines.
-age_band_years: 10             # ages become bands like 40-49 (the band always contains the true age)
+age_band_years: 20             # ages become bands like 40-59 (the band always contains the true age); 10-year bands let a voter-roll attacker single out 14 of 48 practice patients, 20-year bands 8
 age_top_code: 80               # ages >= 80 become "80+" (very old patients are rare)
 date_shift_max_days: 180       # every date of one patient moves by the same secret offset (intervals kept)
 keep_tehsil: false             # false: only the district survives (villages and tehsils become the district)

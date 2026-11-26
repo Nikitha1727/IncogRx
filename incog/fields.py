@@ -13,6 +13,8 @@ import unicodedata
 # category -> phrases (normalised: lowercase, alnum words). A header matches a category when
 # one of its phrases appears as a word sequence inside the header.
 _RULES = [
+    ("SECRET", ["password", "passwd", "pwd", "passcode", "passphrase", "api key", "apikey", "access token",
+                "auth token", "refresh token", "client secret", "secret", "secret key", "private key"]),
     ("ABHA", ["abha", "health id", "healthid", "आभा"]),
     ("AADHAAR", ["aadhaar", "aadhar", "adhar", "uid", "uidai", "आधार"]),
     ("PAN", ["pan", "pan no", "pan number", "payer pan", "पैन"]),

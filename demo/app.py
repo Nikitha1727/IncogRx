@@ -193,6 +193,7 @@ def run_job(files: list, secret: str, scans: list | None = None) -> dict:
                     "typed_pages": sum(p["kind"] == "text" for p in pages), "ocr_pages": len(ocr),
                     "ocr_conf": round(sum(p["conf"] for p in ocr) / len(ocr), 1) if ocr else None,
                     "review_pages": [p["page"] for p in ocr if p.get("review")],
+                    "clinical_checks": [{"page": p["page"], "issue": c} for p in ocr for c in p.get("clinical_checks", [])],
                     "unsure_hidden": sum(p.get("unsure_hidden", 0) for p in ocr),
                     "boxes": sum(p["boxes"] for p in pages), "langs": prep["langs"],
                     "read_seconds": prep["read_seconds"], "redact_seconds": round(time.time() - t_doc, 2)})

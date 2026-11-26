@@ -39,6 +39,13 @@ RX = {
     "PAN": re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])"),
     "INSURANCE": re.compile(r"(?i)(?<![A-Za-z0-9])(?:PMJAY|PM-JAY|AB-?PMJAY)[ \t-]?[A-Z]{2}[ \t-]?\d{6,14}(?!\d)"
                             r"|(?<![A-Za-z0-9])POL[\s/-]?\d{1,4}[\s/-]\d{5,12}(?!\d)"),
+    # planted canary tokens and well-known credential shapes: never released, whatever the field
+    "SECRET": re.compile(r"(?i)(?<![A-Za-z0-9])CANARY[-_][A-Z0-9][A-Z0-9_-]{3,}"
+                         r"|(?<![A-Za-z0-9])(?:sk|pk|rk)[-_](?:live|test|prod)[-_][A-Za-z0-9]{12,}"
+                         r"|(?<![A-Za-z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![A-Za-z0-9])"
+                         r"|(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{30,}"
+                         r"|(?<![A-Za-z0-9])xox[abprs]-[A-Za-z0-9-]{10,}"
+                         r"|(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"),
 }
 # label-anchored detectors: (label regex, value regex, kind)
 LABELLED = [
@@ -48,6 +55,9 @@ LABELLED = [
     (r"(?i)(?:\bUHID|\bIPD\s*No|\bIP\s*No|\bMRN|\bReg(?:istration)?\.?\s*No|\bAdm(?:ission)?\.?\s*No|"
      r"\bPatient\s*ID|\bCR\s*No|\bOPD\s*No|पंजीकरण\s*(?:सं|संख्या)|आईपीडी\s*(?:सं|संख्या|नं)|ओपीडी\s*(?:सं|संख्या|नं))\.?\s*[:#\-]?\s*",
      r"(?=[A-Z0-9/\-]*\d{4})[A-Z]{0,6}[/\-]?[A-Z0-9][A-Z0-9/\-]{3,}|(?=[A-Z0-9\-]*\d)[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}", "MRN"),
+    (r"(?i)(?<![A-Za-z])(?:password|passwd|pwd|passcode|passphrase|otp|api[_ -]?key|access[_ -]?token|"
+     r"auth[_ -]?token|refresh[_ -]?token|client[_ -]?secret|secret[_ -]?key|bearer)\s*[:=]\s*[\"']?",
+     r"[^\s\"',;]{3,}", "SECRET"),
     (r"(?i)(?:Policy\s*(?:No\.?|Number|#)|Member\s*ID|Card\s*No\.?|Insurance\s*(?:ID|No\.?|Number|#))\s*[:\-]?\s*", r"[A-Z0-9][A-Z0-9/\-]{4,}", "INSURANCE"),
 ]
 LABELLED_RX = [(re.compile(lab + "(" + val + ")"), kind) for lab, val, kind in LABELLED]
@@ -236,7 +246,7 @@ def find_spans(text: str, kb: Knowledge | None = None) -> list:
         return []
     t = norm_digits(text)
     found = []
-    for kind in ("EMAIL", "INSURANCE", "ABHA", "AADHAAR_MASKED", "AADHAAR", "PAN", "PHONE_MASKED", "PHONE"):
+    for kind in ("SECRET", "EMAIL", "INSURANCE", "ABHA", "AADHAAR_MASKED", "AADHAAR", "PAN", "PHONE_MASKED", "PHONE"):
         for m in RX[kind].finditer(t):
             found.append((m.start(), m.end(), kind if kind != "PHONE_MASKED" else "PHONE"))
     for rx, kind in LABELLED_RX:
@@ -291,7 +301,7 @@ def _merge(spans: list) -> list:
 
 TAG = {"MRN": "[MRN]", "ID": "[ID]", "PHONE": "[PHONE]", "AADHAAR": "[AADHAAR]", "AADHAAR_MASKED": "[AADHAAR]",
        "ABHA": "[ABHA]", "PAN": "[PAN]", "EMAIL": "[EMAIL]", "INSURANCE": "[INSURANCE_ID]", "DOB": "[DOB]",
-       "PIN": "[PIN]", "NAME": "[NAME]", "RELATIVE": "[RELATIVE]", "ADDRESS": "[ADDRESS]"}
+       "PIN": "[PIN]", "NAME": "[NAME]", "RELATIVE": "[RELATIVE]", "ADDRESS": "[ADDRESS]", "SECRET": "[SECRET]"}
 
 
 def redact(text: str, spans: list) -> tuple:

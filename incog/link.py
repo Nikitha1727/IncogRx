@@ -385,7 +385,7 @@ class Linker:
             i = self.parent[i]
         return i
 
-    def _conflict(self, a: Ev, b: Ev, by_name: bool, phone: bool = False) -> bool:
+    def _conflict(self, a: Ev, b: Ev, by_name: bool, phone: bool = False, national: bool = False) -> bool:
         # a phone is often shared by a family: a phone link never joins two different birth dates
         if phone:
             da, db = _births(a.dobs), _births(b.dobs)
@@ -404,6 +404,17 @@ class Linker:
             my = {i for i in b.ids if i.startswith("M:")}
             if mx and my and not mx & my and a.villages and b.villages and not a.villages & b.villages:
                 return True
+            # a shared name (even with the same relative's name) does not outweigh a different
+            # record number AND a different phone, unless the birth date agrees: homonyms are common
+            px = {i for i in a.ids if i.startswith("P:")}
+            py = {i for i in b.ids if i.startswith("P:")}
+            if mx and my and not mx & my and px and py and not px & py and not (da and db and da & db):
+                return True
+        if national:
+            # one Aadhaar number belongs to one person: a name that does not transliterate cleanly
+            # (or a typo) does not split the record, unless the birth dates disagree
+            da, db = _births(a.dobs), _births(b.dobs)
+            return bool(da and db and not da & db)
         if a.names and b.names and not a.names & b.names:
             fa = {n.split("|")[0] for n in a.names} | a.firsts
             fb = {n.split("|")[0] for n in b.names} | b.firsts
@@ -413,11 +424,12 @@ class Linker:
                 return True
         return False
 
-    def union(self, i: int, j: int, cev: dict, by_name: bool = False, phone: bool = False) -> bool:
+    def union(self, i: int, j: int, cev: dict, by_name: bool = False, phone: bool = False,
+              national: bool = False) -> bool:
         ri, rj = self.find(i), self.find(j)
         if ri == rj:
             return True
-        if self._conflict(cev[ri], cev[rj], by_name, phone):
+        if self._conflict(cev[ri], cev[rj], by_name, phone, national):
             return False
         if rj < ri:
             ri, rj = rj, ri
@@ -447,7 +459,7 @@ class Linker:
         for k in sorted(idx):
             members = idx[k]
             for j in members[1:]:
-                self.union(members[0], j, cev, phone=k.startswith("P:"))
+                self.union(members[0], j, cev, phone=k.startswith("P:"), national=k.startswith("A:"))
         # 2) same name + second clue
         for _round in range(2):
             keys: dict = {}

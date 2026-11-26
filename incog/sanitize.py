@@ -25,7 +25,7 @@ class Stats:
 
 
 ENTITY = {"NAME": "PATIENT_NAME", "INSURANCE": "INSURANCE_ID"}
-_TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|"
+_TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|SECRET|HOUSE|"
                      r"LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]")
 
 
@@ -222,12 +222,29 @@ def clean_text(value, kb: Knowledge | None):
     return text
 
 
+_EMBEDDED_BLOB = re.compile(r"(?<![A-Za-z0-9+/=])(?:[A-Za-z0-9+/]{24,}={0,2}|(?:[0-9a-fA-F]{2}){12,})(?![A-Za-z0-9+/=])")
+
+
+def _clean_embedded(value: str, kb: Knowledge | None) -> str:
+    """Encoded attachments inside a longer text ("Attachment (base64): UGF0aWVudC..."): decode, clean, re-encode."""
+    def sub(m):
+        blob = _decode_blob(m.group())
+        if blob is None:
+            return m.group()
+        inner, encode = blob
+        cleaned = _clean_text(inner, kb)
+        return m.group() if cleaned == inner else encode(cleaned)
+    return _EMBEDDED_BLOB.sub(sub, value)
+
+
 def _clean_text(value, kb: Knowledge | None):
     blob = _decode_blob(value)
     if blob is not None:
         inner, encode = blob
         cleaned = _clean_text(inner, kb)
         return value if cleaned == inner else encode(cleaned)
+    if len(value) > 24 and _EMBEDDED_BLOB.search(value):
+        value = _clean_embedded(value, kb)
     value = normalize_text(value)
     text, n = textner.apply(value, lambda v: generalize_address(v, kb))
     text, m = redact(text, find_spans(text, kb))
@@ -281,6 +298,10 @@ def _sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
         Stats.identifiers += 1
         _ent(cat)
         return TAG.get(cat, "[ID]") if not (cat == "AADHAAR" and False) else value
+    if cat == "SECRET":
+        Stats.identifiers += 1
+        _ent("SECRET")
+        return TAG["SECRET"]
     if cat in ("HOUSE", "LANDMARK"):
         Stats.identifiers += 1
         _ent(cat)

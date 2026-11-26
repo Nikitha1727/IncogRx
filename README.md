@@ -61,7 +61,7 @@ sanitized/  +  records.jsonl  +  report.json
 ### 3.1 Ingestion (`incog/readers.py`)
 * Decodes UTF-8, UTF-8 with BOM, UTF-16 and legacy cp1252. Stray NUL or BOM bytes in the middle of a file mark it `corrupt_encoding`.
 * Picks the CSV delimiter that splits the header and rows consistently (`,`, tab, `;`, `|`).
-* Quarantines, never copies raw: empty files, unsupported formats (XML, PDF, images), malformed or truncated JSON, JSON nested deeper than 120 levels, and JSON hidden behind a `.csv` extension. Two kinds of file are quarantined whatever their extension, before any parsing: anything carrying the EICAR anti-virus test signature (`malware_signature`) and cryptographic key material such as private keys or `key_hex=` / `nonce_hex=` values (`key_material`); their content is never logged or released. Every quarantined file is listed in `report.json` with its reason.
+* Quarantines, never copies raw: empty files, unsupported formats (XML, PDF, images), malformed or truncated JSON, JSON nested deeper than 120 levels, and JSON hidden behind a `.csv` extension. Two kinds of file are quarantined whatever their extension, before any parsing: anything carrying the EICAR anti-virus test signature (`malware_signature`) and cryptographic key material such as private keys or `key_hex=` / `nonce_hex=` values (`key_material`); their content is never logged or released. Symbolic links are never followed (`symlink`), and a file over 1 GB is hashed in chunks and quarantined without loading it (`file_too_large`). Every quarantined file is listed in `report.json` with its reason.
 
 ### 3.2 Detection
 **Structured fields** (`incog/fields.py`). Column names and JSON paths are classified in English, Hinglish and Devanagari (`Naam`, `Pita/Pati ka Naam`, `Gaon`, `Janm Tithi`, `मरीज़ का नाम`). The parent decides ambiguous keys: a `name` under `contact` is a relative, under `Practitioner` or `Organization` it is kept, and a FHIR extension is classified by its `url`.
@@ -73,14 +73,18 @@ sanitized/  +  records.jsonl  +  report.json
 * Labels: `Patient Name:`, `मरीज़ का नाम:`, `रोगी:`, `पिता का नाम:`, `Attendant:`, `Address:`, `पता:`, `निवास:`.
 * Context: relation markers (`S/o`, `W/o`, `D/o`, `C/O` + capitalised name, `पुत्र`, `पत्नी`), Hinglish honorifics (`Asha ji`, `Mahesh bhai`, `Kamal Bhaiya`, `Fatima amma`, `जी`, `भैया`), possessives (`Asha's attendant`), WhatsApp senders, and cue phrases (`called by`, `brought by`, visitor-log lines). These cues are how canary identities, which appear nowhere else, are caught.
 * Addresses inside text: house numbers (`House 364`, `मकान नं. 398`), mohallas, landmarks (`near Panchayat Bhawan`, `पंचायत भवन के पास`) and villages (`Vill.`, `Gram`, `ग्राम`).
-* Script aliases: a name written again in the other script right beside a removed name (`Aarav Menon (आरव मेनन)`, `Patient [NAME] / मीरा नायर`, also after an honorific) is the same person and is removed too.
+* Script pairs and aliases: a Latin name followed by its Devanagari spelling in brackets (or the reverse) is removed on context alone, and a name written again in the other script right beside a removed name (`Aarav Menon (आरव मेनन)`, `Patient [NAME] / मीरा नायर`, also after an honorific) is the same person and is removed too.
 * A gazetteer of name tokens learned in the first pass removes first names that appear alone ("Zainab" in a CSV header). Generic parts such as Kumar and Devi are never learned.
+
+**Secrets.** Planted canary tokens (`CANARY-...`), credential values after `password:`, `api_key=`, `access_token` and similar labels, JSON fields named `password`, `api_key`, `secret`, and well-known key shapes (`sk_live_...`, `AKIA...`, JWTs) become `[SECRET]`. Encoded attachments inside longer text are decoded, cleaned and re-encoded.
 
 **Meaning traps kept intact.** `Dr. <name>` spans, hospital and lab names, the `ASHA worker` role, `C/O fever` (complaint), `K/C/O`, `H/O`, doses (`1-0-1`, `BD x 5 days`), hospital wards (`Ward 9 (Medicine)`), tehsil and district names in context, and reference documents with no patient in them (byte-identical on the practice data).
 
 **Hidden places.** JSON keys, CSV headers, file names, export metadata, FHIR narratives, `\u`-escaped Devanagari and base64 attachments (decoded, cleaned, re-encoded) all go through the same detectors.
 
 ### 3.3 Linking and pseudonyms (`incog/link.py`)
+* Records per file: CSV/TSV `row:N`; JSON one record per entry of a patient list (`/records/3`); JSONL one record per line (`/0`, `/1`, ... as if the lines were an array); a text note, FHIR Bundle or single-object JSON is `doc`. A text file that names several patients (a register, a roster) is left unlinked (`null`) instead of being given one patient's pseudonym.
+* A shared name, even with the same relative's name, never joins two records whose hospital record numbers and phones both differ, unless the birth date agrees.
 Two records are linked only when the data connects them, following the dataset's own definition:
 * a shared strong identifier: UHID/IPD number, Aadhaar, ABHA, the patient's own phone, email; or
 * the same name plus a second clue: DOB, relative's name, or village with age within one year.
@@ -94,7 +98,7 @@ Pseudonyms are `PSN-XXXXXX`: HMAC-SHA256 over the cluster's anchor record, keyed
 |---|---|---|
 | Dates | one secret offset per patient (±180 days, never 0), every format kept (ISO, DD/MM, MM/DD, dotted, two-digit years, "5 September") | intervals and lengths of stay stay exact; a global offset cannot be recovered from a few known visit dates |
 | Day or month first | decided per file: a value above 12, a `(MM/DD/YYYY)` label, or a vote from files of the same source | Arogya exports are month first |
-| Age | 10-year bands; 80 and above becomes `80+`; ages written in text are banded too | the band always contains the true age |
+| Age | 20-year bands (0-19, 20-39, 40-59, 60-79); 80 and above becomes `80+`; ages written in text are banded too | the band always contains the true age. With 10-year bands our replica of the published A2 to A4 attack singled out 14 of 48 practice patients; with 20-year bands 8 (30-year bands: 3, but children would share a band with adults). The medical-value score is unchanged |
 | DOB | suppressed (`[DOB]`); FHIR `birthDate` dropped so bundles stay valid | a birth year pins the age and cancels the band |
 | Location | house, locality, landmark, village and tehsil removed; district kept; PIN reduced to its first 3 digits | tehsil + gender + age band left a median of one person in the registry |
 | Rare diagnoses | a diagnosis held by 3 or fewer patients becomes its ICD-10 chapter, in codes and in text | a rare condition next to an age band and a district identifies the patient; the threshold matches the attacker's own |
@@ -128,7 +132,7 @@ Practice data (200 files, 48 patients, 4 hospitals), `RAKSHA_SECRET=practice`:
 | Language trap / fragmented trap / homonyms kept apart | 816 of 816 / 258 of 258 / 2 of 2 |
 | Pseudonym present inside its record | 774 of 774 |
 | Date intervals preserved exactly | 12,554 of 12,554 |
-| Re-identification, our re-implementation of the published A2/A3/A4 attacks | record risk 0.369 raw → 0.076; patients re-identified 47 of 48 raw → 14 of 48 |
+| Re-identification, our re-implementation of the published A2/A3/A4 attacks | record risk 0.369 raw → 0.051; patients re-identified 47 of 48 raw → 8 of 48 |
 | Run time / peak memory | 1.3 s / 26 MB |
 | 10× the practice data (2,000 files) | 9.2 s / 103 MB, linear growth |
 
@@ -156,6 +160,7 @@ On the practice, noise-injected, unseen-format and broken-file sets, the output 
 * The first-name gazetteer removes a learned name wherever it appears, which can also remove a matching ordinary word.
 * The re-identification figures come from our own re-implementation of the published attack, run against a 240-person practice registry. The official attacker and the larger hidden datasets will give different numbers; larger populations make the same rules protect better.
 * Rare-condition generalisation lowers the number of exact diagnoses kept (3.6% of medical values on the practice data). The threshold is configurable.
+* OCR (document mode only) loses the micro sign (`µL` is read as `uL`) and sometimes a decimal point (`Hb 112`). These are never corrected by guessing: the page is flagged for review with the reason (`CHECK` lines in `demo/run_documents.py`, `clinical_checks` in the result). Names drawn in a PDF with a font that has no Unicode map cannot be read by anyone; those glyphs are blacked out and marked `[UNREADABLE]`.
 * Linking is deliberately conservative: when evidence is thin, records stay unlinked rather than risk a false merge.
 
 ---
@@ -179,7 +184,12 @@ python demo/app.py            # opens http://127.0.0.1:8765
 
 ---
 
-## 8. Repository layout
+## 8. Tests
+* `python tests/test_multilingual.py`: 30 English, Hindi, Hinglish and mixed-script sentences; checks that personal data is removed and that clinical text, doctors and roles are kept.
+* `python tests/test_security_pack.py`: builds harmless fixtures (prompt injection, canary tokens, fake credentials, key material, EICAR string, a symlink to a system file, an encoded attachment, a zip with a `../` entry, an opaque binary, truncated JSON), runs `main.py`, checks every quarantine reason and scans the whole output, base64 and hex decoded, for anything that must not be released.
+* `person_a/phase2..phase5`: detection traps, linkage cases, privacy engine and hardening.
+
+## 9. Repository layout
 ```
 main.py               entry point (contract: --input / --output, RAKSHA_SECRET)
 raksha.toml           track run configuration
@@ -195,6 +205,7 @@ incog/dates.py        per-patient date shifting in every date format
 incog/privacy.py      rare-condition generalisation, age banding in text
 incog/sanitize.py     per-category sanitisers
 incog/pipeline.py     two learning passes, linking, sanitising, report and records
-demo/                 optional local demo UI (app.py, index.html, invented samples)
+demo/                 optional demo UI and document mode (app.py, index.html, security.py, pdf_support.py, run_documents.py)
+tests/                multilingual detection and security-pack tests
 docs/                 Project Brief (PDF)
 ```
