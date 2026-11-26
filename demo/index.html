@@ -347,7 +347,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
 .pempty{text-align:center}
 @media(max-width:1180px){.nexts.on{grid-template-columns:1fr}}
 @media(max-width:900px){.pagehead p{text-align:left}}
-.sheet.plain #security>.bh,.sheet.plain #pipeline>.bh{display:none}
+.sheet.plain #pipeline>.bh{display:none}
 .sheet.plain #pipeline .pipe{margin-top:6px}
 
 /* empty result: light sketch of a record being masked */
@@ -425,7 +425,6 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
       <a href="#/reports" title="Processing reports" data-route="reports"><svg class="i"><use href="#i-reports"/></svg><span class="t">Processing reports</span><span class="nb" id="nb-reports"></span></a>
       <a href="#/explorer" title="Dataset explorer" data-route="explorer"><svg class="i"><use href="#i-explore"/></svg><span class="t">Dataset explorer</span><span class="nb" id="nb-explorer"></span></a>
       <a href="#/pipeline" title="Privacy pipeline" data-route="pipeline"><svg class="i"><use href="#i-pipe"/></svg><span class="t">Privacy pipeline</span></a>
-      <a href="#/security" title="Security overview" data-route="security"><svg class="i"><use href="#i-secure"/></svg><span class="t">Security overview</span></a>
     </nav>
   </aside>
 
@@ -563,7 +562,7 @@ footer b{font:400 21px var(--serif);color:var(--ink)}footer b i{font-style:itali
 
     <div class="page" data-page="pipeline" data-title="Privacy pipeline">
       <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-pipe"/></svg></span><div class="phx"><div class="kick"><span>04</span><span class="rule"></span><span>Privacy pipeline</span></div>
-        <h2>Four steps, <i>no guesswork.</i></h2></div><p>Rules and patterns only, no language model. Keyed by a release secret, so the same input always gives the same release.</p></div>
+        <h2>Four steps, <i>no guesswork.</i></h2></div><p>How a record is cleaned, the guarantees behind it, and how it performed on the organisers' practice data.</p></div>
       <div class="sheet plain">
       <div class="box" id="pipeline">
             <div class="bh"><div><div class="lab">Behind the workspace</div><h3>Privacy pipeline</h3></div></div>
@@ -606,13 +605,7 @@ Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i
         </div>
         <div class="legend"><span><i class="k n"></i>Removed</span><span><i class="k p"></i>Pseudonymised</span><span><i class="k g"></i>Generalised</span><span><i class="k d"></i>Date shifted, 4-day stay kept</span><span class="muted">The right side is the engine's real output for this invented record.</span></div>
       </div>
-      </div>
-    </div>
-
-    <div class="page" data-page="security" data-title="Security overview">
-      <div class="pagehead rv"><span class="phi"><svg class="i"><use href="#i-secure"/></svg></span><div class="phx"><div class="kick"><span>05</span><span class="rule"></span><span>Security overview</span></div>
-        <h2>Clear <i>by design.</i></h2></div><p>What the engine does with your data, and how it performed on the organisers' practice set.</p></div>
-      <div class="sheet plain">
+      
       <div class="box" id="security">
             <div class="bh"><div><div class="lab">Clear by design</div><h3>Security overview</h3></div></div>
             <div class="secgrid">
@@ -631,6 +624,8 @@ Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i
       </div>
       </div>
     </div>
+
+    
 
     <footer><b>Incog<i>Rx</i>.</b><span>Team Knull Void · DevForge26 · Secret Wards</span><span>Independent local preview · Talks only to 127.0.0.1</span></footer>
   </main>
