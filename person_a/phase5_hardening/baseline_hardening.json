@@ -1,0 +1,374 @@
+{
+  "runs": [
+    {
+      "exit": 0,
+      "contract": true,
+      "seconds": 0.981,
+      "reported_peak_rss_mb": 103.7,
+      "input_unchanged": true,
+      "passed": 6,
+      "total": 20,
+      "cases": [
+        {
+          "id": 1,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 2,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 3,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 4,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 5,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 6,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 7,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 8,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 9,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 10,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 11,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 12,
+          "errors": []
+        },
+        {
+          "id": 13,
+          "errors": []
+        },
+        {
+          "id": 14,
+          "errors": []
+        },
+        {
+          "id": 15,
+          "errors": []
+        },
+        {
+          "id": 16,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 17,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 18,
+          "errors": []
+        },
+        {
+          "id": 19,
+          "errors": [
+            "not safely quarantined",
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 20,
+          "errors": []
+        }
+      ],
+      "secret_leaked": false
+    },
+    {
+      "exit": 0,
+      "contract": true,
+      "seconds": 0.62,
+      "reported_peak_rss_mb": 205.9,
+      "input_unchanged": true,
+      "passed": 6,
+      "total": 20,
+      "cases": [
+        {
+          "id": 1,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 2,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 3,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 4,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 5,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 6,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 7,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 8,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 9,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 10,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 11,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 12,
+          "errors": []
+        },
+        {
+          "id": 13,
+          "errors": []
+        },
+        {
+          "id": 14,
+          "errors": []
+        },
+        {
+          "id": 15,
+          "errors": []
+        },
+        {
+          "id": 16,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 17,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 18,
+          "errors": []
+        },
+        {
+          "id": 19,
+          "errors": [
+            "not safely quarantined",
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 20,
+          "errors": []
+        }
+      ],
+      "secret_leaked": false
+    },
+    {
+      "exit": 0,
+      "contract": true,
+      "seconds": 0.653,
+      "reported_peak_rss_mb": 231.7,
+      "input_unchanged": true,
+      "passed": 6,
+      "total": 20,
+      "cases": [
+        {
+          "id": 1,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 2,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 3,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 4,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 5,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 6,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 7,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 8,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 9,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 10,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 11,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 12,
+          "errors": []
+        },
+        {
+          "id": 13,
+          "errors": []
+        },
+        {
+          "id": 14,
+          "errors": []
+        },
+        {
+          "id": 15,
+          "errors": []
+        },
+        {
+          "id": 16,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 17,
+          "errors": [
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 18,
+          "errors": []
+        },
+        {
+          "id": 19,
+          "errors": [
+            "not safely quarantined",
+            "PII leaked"
+          ]
+        },
+        {
+          "id": 20,
+          "errors": []
+        }
+      ],
+      "secret_leaked": false
+    }
+  ],
+  "same_secret_identical": true,
+  "different_secret_nonempty_disjoint": false,
+  "pseudonym_counts": [
+    0,
+    0,
+    0
+  ]
+}

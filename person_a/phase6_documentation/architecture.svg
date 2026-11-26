@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="790" viewBox="0 0 1000 790">
+<rect width="1000" height="790" fill="#ffffff"/>
+<text x="40" y="45" font-family="Arial" font-size="28" font-weight="bold" fill="#183344">RAKSHA | Proposed architecture</text>
+<rect x="100" y="90" width="800" height="82" rx="12" fill="#EAF3F3" stroke="#087E83"/>
+<text x="500" y="120" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#183344">Ingestion</text>
+<text x="500" y="148" text-anchor="middle" font-family="Arial" font-size="17" fill="#536773">CSV / TSV / JSON / FHIR R4 / notes; decode and validate</text>
+<path d="M500 172 V196 l-6 -8 m6 8 l6 -8" stroke="#087E83" stroke-width="2" fill="none"/>
+<rect x="100" y="200" width="800" height="82" rx="12" fill="#EAF3F3" stroke="#087E83"/>
+<text x="500" y="230" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#183344">Detection + clinical guard</text>
+<text x="500" y="258" text-anchor="middle" font-family="Arial" font-size="17" fill="#536773">Rules, gazetteers, Hindi digits and context; protect clinical spans</text>
+<path d="M500 282 V306 l-6 -8 m6 8 l6 -8" stroke="#087E83" stroke-width="2" fill="none"/>
+<rect x="100" y="310" width="800" height="82" rx="12" fill="#EAF3F3" stroke="#087E83"/>
+<text x="500" y="340" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#183344">Identity resolution</text>
+<text x="500" y="368" text-anchor="middle" font-family="Arial" font-size="17" fill="#536773">Cross-script normalization, blocking and conflict-aware clusters</text>
+<path d="M500 392 V416 l-6 -8 m6 8 l6 -8" stroke="#087E83" stroke-width="2" fill="none"/>
+<rect x="100" y="420" width="800" height="82" rx="12" fill="#EAF3F3" stroke="#087E83"/>
+<text x="500" y="450" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#183344">Privacy transformation</text>
+<text x="500" y="478" text-anchor="middle" font-family="Arial" font-size="17" fill="#536773">Keyed HMAC IDs; adaptive age/location; consistent date shifts</text>
+<path d="M500 502 V526 l-6 -8 m6 8 l6 -8" stroke="#087E83" stroke-width="2" fill="none"/>
+<rect x="100" y="530" width="800" height="82" rx="12" fill="#EAF3F3" stroke="#087E83"/>
+<text x="500" y="560" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="#183344">Release validation</text>
+<text x="500" y="588" text-anchor="middle" font-family="Arial" font-size="17" fill="#536773">Scan content, paths, keys, metadata; quarantine unsafe files</text>
+<path d="M500 612 V640 H185 V665 M500 640 V665 M500 640 H815 V665" stroke="#087E83" stroke-width="2" fill="none"/>
+<rect x="45" y="665" width="280" height="48" rx="8" fill="#183344"/>
+<text x="185" y="695" text-anchor="middle" font-family="Arial" font-size="20" fill="white">sanitized/</text>
+<rect x="360" y="665" width="280" height="48" rx="8" fill="#183344"/>
+<text x="500" y="695" text-anchor="middle" font-family="Arial" font-size="20" fill="white">report.json</text>
+<rect x="675" y="665" width="280" height="48" rx="8" fill="#183344"/>
+<text x="815" y="695" text-anchor="middle" font-family="Arial" font-size="20" fill="white">records.jsonl</text>
+<text x="500" y="755" text-anchor="middle" font-family="Arial" font-size="16" fill="#536773">Cross-cutting: in-memory processing, separated keys, authenticated encryption, PII-free logs</text></svg>

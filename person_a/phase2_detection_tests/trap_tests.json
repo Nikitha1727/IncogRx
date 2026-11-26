@@ -1,0 +1,776 @@
+[
+  {
+    "id": "T001",
+    "group": "context",
+    "path": "notes/note_001.txt",
+    "text": "C/O Ramesh, H.No. 364, Ward 20",
+    "remove": [
+      "Ramesh",
+      "H.No. 364",
+      "Ward 20"
+    ],
+    "keep": [],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T002",
+    "group": "context",
+    "path": "notes/note_002.txt",
+    "text": "C/O fever and cough since 3 days",
+    "remove": [],
+    "keep": [
+      "C/O fever and cough since 3 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T003",
+    "group": "context",
+    "path": "notes/note_003.txt",
+    "text": "Reviewed by Dr. Ramesh",
+    "remove": [],
+    "keep": [
+      "Reviewed by Dr. Ramesh"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T004",
+    "group": "clinical",
+    "path": "notes/note_004.txt",
+    "text": "Dolo 650 1-0-1 x 5 days",
+    "remove": [],
+    "keep": [
+      "Dolo 650 1-0-1 x 5 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T005",
+    "group": "relative",
+    "path": "notes/note_005.txt",
+    "text": "S/o Zubair",
+    "remove": [
+      "Zubair"
+    ],
+    "keep": [],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T006",
+    "group": "clinical",
+    "path": "notes/note_006.txt",
+    "text": "K/C/O addison's disease",
+    "remove": [],
+    "keep": [
+      "K/C/O addison's disease"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T007",
+    "group": "hinglish",
+    "path": "notes/note_007.txt",
+    "text": "Shahid sahab ka BP 117/82",
+    "remove": [
+      "Shahid"
+    ],
+    "keep": [
+      "BP 117/82"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T008",
+    "group": "hindi",
+    "path": "notes/note_008.txt",
+    "text": "नाम: मोहम्मद शाहिद, 650mg 1-1-1 x 5 days",
+    "remove": [
+      "मोहम्मद शाहिद"
+    ],
+    "keep": [
+      "650mg 1-1-1 x 5 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T009",
+    "group": "hindi",
+    "path": "notes/note_009.txt",
+    "text": "मरीज का नाम: देविका नायर\nबीपी 130/85",
+    "remove": [
+      "देविका नायर"
+    ],
+    "keep": [
+      "130/85"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T010",
+    "group": "hindi",
+    "path": "notes/note_010.txt",
+    "text": "रोगी: नवनीत राव\nतापमान १०१°F",
+    "remove": [
+      "नवनीत राव"
+    ],
+    "keep": [
+      "१०१°F"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T011",
+    "group": "hindi",
+    "path": "notes/note_011.txt",
+    "text": "नाम: इरफ़ान अंसारी\nमोबाइल: ९००००००००१",
+    "remove": [
+      "इरफ़ान अंसारी",
+      "९००००००००१"
+    ],
+    "keep": [],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T012",
+    "group": "hindi",
+    "path": "notes/note_012.txt",
+    "text": "पति का नाम: हरीश वर्मा\nदवा: Metformin 500 mg",
+    "remove": [
+      "हरीश वर्मा"
+    ],
+    "keep": [
+      "Metformin 500 mg"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T013",
+    "group": "hindi",
+    "path": "notes/note_013.txt",
+    "text": "ग्राम: काल्पनिकपुर\nपिन: १२३४५६\nHb 11.2 g/dL",
+    "remove": [
+      "काल्पनिकपुर",
+      "१२३४५६"
+    ],
+    "keep": [
+      "Hb 11.2 g/dL"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T014",
+    "group": "hindi",
+    "path": "notes/note_014.txt",
+    "text": "आधार: XXXX XXXX 4321\nSpO2 98%",
+    "remove": [
+      "XXXX XXXX 4321"
+    ],
+    "keep": [
+      "SpO2 98%"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T015",
+    "group": "hindi",
+    "path": "notes/note_015.txt",
+    "text": "नाम: काव्या मेहता\nशिकायत: बुखार और खांसी",
+    "remove": [
+      "काव्या मेहता"
+    ],
+    "keep": [
+      "बुखार और खांसी"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T016",
+    "group": "hindi",
+    "path": "notes/note_016.txt",
+    "text": "रोगी की पुत्री: निधि राव\nPulse 72/min",
+    "remove": [
+      "निधि राव"
+    ],
+    "keep": [
+      "Pulse 72/min"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T017",
+    "group": "hinglish",
+    "path": "notes/note_017.txt",
+    "text": "Devika ji ka sugar 180 mg/dL",
+    "remove": [
+      "Devika"
+    ],
+    "keep": [
+      "180 mg/dL"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T018",
+    "group": "hinglish",
+    "path": "notes/note_018.txt",
+    "text": "Navneet bhaiya ko bukhar 103 F",
+    "remove": [
+      "Navneet"
+    ],
+    "keep": [
+      "bukhar 103 F"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T019",
+    "group": "hinglish",
+    "path": "notes/note_019.txt",
+    "text": "Irfan saheb ki tabiyat theek hai; BP 120/80",
+    "remove": [
+      "Irfan"
+    ],
+    "keep": [
+      "BP 120/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T020",
+    "group": "hinglish",
+    "path": "notes/note_020.txt",
+    "text": "Patient ka naam Kavya Mehta; Dolo 650 BD",
+    "remove": [
+      "Kavya Mehta"
+    ],
+    "keep": [
+      "Dolo 650 BD"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T021",
+    "group": "hinglish",
+    "path": "notes/note_021.txt",
+    "text": "Pati ka naam Harish Verma; Hb 10.4 g/dL",
+    "remove": [
+      "Harish Verma"
+    ],
+    "keep": [
+      "Hb 10.4 g/dL"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T022",
+    "group": "hinglish",
+    "path": "notes/note_022.txt",
+    "text": "Nidhi didi ka pulse 80/min",
+    "remove": [
+      "Nidhi"
+    ],
+    "keep": [
+      "pulse 80/min"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T023",
+    "group": "hinglish",
+    "path": "notes/note_023.txt",
+    "text": "Patient ko raat mein neend nahi aayi",
+    "remove": [],
+    "keep": [
+      "Patient ko raat mein neend nahi aayi"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T024",
+    "group": "identifier",
+    "path": "notes/note_024.txt",
+    "text": "Patient: Devika Nair\nMRN: TEST-MRN-9931\nBP 130/85",
+    "remove": [
+      "Devika Nair",
+      "TEST-MRN-9931"
+    ],
+    "keep": [
+      "BP 130/85"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T025",
+    "group": "identifier",
+    "path": "notes/note_025.txt",
+    "text": "UHID: TEST-UH-2145\nTab Amlodipine 5 mg",
+    "remove": [
+      "TEST-UH-2145"
+    ],
+    "keep": [
+      "Tab Amlodipine 5 mg"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T026",
+    "group": "identifier",
+    "path": "notes/note_026.txt",
+    "text": "Phone: +91 90000-00002\nHbA1c 6.4%",
+    "remove": [
+      "90000-00002"
+    ],
+    "keep": [
+      "HbA1c 6.4%"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T027",
+    "group": "identifier",
+    "path": "notes/note_027.txt",
+    "text": "Aadhaar: XXXX-XXXX-4321\nRR 20/min",
+    "remove": [
+      "XXXX-XXXX-4321"
+    ],
+    "keep": [
+      "RR 20/min"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T028",
+    "group": "identifier",
+    "path": "notes/note_028.txt",
+    "text": "Insurance ID: TEST-INS-4422\nDiagnosis: Asthma",
+    "remove": [
+      "TEST-INS-4422"
+    ],
+    "keep": [
+      "Diagnosis: Asthma"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T029",
+    "group": "identifier",
+    "path": "notes/note_029.txt",
+    "text": "DOB: 14/03/1982\nCreatinine 1.2 mg/dL",
+    "remove": [
+      "14/03/1982"
+    ],
+    "keep": [
+      "Creatinine 1.2 mg/dL"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T030",
+    "group": "identifier",
+    "path": "notes/note_030.txt",
+    "text": "PAN: ABCDE1234F\nDolo 650",
+    "remove": [
+      "ABCDE1234F"
+    ],
+    "keep": [
+      "Dolo 650"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T031",
+    "group": "identifier",
+    "path": "notes/note_031.txt",
+    "text": "Email: synthetic@example.invalid\nTemp 98.6 F",
+    "remove": [
+      "synthetic@example.invalid"
+    ],
+    "keep": [
+      "Temp 98.6 F"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T032",
+    "group": "identifier",
+    "path": "notes/note_032.txt",
+    "text": "W/o Harish Verma\nC/O headache",
+    "remove": [
+      "Harish Verma"
+    ],
+    "keep": [
+      "C/O headache"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T033",
+    "group": "identifier",
+    "path": "notes/note_033.txt",
+    "text": "Address: H.No. 42, Imaginary Lane, PIN 123456\nWard 3 transfer",
+    "remove": [
+      "H.No. 42",
+      "Imaginary Lane",
+      "123456"
+    ],
+    "keep": [
+      "Ward 3 transfer"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T034",
+    "group": "clinical",
+    "path": "notes/note_034.txt",
+    "text": "Parkinson's disease",
+    "remove": [],
+    "keep": [
+      "Parkinson's disease"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T035",
+    "group": "clinical",
+    "path": "notes/note_035.txt",
+    "text": "Alzheimer’s disease",
+    "remove": [],
+    "keep": [
+      "Alzheimer’s disease"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T036",
+    "group": "clinical",
+    "path": "notes/note_036.txt",
+    "text": "Dr. Devika reviewed the patient.",
+    "remove": [],
+    "keep": [
+      "Dr. Devika reviewed the patient."
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T037",
+    "group": "clinical",
+    "path": "notes/note_037.txt",
+    "text": "Ramipril 5 mg OD",
+    "remove": [],
+    "keep": [
+      "Ramipril 5 mg OD"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T038",
+    "group": "clinical",
+    "path": "notes/note_038.txt",
+    "text": "Tab Pantoprazole 40 mg 1-0-0 x 1 month",
+    "remove": [],
+    "keep": [
+      "Tab Pantoprazole 40 mg 1-0-0 x 1 month"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T039",
+    "group": "clinical",
+    "path": "notes/note_039.txt",
+    "text": "Inj Ceftriaxone 1g IV x 2 wks",
+    "remove": [],
+    "keep": [
+      "Inj Ceftriaxone 1g IV x 2 wks"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T040",
+    "group": "clinical",
+    "path": "notes/note_040.txt",
+    "text": "BP 150/90 mmHg; SpO2 97%; RR 18/min",
+    "remove": [],
+    "keep": [
+      "BP 150/90 mmHg; SpO2 97%; RR 18/min"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T041",
+    "group": "clinical",
+    "path": "notes/note_041.txt",
+    "text": "HbA1c 7.2%; Creatinine 1.3 mg/dL",
+    "remove": [],
+    "keep": [
+      "HbA1c 7.2%; Creatinine 1.3 mg/dL"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T042",
+    "group": "clinical",
+    "path": "notes/note_042.txt",
+    "text": "H/O diabetes; K/C/O hypertension",
+    "remove": [],
+    "keep": [
+      "H/O diabetes; K/C/O hypertension"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T043",
+    "group": "clinical",
+    "path": "notes/note_043.txt",
+    "text": "Tab Amlodipine 5 mg; 1-0-1; x 5 days",
+    "remove": [],
+    "keep": [
+      "Tab Amlodipine 5 mg; 1-0-1; x 5 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T044",
+    "group": "clinical",
+    "path": "notes/note_044.txt",
+    "text": "Sodium 138 mmol/L; Potassium 4.2 mmol/L",
+    "remove": [],
+    "keep": [
+      "Sodium 138 mmol/L; Potassium 4.2 mmol/L"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T045",
+    "group": "clinical",
+    "path": "notes/note_045.txt",
+    "text": "Transferred to ICU Ward 3",
+    "remove": [],
+    "keep": [
+      "Transferred to ICU Ward 3"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T046",
+    "group": "clinical",
+    "path": "notes/note_046.txt",
+    "text": "Dolo 650 BD x 5 days",
+    "remove": [],
+    "keep": [
+      "Dolo 650 BD x 5 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T047",
+    "group": "clinical",
+    "path": "notes/note_047.txt",
+    "text": "C/O chest pain since 2 days",
+    "remove": [],
+    "keep": [
+      "C/O chest pain since 2 days"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T048",
+    "group": "structured",
+    "path": "registration/example.csv",
+    "text": "Patient Name,MRN,BP\nDevika Nair,TEST-MRN-873,120/80\n",
+    "remove": [
+      "Devika Nair",
+      "TEST-MRN-873"
+    ],
+    "keep": [
+      "120/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T049",
+    "group": "structured",
+    "path": "registration/example.tsv",
+    "text": "Naam\tMobile\tMedicine\nकाव्या मेहता\t९००००००००३\tDolo 650\n",
+    "remove": [
+      "काव्या मेहता",
+      "९००००००००३"
+    ],
+    "keep": [
+      "Dolo 650"
+    ],
+    "quarantine": false,
+    "encoding": "utf-16"
+  },
+  {
+    "id": "T050",
+    "group": "structured",
+    "path": "opd/nested.json",
+    "text": "{\"patient\": {\"name\": \"Navneet Rao\", \"mrn\": \"TEST-JSON-33\"}, \"bp\": \"118/79\"}",
+    "remove": [
+      "Navneet Rao",
+      "TEST-JSON-33"
+    ],
+    "keep": [
+      "118/79"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T051",
+    "group": "hidden",
+    "path": "misc/key.json",
+    "text": "{\"Devika Nair\": {\"BP\": \"122/81\"}}",
+    "remove": [
+      "Devika Nair"
+    ],
+    "keep": [
+      "122/81"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T052",
+    "group": "hidden",
+    "path": "misc/header.csv",
+    "text": "Devika Nair TEST-HDR-91,BP\n,120/80\n",
+    "remove": [
+      "Devika Nair",
+      "TEST-HDR-91"
+    ],
+    "keep": [
+      "120/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T053",
+    "group": "hidden",
+    "path": "misc/Devika_Nair_TEST-FILE-92.txt",
+    "text": "BP 121/80",
+    "remove": [
+      "Devika_Nair",
+      "TEST-FILE-92"
+    ],
+    "keep": [
+      "BP 121/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T054",
+    "group": "hidden",
+    "path": "misc/metadata.json",
+    "text": "{\"metadata\": {\"source\": \"archive/Devika Nair/TEST-META-94.txt\"}, \"bp\": \"125/80\"}",
+    "remove": [
+      "Devika Nair",
+      "TEST-META-94"
+    ],
+    "keep": [
+      "125/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T055",
+    "group": "hidden",
+    "path": "misc/attachment.json",
+    "text": "{\"attachment\": \"UGF0aWVudDogRGV2aWthIE5haXI7IE1STjogVEVTVC1CNjQtOTU=\", \"bp\": \"123/80\"}",
+    "remove": [
+      "Devika Nair",
+      "TEST-B64-95"
+    ],
+    "keep": [
+      "123/80"
+    ],
+    "quarantine": false,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T056",
+    "group": "quarantine",
+    "path": "misc/broken.json",
+    "text": "{\"patient\":\"Devika Nair\",",
+    "remove": [
+      "Devika Nair"
+    ],
+    "keep": [],
+    "quarantine": true,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T057",
+    "group": "quarantine",
+    "path": "misc/unsupported.xml",
+    "text": "Patient: Devika Nair",
+    "remove": [
+      "Devika Nair"
+    ],
+    "keep": [],
+    "quarantine": true,
+    "encoding": "utf-8"
+  },
+  {
+    "id": "T058",
+    "group": "quarantine",
+    "path": "misc/empty.txt",
+    "text": "",
+    "remove": [],
+    "keep": [],
+    "quarantine": true,
+    "encoding": "utf-8"
+  }
+]

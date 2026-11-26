@@ -1,0 +1,146 @@
+[
+  {
+    "case": "cross_script",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "honorific",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "abbreviation",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "surname_first",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "local_id",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "fragmented",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "homonym",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "shared_phone",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "hospital_namespace",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "relative_not_patient",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "doctor_not_patient",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "weak_name",
+    "expect": "abstain",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "transitive_conflict",
+    "expect": "different",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "changed_phone",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "initials",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  },
+  {
+    "case": "cross_hospital",
+    "expect": "same",
+    "passed": false,
+    "assigned": [
+      false,
+      false
+    ]
+  }
+]

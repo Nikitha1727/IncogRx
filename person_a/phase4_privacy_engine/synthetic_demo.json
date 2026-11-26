@@ -1,0 +1,23 @@
+{
+  "description": "Independent synthetic fixture; demographic proxy only, not official risk score",
+  "fixed_5_year_district_gender": {
+    "patients": 30,
+    "min_group_size": 1,
+    "unique_fraction": 0.4666666666666667,
+    "mean_inverse_group_size": 0.7333333333333333
+  },
+  "adaptive": {
+    "patients": 30,
+    "min_group_size": 3,
+    "mean_inverse_group_size": 0.13333333333333333,
+    "unique_fraction": 0.0,
+    "below_target_k": 3,
+    "rare_condition_profiles": 3,
+    "review_required": 3
+  },
+  "levels": {
+    "1": 20,
+    "2": 7,
+    "3": 3
+  }
+}

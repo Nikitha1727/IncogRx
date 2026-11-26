@@ -1,0 +1,17 @@
+[
+{"file":"registration/renamed.csv","text":"Hospital Ref,Full legal name,Age,Contact handset,Clinical finding\nNEW-483719,Avnika Keshri,46,9000012345,HbA1c 7.2%\n","encoding":"utf-8-sig","remove":["NEW-483719","Avnika Keshri","9000012345"],"keep":["HbA1c 7.2%"]},
+{"file":"registration/alternate.tsv","text":"अस्पताल क्रमांक\tरोगी का पूरा नाम\tसंपर्क\tजांच\nNEW-483720\tतृषिका मेनन\t९००००१२३४६\tBP 128/76\n","encoding":"utf-16","remove":["NEW-483720","तृषिका मेनन","9000012346"],"keep":["BP 128/76"]},
+{"file":"notes/legacy.txt","text":"Patient: Zivaan Korde\nComplaint: café-associated nausea\nMetformin 500 mg OD","encoding":"cp1252","remove":["Zivaan Korde"],"keep":["café-associated nausea","Metformin 500 mg OD"]},
+{"file":"notes/hindi.txt","text":"रोगी: इशानी बिष्ट\nमोबाइल: ९००००१२३४७\nTab Dolo 650 1-0-1 x 5 days","remove":["इशानी बिष्ट","9000012347"],"keep":["Tab Dolo 650 1-0-1 x 5 days"]},
+{"file":"notes/hinglish.txt","text":"Nivaan sahab ka BP 117/82. S/o Vayun Khatri. Reviewed by Dr. Ramesh.","remove":["Nivaan","Vayun Khatri"],"keep":["BP 117/82","Dr. Ramesh"]},
+{"file":"notes/dates.txt","text":"Patient: Anvika Keshri\nDOB: 17 February 1979\nAdmission: 03-Oct-2025\nDischarge: 12-Oct-2025\nStay: 9 days\nDiagnosis: Dengue","remove":["Anvika Keshri","17 February 1979","03-Oct-2025","12-Oct-2025"],"keep":["9 days","Dengue"]},
+{"file":"lab/Report_Tanvika_Korde_9000012348.txt","text":"Patient: Tanvika Korde\nCreatinine 1.3 mg/dL","remove":["Tanvika Korde","Tanvika_Korde","9000012348"],"keep":["Creatinine 1.3 mg/dL"]},
+{"file":"misc/key.json","text":"{\"Vihana_Bisht\":{\"test\":\"TSH 3.2 mIU/L\"}}","remove":["Vihana_Bisht"],"keep":["TSH 3.2 mIU/L"]},
+{"file":"misc/header.csv","text":"Patient_Tavishi_Menon,Lab\nX,Sodium 138 mmol/L\n","remove":["Tavishi_Menon"],"keep":["Sodium 138 mmol/L"]},
+{"file":"misc/metadata.json","text":"{\"metadata\":{\"source\":\"/private/Rivaan_Korde_9000012349.txt\"},\"result\":\"Hb 12.5 g/dL\"}","remove":["Rivaan_Korde","9000012349"],"keep":["Hb 12.5 g/dL"]},
+{"file":"notes/zero_width.txt","text":"Patient: Avi​ka Korde\nPhone: ９００００１２３５１\nPulse 78 bpm","remove":["Avika Korde","9000012351"],"keep":["Pulse 78 bpm"]},
+{"file":"clean/protocol.txt","text":"C/O fever and cough. Reviewed by Dr. Ramesh. Parkinson's disease. Dolo 650 BD x 5 days.","keep":["C/O fever and cough. Reviewed by Dr. Ramesh. Parkinson's disease. Dolo 650 BD x 5 days."]},
+{"file":"misc/broken.json","text":"{\"patient\":\"SYNTHCANARY_BROKEN_91\",","remove":["SYNTHCANARY_BROKEN_91"],"quarantine":true},
+{"file":"misc/unknown.pdf","text":"%PDF-1.4 SYNTHCANARY_PDF_92","remove":["SYNTHCANARY_PDF_92"],"quarantine":true},
+{"file":"misc/empty.txt","text":"","quarantine":true}
+]

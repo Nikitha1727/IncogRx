@@ -1,0 +1,17 @@
+test_actual_group_counts (test_privacy.PolicyTests.test_actual_group_counts) ... ok
+test_age_bounds (test_privacy.PolicyTests.test_age_bounds) ... ok
+test_common_group (test_privacy.PolicyTests.test_common_group) ... ok
+test_date_interval (test_privacy.PolicyTests.test_date_interval) ... ok
+test_duplicate (test_privacy.PolicyTests.test_duplicate) ... ok
+test_key_rotation (test_privacy.PolicyTests.test_key_rotation) ... ok
+test_no_key (test_privacy.PolicyTests.test_no_key) ... ok
+test_order (test_privacy.PolicyTests.test_order) ... ok
+test_per_patient (test_privacy.PolicyTests.test_per_patient) ... ok
+test_rare (test_privacy.PolicyTests.test_rare) ... ok
+test_repeat (test_privacy.PolicyTests.test_repeat) ... ok
+test_tiny_dataset (test_privacy.PolicyTests.test_tiny_dataset) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.002s
+
+OK

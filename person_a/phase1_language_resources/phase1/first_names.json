@@ -1,0 +1,586 @@
+[
+  {
+    "latin": "Aarav",
+    "hindi": "आरव"
+  },
+  {
+    "latin": "Aditi",
+    "hindi": "अदिति"
+  },
+  {
+    "latin": "Aditya",
+    "hindi": "आदित्य"
+  },
+  {
+    "latin": "Akash",
+    "hindi": "आकाश"
+  },
+  {
+    "latin": "Akanksha",
+    "hindi": "आकांक्षा"
+  },
+  {
+    "latin": "Amit",
+    "hindi": "अमित"
+  },
+  {
+    "latin": "Anil",
+    "hindi": "अनिल"
+  },
+  {
+    "latin": "Anita",
+    "hindi": "अनीता"
+  },
+  {
+    "latin": "Anjali",
+    "hindi": "अंजलि"
+  },
+  {
+    "latin": "Ankit",
+    "hindi": "अंकित"
+  },
+  {
+    "latin": "Anuradha",
+    "hindi": "अनुराधा"
+  },
+  {
+    "latin": "Arif",
+    "hindi": "आरिफ"
+  },
+  {
+    "latin": "Arjun",
+    "hindi": "अर्जुन"
+  },
+  {
+    "latin": "Asha",
+    "hindi": "आशा"
+  },
+  {
+    "latin": "Ashok",
+    "hindi": "अशोक"
+  },
+  {
+    "latin": "Ayush",
+    "hindi": "आयुष"
+  },
+  {
+    "latin": "Bhavna",
+    "hindi": "भावना"
+  },
+  {
+    "latin": "Chandan",
+    "hindi": "चंदन"
+  },
+  {
+    "latin": "Deepak",
+    "hindi": "दीपक"
+  },
+  {
+    "latin": "Divya",
+    "hindi": "दिव्या"
+  },
+  {
+    "latin": "Farah",
+    "hindi": "फराह"
+  },
+  {
+    "latin": "Fatima",
+    "hindi": "फातिमा"
+  },
+  {
+    "latin": "Ganesh",
+    "hindi": "गणेश"
+  },
+  {
+    "latin": "Geeta",
+    "hindi": "गीता"
+  },
+  {
+    "latin": "Harish",
+    "hindi": "हरीश"
+  },
+  {
+    "latin": "Imran",
+    "hindi": "इमरान"
+  },
+  {
+    "latin": "Irfan",
+    "hindi": "इरफान"
+  },
+  {
+    "latin": "Ishita",
+    "hindi": "इशिता"
+  },
+  {
+    "latin": "Javed",
+    "hindi": "जावेद"
+  },
+  {
+    "latin": "Jyoti",
+    "hindi": "ज्योति"
+  },
+  {
+    "latin": "Kajal",
+    "hindi": "काजल"
+  },
+  {
+    "latin": "Kamal",
+    "hindi": "कमल"
+  },
+  {
+    "latin": "Kavita",
+    "hindi": "कविता"
+  },
+  {
+    "latin": "Kiran",
+    "hindi": "किरण"
+  },
+  {
+    "latin": "Lakshmi",
+    "hindi": "लक्ष्मी"
+  },
+  {
+    "latin": "Lata",
+    "hindi": "लता"
+  },
+  {
+    "latin": "Manish",
+    "hindi": "मनीष"
+  },
+  {
+    "latin": "Meena",
+    "hindi": "मीना"
+  },
+  {
+    "latin": "Meera",
+    "hindi": "मीरा"
+  },
+  {
+    "latin": "Mohammad",
+    "hindi": "मोहम्मद"
+  },
+  {
+    "latin": "Mohan",
+    "hindi": "मोहन"
+  },
+  {
+    "latin": "Mukesh",
+    "hindi": "मुकेश"
+  },
+  {
+    "latin": "Nandini",
+    "hindi": "नंदिनी"
+  },
+  {
+    "latin": "Nasreen",
+    "hindi": "नसरीन"
+  },
+  {
+    "latin": "Neha",
+    "hindi": "नेहा"
+  },
+  {
+    "latin": "Nikhil",
+    "hindi": "निखिल"
+  },
+  {
+    "latin": "Nisha",
+    "hindi": "निशा"
+  },
+  {
+    "latin": "Pankaj",
+    "hindi": "पंकज"
+  },
+  {
+    "latin": "Pooja",
+    "hindi": "पूजा"
+  },
+  {
+    "latin": "Prakash",
+    "hindi": "प्रकाश"
+  },
+  {
+    "latin": "Praveen",
+    "hindi": "प्रवीण"
+  },
+  {
+    "latin": "Priya",
+    "hindi": "प्रिया"
+  },
+  {
+    "latin": "Rahul",
+    "hindi": "राहुल"
+  },
+  {
+    "latin": "Raj",
+    "hindi": "राज"
+  },
+  {
+    "latin": "Rajan",
+    "hindi": "राजन"
+  },
+  {
+    "latin": "Rajesh",
+    "hindi": "राजेश"
+  },
+  {
+    "latin": "Rakesh",
+    "hindi": "राकेश"
+  },
+  {
+    "latin": "Ramesh",
+    "hindi": "रमेश"
+  },
+  {
+    "latin": "Rani",
+    "hindi": "रानी"
+  },
+  {
+    "latin": "Ravi",
+    "hindi": "रवि"
+  },
+  {
+    "latin": "Rekha",
+    "hindi": "रेखा"
+  },
+  {
+    "latin": "Ritu",
+    "hindi": "ऋतु"
+  },
+  {
+    "latin": "Rohan",
+    "hindi": "रोहन"
+  },
+  {
+    "latin": "Sahil",
+    "hindi": "साहिल"
+  },
+  {
+    "latin": "Salma",
+    "hindi": "सलमा"
+  },
+  {
+    "latin": "Sameer",
+    "hindi": "समीर"
+  },
+  {
+    "latin": "Sanjay",
+    "hindi": "संजय"
+  },
+  {
+    "latin": "Santosh",
+    "hindi": "संतोष"
+  },
+  {
+    "latin": "Seema",
+    "hindi": "सीमा"
+  },
+  {
+    "latin": "Shahid",
+    "hindi": "शाहिद"
+  },
+  {
+    "latin": "Shalini",
+    "hindi": "शालिनी"
+  },
+  {
+    "latin": "Shankar",
+    "hindi": "शंकर"
+  },
+  {
+    "latin": "Shivam",
+    "hindi": "शिवम"
+  },
+  {
+    "latin": "Sita",
+    "hindi": "सीता"
+  },
+  {
+    "latin": "Sneha",
+    "hindi": "स्नेहा"
+  },
+  {
+    "latin": "Suresh",
+    "hindi": "सुरेश"
+  },
+  {
+    "latin": "Sunil",
+    "hindi": "सुनील"
+  },
+  {
+    "latin": "Sunita",
+    "hindi": "सुनीता"
+  },
+  {
+    "latin": "Swati",
+    "hindi": "स्वाति"
+  },
+  {
+    "latin": "Tanvi",
+    "hindi": "तन्वी"
+  },
+  {
+    "latin": "Usha",
+    "hindi": "उषा"
+  },
+  {
+    "latin": "Vijay",
+    "hindi": "विजय"
+  },
+  {
+    "latin": "Vikram",
+    "hindi": "विक्रम"
+  },
+  {
+    "latin": "Vinod",
+    "hindi": "विनोद"
+  },
+  {
+    "latin": "Vishal",
+    "hindi": "विशाल"
+  },
+  {
+    "latin": "Yusuf",
+    "hindi": "यूसुफ"
+  },
+  {
+    "latin": "Zubair",
+    "hindi": "ज़ुबैर"
+  },
+  {
+    "latin": "Abdul",
+    "hindi": "अब्दुल"
+  },
+  {
+    "latin": "Ayesha",
+    "hindi": "आयशा"
+  },
+  {
+    "latin": "Aruna",
+    "hindi": "अरुणा"
+  },
+  {
+    "latin": "Bharat",
+    "hindi": "भरत"
+  },
+  {
+    "latin": "Dinesh",
+    "hindi": "दिनेश"
+  },
+  {
+    "latin": "Gaurav",
+    "hindi": "गौरव"
+  },
+  {
+    "latin": "Hemant",
+    "hindi": "हेमंत"
+  },
+  {
+    "latin": "Jaya",
+    "hindi": "जया"
+  },
+  {
+    "latin": "Krishna",
+    "hindi": "कृष्ण"
+  },
+  {
+    "latin": "Madhav",
+    "hindi": "माधव"
+  },
+  {
+    "latin": "Naveen",
+    "hindi": "नवीन"
+  },
+  {
+    "latin": "Nirmala",
+    "hindi": "निर्मला"
+  },
+  {
+    "latin": "Rashmi",
+    "hindi": "रश्मि"
+  },
+  {
+    "latin": "Sakshi",
+    "hindi": "साक्षी"
+  },
+  {
+    "latin": "Tarun",
+    "hindi": "तरुण"
+  },
+  {
+    "latin": "Varun",
+    "hindi": "वरुण"
+  },
+  {
+    "latin": "Zoya",
+    "hindi": "ज़ोया"
+  },
+  {
+    "latin": "Aman",
+    "hindi": "अमन"
+  },
+  {
+    "latin": "Karthik",
+    "hindi": "कार्तिक"
+  },
+  {
+    "latin": "Srinivas",
+    "hindi": "श्रीनिवास"
+  },
+  {
+    "latin": "Venkatesh",
+    "hindi": "वेंकटेश"
+  },
+  {
+    "latin": "Anand",
+    "hindi": "आनंद"
+  },
+  {
+    "latin": "Suman",
+    "hindi": "सुमन"
+  },
+  {
+    "latin": "Mary",
+    "hindi": "मैरी"
+  },
+  {
+    "latin": "Joseph",
+    "hindi": "जोसेफ"
+  },
+  {
+    "latin": "Gurpreet",
+    "hindi": "गुरप्रीत"
+  },
+  {
+    "latin": "Harpreet",
+    "hindi": "हरप्रीत"
+  },
+  {
+    "latin": "Simran",
+    "hindi": "सिमरन"
+  },
+  {
+    "latin": "Baljit",
+    "hindi": "बलजीत"
+  },
+  {
+    "latin": "Tenzin",
+    "hindi": "तेनज़िन"
+  },
+  {
+    "latin": "Rinchen",
+    "hindi": "रिनचेन"
+  },
+  {
+    "latin": "Bina",
+    "hindi": "बीना"
+  },
+  {
+    "latin": "Mina",
+    "hindi": "मीना"
+  },
+  {
+    "latin": "Sohail",
+    "hindi": "सोहैल"
+  },
+  {
+    "latin": "Naseem",
+    "hindi": "नसीम"
+  },
+  {
+    "latin": "Shabnam",
+    "hindi": "शबनम"
+  },
+  {
+    "latin": "Parveen",
+    "hindi": "परवीन"
+  },
+  {
+    "latin": "Abhay",
+    "hindi": "अभय"
+  },
+  {
+    "latin": "Abhishek",
+    "hindi": "अभिषेक"
+  },
+  {
+    "latin": "Anirudh",
+    "hindi": "अनिरुद्ध"
+  },
+  {
+    "latin": "Anjana",
+    "hindi": "अंजना"
+  },
+  {
+    "latin": "Anupama",
+    "hindi": "अनुपमा"
+  },
+  {
+    "latin": "Chandana",
+    "hindi": "चंदना"
+  },
+  {
+    "latin": "Devendra",
+    "hindi": "देवेंद्र"
+  },
+  {
+    "latin": "Farhan",
+    "hindi": "फरहान"
+  },
+  {
+    "latin": "Gauri",
+    "hindi": "गौरी"
+  },
+  {
+    "latin": "Gopal",
+    "hindi": "गोपाल"
+  },
+  {
+    "latin": "Iqbal",
+    "hindi": "इकबाल"
+  },
+  {
+    "latin": "Madhavi",
+    "hindi": "माधवी"
+  },
+  {
+    "latin": "Manisha",
+    "hindi": "मनीषा"
+  },
+  {
+    "latin": "Neelam",
+    "hindi": "नीलम"
+  },
+  {
+    "latin": "Pratibha",
+    "hindi": "प्रतिभा"
+  },
+  {
+    "latin": "Raghav",
+    "hindi": "राघव"
+  },
+  {
+    "latin": "Ritu",
+    "hindi": "रितु"
+  },
+  {
+    "latin": "Salim",
+    "hindi": "सलीम"
+  },
+  {
+    "latin": "Saraswati",
+    "hindi": "सरस्वती"
+  },
+  {
+    "latin": "Shilpa",
+    "hindi": "शिल्पा"
+  },
+  {
+    "latin": "Vandana",
+    "hindi": "वंदना"
+  },
+  {
+    "latin": "Zainab",
+    "hindi": "ज़ैनब"
+  }
+]

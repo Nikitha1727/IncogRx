@@ -1,0 +1,36 @@
+{
+  "leaks": 2718,
+  "total": 3230,
+  "canaries": 4,
+  "clinical_probes": 4855,
+  "clinical_lost": 0,
+  "clinical_unexported": 0,
+  "by_type": {
+    "DOB": 111,
+    "RELATIVE_NAME": 232,
+    "HOUSE": 136,
+    "LOCALITY": 103,
+    "LANDMARK": 64,
+    "VILLAGE": 150,
+    "PIN": 136,
+    "MRN": 817,
+    "PATIENT_NAME": 911,
+    "AADHAAR_MASKED": 16,
+    "PHONE": 25,
+    "AADHAAR": 2,
+    "INSURANCE_ID": 15
+  },
+  "by_language": {
+    "latin": 2464,
+    "deva": 143,
+    "hinglish": 111
+  },
+  "by_channel": {
+    "content": 2600,
+    "filename": 48,
+    "base64": 10,
+    "metadata": 40,
+    "key": 12,
+    "header": 8
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "target_k": 5,
+  "rare_condition_max_patients": 3,
+  "age_band_widths": [5, 10, 20],
+  "date_shift_max_days": 365,
+  "retain_clinical_values": true,
+  "retain_diagnoses_by_default": true,
+  "suppress_birth_date": true,
+  "suppress_pin": true,
+  "suppress_village_tehsil_address": true,
+  "location_finest": "district",
+  "unresolved_identity": "suppress_dates_if_no_consistent_encounter_key",
+  "residual_risk_action": "report_and_review_not_claim_anonymity"
+}

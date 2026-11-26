@@ -1,0 +1,22 @@
+{
+  "required_units": 771,
+  "assigned": 0,
+  "ambiguous_assigned": 0,
+  "duplicate_locators": 0,
+  "tp": 0,
+  "fp": 0,
+  "fn": 6892,
+  "precision": 0,
+  "recall": 0.0,
+  "f05": 0,
+  "merged_clusters": 0,
+  "language": {
+    "correct_pairs": 0,
+    "total_pairs": 816
+  },
+  "fragmented": {
+    "correct_pairs": 0,
+    "total_pairs": 258
+  },
+  "homonym_pairs_with_shared_id": 0
+}

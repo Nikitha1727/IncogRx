@@ -1,0 +1,473 @@
+{
+  "passed": 25,
+  "total": 58,
+  "groups": {
+    "clinical": {
+      "passed": 16,
+      "total": 16
+    },
+    "context": {
+      "passed": 2,
+      "total": 3
+    },
+    "hidden": {
+      "passed": 0,
+      "total": 5
+    },
+    "hindi": {
+      "passed": 0,
+      "total": 9
+    },
+    "hinglish": {
+      "passed": 1,
+      "total": 8
+    },
+    "identifier": {
+      "passed": 3,
+      "total": 10
+    },
+    "quarantine": {
+      "passed": 3,
+      "total": 3
+    },
+    "relative": {
+      "passed": 0,
+      "total": 1
+    },
+    "structured": {
+      "passed": 0,
+      "total": 3
+    }
+  },
+  "results": [
+    {
+      "id": "T001",
+      "group": "context",
+      "passed": false,
+      "errors": [
+        "PII visible: Ramesh",
+        "PII visible: H.No. 364",
+        "PII visible: Ward 20"
+      ]
+    },
+    {
+      "id": "T002",
+      "group": "context",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T003",
+      "group": "context",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T004",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T005",
+      "group": "relative",
+      "passed": false,
+      "errors": [
+        "PII visible: Zubair"
+      ]
+    },
+    {
+      "id": "T006",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T007",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Shahid"
+      ]
+    },
+    {
+      "id": "T008",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: मोहम्मद शाहिद"
+      ]
+    },
+    {
+      "id": "T009",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: देविका नायर"
+      ]
+    },
+    {
+      "id": "T010",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: नवनीत राव"
+      ]
+    },
+    {
+      "id": "T011",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: इरफ़ान अंसारी",
+        "PII visible: ९००००००००१"
+      ]
+    },
+    {
+      "id": "T012",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: हरीश वर्मा"
+      ]
+    },
+    {
+      "id": "T013",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: काल्पनिकपुर",
+        "PII visible: १२३४५६"
+      ]
+    },
+    {
+      "id": "T014",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: XXXX XXXX 4321"
+      ]
+    },
+    {
+      "id": "T015",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: काव्या मेहता"
+      ]
+    },
+    {
+      "id": "T016",
+      "group": "hindi",
+      "passed": false,
+      "errors": [
+        "PII visible: निधि राव"
+      ]
+    },
+    {
+      "id": "T017",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika"
+      ]
+    },
+    {
+      "id": "T018",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Navneet"
+      ]
+    },
+    {
+      "id": "T019",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Irfan"
+      ]
+    },
+    {
+      "id": "T020",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Kavya Mehta"
+      ]
+    },
+    {
+      "id": "T021",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Harish Verma"
+      ]
+    },
+    {
+      "id": "T022",
+      "group": "hinglish",
+      "passed": false,
+      "errors": [
+        "PII visible: Nidhi"
+      ]
+    },
+    {
+      "id": "T023",
+      "group": "hinglish",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T024",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair",
+        "PII visible: TEST-MRN-9931"
+      ]
+    },
+    {
+      "id": "T025",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: TEST-UH-2145"
+      ]
+    },
+    {
+      "id": "T026",
+      "group": "identifier",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T027",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: XXXX-XXXX-4321"
+      ]
+    },
+    {
+      "id": "T028",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: TEST-INS-4422"
+      ]
+    },
+    {
+      "id": "T029",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: 14/03/1982"
+      ]
+    },
+    {
+      "id": "T030",
+      "group": "identifier",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T031",
+      "group": "identifier",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T032",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: Harish Verma"
+      ]
+    },
+    {
+      "id": "T033",
+      "group": "identifier",
+      "passed": false,
+      "errors": [
+        "PII visible: H.No. 42",
+        "PII visible: Imaginary Lane",
+        "PII visible: 123456"
+      ]
+    },
+    {
+      "id": "T034",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T035",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T036",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T037",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T038",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T039",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T040",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T041",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T042",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T043",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T044",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T045",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T046",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T047",
+      "group": "clinical",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T048",
+      "group": "structured",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair",
+        "PII visible: TEST-MRN-873"
+      ]
+    },
+    {
+      "id": "T049",
+      "group": "structured",
+      "passed": false,
+      "errors": [
+        "PII visible: काव्या मेहता",
+        "PII visible: ९००००००००३"
+      ]
+    },
+    {
+      "id": "T050",
+      "group": "structured",
+      "passed": false,
+      "errors": [
+        "PII visible: Navneet Rao",
+        "PII visible: TEST-JSON-33"
+      ]
+    },
+    {
+      "id": "T051",
+      "group": "hidden",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair"
+      ]
+    },
+    {
+      "id": "T052",
+      "group": "hidden",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair",
+        "PII visible: TEST-HDR-91"
+      ]
+    },
+    {
+      "id": "T053",
+      "group": "hidden",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika_Nair",
+        "PII visible: TEST-FILE-92",
+        "side-channel identifier: TEST-FILE-92"
+      ]
+    },
+    {
+      "id": "T054",
+      "group": "hidden",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair",
+        "PII visible: TEST-META-94"
+      ]
+    },
+    {
+      "id": "T055",
+      "group": "hidden",
+      "passed": false,
+      "errors": [
+        "PII visible: Devika Nair",
+        "PII visible: TEST-B64-95"
+      ]
+    },
+    {
+      "id": "T056",
+      "group": "quarantine",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T057",
+      "group": "quarantine",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "id": "T058",
+      "group": "quarantine",
+      "passed": true,
+      "errors": []
+    }
+  ]
+}
