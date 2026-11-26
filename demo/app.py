@@ -41,7 +41,8 @@ KEEP_JOBS = 5
 sys.path.insert(0, str(ROOT))
 from incog.readers import decode  # noqa: E402  (same decoder as the pipeline, for the "before" view)
 sys.path.insert(0, str(DEMO))
-import pdf_support  # noqa: E402  (demo-only: text PDFs -> redacted PDF)
+import pdf_support  # noqa: E402  (demo-only: PDFs, scans and images -> redacted PDF)
+import security  # noqa: E402  (demo-only: intake security scan before anything is processed)
 
 TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|"
                     r"LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]")
@@ -66,9 +67,10 @@ def safe_rel(path: str) -> Path:
     return Path(*parts)
 
 
-def expand_zip(path: str, data: bytes):
-    """Demo convenience: a dropped .zip is unpacked so its files are processed (the evaluator
-    never sends archives; the scored pipeline itself still quarantines anything it cannot read)."""
+def expand_zip(path: str, data: bytes, blocked: list):
+    """Demo convenience: a dropped .zip is unpacked in memory so its files are processed (the
+    evaluator never sends archives). Encrypted members, zip-slip paths, bombs and nested archives
+    are refused and listed in `blocked`; nothing from an archive is written before it is scanned."""
     if not path.lower().endswith(".zip") or not zipfile.is_zipfile(io.BytesIO(data)):
         yield path, data
         return
@@ -77,8 +79,12 @@ def expand_zip(path: str, data: bytes):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         for info in z.infolist():
             name = info.filename
-            parts = PurePosixPath(name).parts
+            parts = PurePosixPath(name.replace("\\", "/")).parts
             if info.is_dir() or not parts or parts[0] == "__MACOSX" or parts[-1].startswith("."):
+                continue
+            why = security.scan_zip_entry(info)
+            if why:
+                blocked.append(security._result(f"{stem}/{parts[-1]}", "blocked", why))
                 continue
             total += info.file_size
             if total > MAX_UPLOAD:                  # zip-bomb guard
@@ -86,25 +92,57 @@ def expand_zip(path: str, data: bytes):
             yield f"{stem}/{name}", z.read(info)
 
 
-def run_job(files: list, secret: str) -> dict:
+DOC_EXT = (".pdf",) + tuple("." + e for e in pdf_support.IMAGE_TYPES)
+PAGES = ".pages"                       # folder of per-page records for one document
+PAGE_RX = re.compile(r"^(.*)\.pages/p(\d{4})\.txt$")
+
+
+def shown_name(path: str) -> str:
+    """How a released record is named on the page: a document page shows as 'file.pdf, page 3'."""
+    m = PAGE_RX.match(path)
+    return f"{m.group(1)}, page {int(m.group(2))}" if m else path
+
+
+def run_job(files: list, secret: str, scans: list | None = None) -> dict:
+    """Scan every file, read PDFs and images page by page (OCR where needed), run the engine
+    (the same main.py the evaluator runs), then write redacted copies of the documents."""
+    t_start = time.time()
     work = Path(tempfile.mkdtemp(prefix="incogrx_demo_"))
     inp, out = work / "input", work / "output"
     inp.mkdir()
-    pdfs, notes = {}, {}
+    scans = list(scans or [])
+    docs, notes = {}, {}
     for rel, data in files:
         rel = safe_rel(rel).as_posix()
-        if rel.lower().endswith(".pdf"):
-            text = pdf_support.extract_text(data)
-            if text is not None:               # text PDF: run its text through the engine
-                pdfs[rel + ".txt"] = (rel, data, text)
-                rel, data = rel + ".txt", text.encode("utf-8")
+        verdict = security.scan(rel, data)
+        scans.append(verdict)
+        if verdict["verdict"] == "blocked":     # never written to disk, never processed
+            continue
+        if rel.lower().endswith(DOC_EXT) or data[:5] == b"%PDF-":
+            prep = pdf_support.prepare(rel, data)
+            if prep is not None:                # every page is its own record for the engine
+                folder = rel + PAGES
+                for n, page in enumerate(prep["pages"]):
+                    if page.get("text", "").strip():
+                        dst = inp / folder / f"p{n + 1:04d}.txt"
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        dst.write_text(page["text"], encoding="utf-8")
+                docs[rel] = (folder, prep)
+                continue
             elif not pdf_support.AVAILABLE:
-                notes[rel] = "PDF support needs PyMuPDF: run  pip install pymupdf  and restart the demo."
+                notes[rel] = "Document support needs PyMuPDF: run  pip install pymupdf  and restart the demo."
+            elif not pdf_support.OCR_AVAILABLE:
+                notes[rel] = "Scanned or handwritten pages need OCR: install Tesseract (see README), so it stays quarantined."
             else:
-                notes[rel] = "Scanned or image-only PDF (no text layer): it would need OCR, so it stays quarantined."
+                notes[rel] = "No readable text on any page, so it stays quarantined."
         dst = inp / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_bytes(data)
+    if not any(inp.rglob("*")):
+        shutil.rmtree(work, ignore_errors=True)
+        raise ValueError("Every file was blocked by the security scan: " +
+                         "; ".join(f"{x['name']}: {x['reason']}" for x in scans if x["verdict"] == "blocked")[:600])
+    read_s = round(time.time() - t_start, 2)
     env = dict(os.environ, RAKSHA_SECRET=secret or "demo-secret")
     t0 = time.time()
     proc = subprocess.run([sys.executable, str(MAIN), "--input", str(inp), "--output", str(out)],
@@ -113,28 +151,69 @@ def run_job(files: list, secret: str) -> dict:
     if proc.returncode != 0 or not (out / "report.json").exists():
         shutil.rmtree(work, ignore_errors=True)
         raise RuntimeError("The pipeline could not process this input.")
-    pdf_out = {}
-    if pdfs:
+    t1 = time.time()
+    pdf_out, doc_stats = {}, []
+    if docs:
         report = json.loads((out / "report.json").read_text(encoding="utf-8"))
         by_sha = {f["input_sha256"]: f for f in report["files"]}
-        for txt_rel, (pdf_rel, data, text) in pdfs.items():
-            f = by_sha.get(hashlib.sha256((inp / txt_rel).read_bytes()).hexdigest())
-            if not f or not f.get("output"):
+        for src_rel, (folder, prep) in docs.items():
+            outs, out_dir = [], None
+            for n, page in enumerate(prep["pages"]):
+                pin = inp / folder / f"p{n + 1:04d}.txt"
+                o = out / "sanitized" / folder / f"p{n + 1:04d}.txt"      # the engine mirrors input paths
+                if pin.exists() and not o.is_file():                       # renamed (a name in the path)
+                    f = by_sha.get(hashlib.sha256(pin.read_bytes()).hexdigest())
+                    o = out / f["output"] if f and f.get("output") else None
+                elif not pin.exists():
+                    o = None
+                outs.append(o)
+                if o is not None and out_dir is None:
+                    out_dir = o.parent
+            if out_dir is None:
                 continue
-            released = (out / f["output"]).read_text(encoding="utf-8")
-            out_pdf = f["output"][:-4] if f["output"].endswith(".txt") else f["output"] + ".pdf"
+            released = ("\n\n" + pdf_support.PAGE_MARK + "\n\n").join(
+                o.read_text(encoding="utf-8") if o else "" for o in outs)
+            name = out_dir.name[:-len(PAGES)] if out_dir.name.endswith(PAGES) else out_dir.name
+            out_pdf = out_dir.parent / (name if name.lower().endswith(".pdf") else name + ".pdf")
             try:
-                (out / out_pdf).write_bytes(pdf_support.redact(data, text, released))
-                pdf_out[txt_rel] = (pdf_rel, out_pdf)
+                t_doc = time.time()
+                pdf_bytes, text, pages = pdf_support.redact(prep, released)
+                out_pdf.write_bytes(pdf_bytes)
+                for o, page_text in zip(outs, text.split(pdf_support.PAGE_MARK)):
+                    if o is not None:                     # unsure OCR words are hidden in the text too
+                        o.write_text(page_text.strip("\n"), encoding="utf-8")
+                rel_pdf = out_pdf.relative_to(out).as_posix()
+                pdf_out[out_dir.relative_to(out / "sanitized").as_posix()] = (src_rel, rel_pdf)
+                ocr = [p for p in pages if p["kind"] == "ocr"]
+                doc_stats.append({
+                    "name": src_rel, "output": rel_pdf, "pages": len(pages),
+                    "typed_pages": sum(p["kind"] == "text" for p in pages), "ocr_pages": len(ocr),
+                    "ocr_conf": round(sum(p["conf"] for p in ocr) / len(ocr), 1) if ocr else None,
+                    "review_pages": [p["page"] for p in ocr if p.get("review")],
+                    "unsure_hidden": sum(p.get("unsure_hidden", 0) for p in ocr),
+                    "boxes": sum(p["boxes"] for p in pages), "langs": prep["langs"],
+                    "read_seconds": prep["read_seconds"], "redact_seconds": round(time.time() - t_doc, 2)})
             except Exception:  # noqa: BLE001  keep the text release even if redaction fails
-                notes[pdf_rel] = "The text was cleaned, but the redacted PDF could not be produced."
+                notes[src_rel] = "The text was cleaned, but the redacted copy could not be produced."
+    redact_s = round(time.time() - t1, 2)
     job = uuid.uuid4().hex[:12]
     with LOCK:
         JOBS[job] = work
         while len(JOBS) > KEEP_JOBS:
             old = next(iter(JOBS))
             shutil.rmtree(JOBS.pop(old), ignore_errors=True)
-    return summarize(job, inp, out, wall, pdf_out, notes)
+    res = summarize(job, inp, out, wall, pdf_out, notes)
+    total_s = round(time.time() - t_start, 2)
+    pages = sum(d["pages"] for d in doc_stats)
+    res["documents"] = doc_stats
+    res["security"] = {"scanned": len(scans), "blocked": [x for x in scans if x["verdict"] == "blocked"],
+                       "neutralized": [x for x in scans if x["verdict"] == "neutralized"],
+                       "clean": sum(x["verdict"] == "clean" for x in scans)}
+    res["speed"] = {"total_seconds": total_s, "read_seconds": read_s, "engine_seconds": round(wall, 2),
+                    "redact_seconds": redact_s, "pages": pages,
+                    "pages_per_second": round(pages / total_s, 2) if pages and total_s else None,
+                    "ocr_available": pdf_support.OCR_AVAILABLE, "ocr_langs": pdf_support.ocr_langs()}
+    return res
 
 
 def _read_text(p: Path) -> str:
@@ -151,7 +230,7 @@ def summarize(job: str, inp: Path, out: Path, wall: float, pdf_out: dict | None 
     records = [json.loads(x) for x in (out / "records.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
     sha2in = {hashlib.sha256(p.read_bytes()).hexdigest(): p for p in inp.rglob("*") if p.is_file()}
     tags: Counter = Counter()
-    files = []
+    files, pages = [], {}
     for f in report["files"]:
         src = sha2in.get(f["input_sha256"])
         entry = {"input": src.relative_to(inp).as_posix() if src else "?", "status": f["status"],
@@ -167,20 +246,30 @@ def summarize(job: str, inp: Path, out: Path, wall: float, pdf_out: dict | None 
             entry["truncated"] = len(after) > PREVIEW
             entry["removed"] = len(found)
             entry["pseudonyms"] = sorted(set(PSN_RX.findall(after)))
-        if entry["input"] in pdf_out:          # show a text PDF under its own name, with its redacted copy
-            pdf_rel, out_pdf = pdf_out[entry["input"]]
-            entry.update(input=pdf_rel, pdf=out_pdf, output=out_pdf,
-                         note="Text extracted from the PDF, cleaned by IncogRx, and written back as a redacted copy of the same PDF.")
+        m = PAGE_RX.match((f.get("output") or "").removeprefix("sanitized/"))
+        if m and m.group(1) + PAGES in pdf_out:    # pages of one document: shown as that document
+            pages.setdefault(m.group(1) + PAGES, []).append((int(m.group(2)), entry))
+            continue
         if entry["input"] in notes:
             entry["note"] = notes[entry["input"]]
         files.append(entry)
+    for folder, items in pages.items():
+        src_rel, out_pdf = pdf_out[folder]
+        items.sort(key=lambda x: x[0])
+        after = "\n\n".join(f"--- page {n} ---\n{e.get('after', '')}" for n, e in items)
+        files.append({"input": src_rel, "status": "sanitized", "reason": None, "output": out_pdf, "pdf": out_pdf,
+                      "after": after[:PREVIEW], "truncated": len(after) > PREVIEW,
+                      "removed": sum(e.get("removed", 0) for _, e in items),
+                      "pseudonyms": sorted({p for _, e in items for p in e.get("pseudonyms", [])}),
+                      "note": "Every page was read (typed text directly, scanned or handwritten pages by OCR), "
+                              "cleaned by IncogRx as its own record, and written back as a redacted, scrubbed copy."})
     files.sort(key=lambda e: (e["status"] != "sanitized", e["input"]))
     pats = defaultdict(lambda: {"records": 0, "files": set()})
     for r in records:
         if r.get("patient"):
             pats[r["patient"]]["records"] += 1
             shown = r["file"].removeprefix("sanitized/")
-            pats[r["patient"]]["files"].add(shown[:-4] if shown.endswith(".pdf.txt") else shown)
+            pats[r["patient"]]["files"].add(shown_name(shown))
     patients = sorted(({"pseudonym": k, "records": v["records"], "files": sorted(v["files"])} for k, v in pats.items()),
                       key=lambda x: (-len(x["files"]), -x["records"], x["pseudonym"]))
     try:
@@ -356,9 +445,7 @@ def build_people(out: Path, records: list) -> tuple:
                 facts[k] |= v
             content = " ".join(v for _, v in pairs) if pairs is not None else (text or "")
             removed.update(TAG_RX.findall(content))
-            shown = r["file"].removeprefix("sanitized/")
-            if shown.endswith(".pdf.txt"):                 # a text PDF: show it as the redacted PDF it became
-                shown = shown[:-4]
+            shown = shown_name(r["file"].removeprefix("sanitized/"))
             items.append({"file": shown, "loc": r.get("out") or r["loc"],
                           "preview": _preview(pairs, text)})
         return {"pseudonym": pseudonym, "records": len(recs), "files": sorted({i["file"] for i in items}),
@@ -470,21 +557,24 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Paste some text first.")
                 files = [("pasted_note.txt", text.encode("utf-8"))]
             elif mode == "files":
-                files, total = [], 0
+                files, total, scans = [], 0, []
                 for f in req.get("files") or []:
                     data = base64.b64decode(f["b64"])
-                    for rel, member in expand_zip(str(f["path"]), data):
+                    for rel, member in expand_zip(str(f["path"]), data, scans):
                         total += len(member)
                         if total > MAX_UPLOAD:
                             raise ValueError("Upload is larger than 80 MB.")
                         files.append((rel, member))
+                if not files and scans:
+                    raise ValueError("Every file was blocked by the security scan: " +
+                                     "; ".join(f"{x['name']}: {x['reason']}" for x in scans)[:600])
                 if not files:
                     raise ValueError("Choose at least one file.")
                 if total > MAX_UPLOAD:
                     raise ValueError("Upload is larger than 80 MB.")
             else:
                 raise ValueError("Unknown mode.")
-            result = run_job(files, secret)
+            result = run_job(files, secret, scans if mode == "files" else None)
             if mode == "files":           # uploaded originals are never sent back to the page
                 for f in result["files"]:
                     f.pop("before", None)

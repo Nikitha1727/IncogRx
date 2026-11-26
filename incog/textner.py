@@ -20,6 +20,9 @@ LAT_TOK = r"(?:Mohd\.|Md\.|Mohd|[A-Z][a-z]+|[A-Z]\.)"
 LAT_NAME = LAT_TOK + r"(?:[ ](?:" + LAT_TOK + r")){0,3}"
 DEV_NAME = rf"[{DEV}]+(?:[ ][{DEV}]+){{0,3}}"
 ANY_NAME = rf"(?:{LAT_NAME}|{DEV_NAME})"
+# ALL-CAPS names ("Name: FATIMA QURESHI") are accepted only right after an explicit name label
+CAPS_NAME = r"[A-Z]{2,}(?:[ ][A-Z]{2,}){0,3}(?![a-z])"
+LABEL_NAME = rf"(?:{LAT_NAME}|{CAPS_NAME}|{DEV_NAME})"
 
 # words that look like names (capitalised) but are not
 NOT_NAME = {
@@ -60,10 +63,10 @@ REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Na
               r"Attendant(?:'s)?\s*(?:Name)?|Next\s+of\s+Kin|NOK|Informant|Pita\s*(?:ka|/Pati\s*ka)?\s*Naam|"
               r"Pati\s*ka\s*Naam|Accompanied\s+by|Escort(?:ed\s+by)?|Care\s*taker|Abhibhavak|"
               r"पिता(?:\s*का\s*नाम)?|पति(?:\s*का\s*नाम)?|माता(?:\s*का\s*नाम)?|पिता/पति(?:\s*का\s*नाम)?|परिजन(?:\s*का\s*नाम)?|अभिभावक)")
-NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({ANY_NAME})")
+NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({LABEL_NAME})")
 # Hinglish label without a colon: "Patient ka naam Kavya Mehta"
 HING_NAME_RX = re.compile(rf"(?i:\b(?:patient|mareez|mariz|marij|rogi)\s+ka\s+naam)(?:\s+(?i:hai|he))?\s+({LAT_NAME})")
-REL_LBL_RX = re.compile(rf"(?i:{REL_LABELS}){LBL_END}({ANY_NAME})")
+REL_LBL_RX = re.compile(rf"(?i:{REL_LABELS}){LBL_END}({LABEL_NAME})")
 ADDR_LBL_RX = re.compile(r"(?:(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence))|(?<![\u0900-\u097F])(?:पता|निवासी|निवास)(?![\u0900-\u097F]))"
                          r"\s*(?:\([^()\n]{1,30}\))?\s*[:\-–]\s*([^\n]+)"
                          r"|(?i:\b(?:Resident\s+of|R/o))\.?\s+([^\n]+)")
@@ -96,7 +99,7 @@ REL_NOUN_RX = re.compile(rf"(?<![A-Za-z])(?i:son|daughter|wife|husband|father|mo
                          rf"granddaughter|beta|beti|bahu|pati|patni|bhai|behen|bahen|saas|sasur|devar|nanad|damad|jija)"
                          rf"(?:\s+(?i:of\s+patient|named|is|was))?\s+({LAT_NAME})"
                          rf"|(?<![{DEV}])(?:बेटा|बेटी|बहू|पति|पत्नी|भाई|बहन|सास|ससुर|दामाद)(?!\s*(?:का|की|के|ने|को|से|[:\-]))\s+([{DEV}]+(?:[ ][{DEV}]+)?)")
-LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s*[(,])")
+LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s*[(,]|\s+[-–]\s)")
 LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),?\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b)")
 TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s*:?\s+({LAT_NAME})")
 WA_RX = re.compile(rf"(?m)^\[[^\]]+\]\s*({LAT_NAME}(?:[ ](?i:{HONOR}))?)\s*:")
