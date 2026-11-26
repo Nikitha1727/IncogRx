@@ -3,323 +3,349 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IncogRx · Privacy firewall for hospital records</title>
+<title>IncogRx · Hospital workspace</title>
 <style>
 :root{
-  --night:#081627; --night2:#0e2640; --night3:#173a5c; --ice:#eef3f8; --frost:#e3ebf3; --silver:#c7d4e1;
-  --cream:#f2e4cf; --cream2:#e9d6b9; --ink:#0d1b2a; --ink2:#46566a; --ink3:#7d8b9c; --line:#dbe3ec;
-  --glass:rgba(255,255,255,.07); --glassb:rgba(255,255,255,.16);
-  --coral:#c0503d; --coralbg:#fbe7e2; --green:#1d7a52; --greenbg:#e3f3ea; --amber:#9a6200; --amberbg:#fff2da;
-  --serif:"Didot","Bodoni 72","Bodoni MT","Playfair Display","Cormorant Garamond","Libre Caslon Display",Georgia,serif;
+  --night:#07131f; --night2:#0c2034; --night3:#16334f; --slate:#1e3d5c; --steel:#5f7d9a;
+  --ice:#e9eff5; --frost:#dde6ef; --card:#f6f8fb; --line:#d6dfe9; --line2:rgba(255,255,255,.13);
+  --cream:#f1e2cb; --cream2:#e6d0ad; --ink:#0c1a29; --ink2:#41536a; --ink3:#6c7c8f;
+  --coral:#b8452f; --coralbg:#fae4de; --green:#17704a; --greenbg:#dff1e7; --amber:#8a5900; --amberbg:#fbedd2;
+  --serif:"Didot","Bodoni 72","Bodoni MT","Playfair Display","Cormorant Garamond",Georgia,serif;
   --sans:-apple-system,BlinkMacSystemFont,"Avenir Next","Segoe UI",Roboto,"Kohinoor Devanagari","Noto Sans Devanagari","Mangal",sans-serif;
   --mono:"SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  --r-lg:22px; --r-md:16px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--ice);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+body{margin:0;font:15px/1.55 var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1200px 700px at 70% -10%,#1d3d5e 0%,transparent 60%),radial-gradient(900px 700px at 0% 100%,#122c46,transparent 60%),linear-gradient(180deg,#0b1d30,#07131f 60%,#081522)}
 a{color:inherit}
-.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
-.serif{font-family:var(--serif);font-weight:400}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--cream);outline-offset:2px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .it{font-family:var(--serif);font-style:italic;font-weight:400}
-.kick{display:flex;align-items:center;gap:14px;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase}
-.kick .num{font-family:var(--serif);letter-spacing:.05em;font-size:13px}
-.kick .rule{width:56px;height:1px;background:currentColor;opacity:.45}
 
-/* ---------- pills & buttons ---------- */
-.pillbtn{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:14px;padding:6px 6px 6px 22px;border-radius:999px;
-  background:linear-gradient(180deg,var(--cream),var(--cream2));color:var(--night);font:600 12.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;
-  box-shadow:0 8px 24px rgba(8,22,39,.18),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .15s,box-shadow .15s}
-.pillbtn:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(8,22,39,.26),inset 0 1px 0 rgba(255,255,255,.7)}
-.pillbtn .arr{width:38px;height:38px;border-radius:50%;background:var(--night);color:#fff;display:grid;place-items:center;font-size:16px;transition:transform .2s}
-.pillbtn:hover .arr{transform:rotate(-45deg)}
-.pillbtn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-.pillbtn.dark{background:var(--night);color:#fff}.pillbtn.dark .arr{background:var(--cream);color:var(--night)}
-.ghost{font-size:12px;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;opacity:.85}
-.ghost:hover{opacity:1}
-.circ{width:34px;height:34px;border-radius:50%;border:1px solid currentColor;display:inline-grid;place-items:center;font-size:14px;opacity:.85}
+/* ============ shell ============ */
+.app{display:grid;grid-template-columns:256px minmax(0,1fr);gap:18px;padding:18px;min-height:100vh}
+.side{position:sticky;top:18px;height:calc(100vh - 36px);display:flex;flex-direction:column;gap:18px;padding:22px 16px;border-radius:var(--r-lg);color:#dfe8f2;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));border:1px solid var(--line2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:12px;padding:2px 6px 8px;text-decoration:none;color:#fff}
+.seal{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(160deg,var(--cream),var(--cream2));color:var(--night);font:italic 21px var(--serif);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.brand b{display:block;font:400 24px/1 var(--serif);letter-spacing:.01em}.brand b i{font-style:italic}
+.brand small{display:block;font-size:9.5px;letter-spacing:.32em;opacity:.6;margin-top:5px}
+.navlab{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(223,232,242,.45);padding:10px 10px 2px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;text-decoration:none;font-size:13.5px;color:rgba(223,232,242,.78);transition:background .2s var(--ease),color .2s}
+.nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav a.on{background:linear-gradient(180deg,var(--cream),var(--cream2));color:var(--night);font-weight:600;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.status{margin-top:auto;border-radius:var(--r-md);padding:16px;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--line2)}
+.status .shield{width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff}
+.status b{display:block;font-size:13.5px;color:#fff}
+.status .st{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;margin-top:6px;color:#bfe7cf}
+.status .dot{width:8px;height:8px;border-radius:50%;background:#4cc38a;box-shadow:0 0 0 4px rgba(76,195,138,.18)}
+.status[data-s="busy"] .dot{background:#f0c36a;box-shadow:0 0 0 4px rgba(240,195,106,.2);animation:pulse 1s infinite}
+.status[data-s="busy"] .st{color:#f6dca6}
+.status[data-s="err"] .dot{background:#ef7a64}.status[data-s="err"] .st{color:#f6b3a5}
+@keyframes pulse{50%{opacity:.35}}
+.status small{display:block;font-size:11.5px;color:rgba(223,232,242,.5);margin-top:6px}
+.team{font-size:11.5px;text-align:center;color:rgba(223,232,242,.45);line-height:1.5}
 
-/* ---------- hero ---------- */
-.hero{position:relative;overflow:hidden;color:#fff;background:
-  radial-gradient(900px 520px at 78% 18%,rgba(173,206,236,.30),transparent 60%),
-  radial-gradient(700px 600px at 10% 110%,rgba(64,118,170,.45),transparent 60%),
-  radial-gradient(500px 380px at 45% -10%,rgba(255,255,255,.12),transparent 70%),
-  linear-gradient(160deg,#0c2440 0%,#081627 55%,#050e1a 100%);padding-bottom:40px}
-.hero:before{content:"";position:absolute;inset:0;background:
-  repeating-linear-gradient(115deg,rgba(255,255,255,.035) 0 2px,transparent 2px 140px);mask:linear-gradient(180deg,#000,transparent 85%);pointer-events:none}
-.ice{position:absolute;pointer-events:none;border-radius:50%;filter:blur(.2px)}
-.ice.o1{width:520px;height:520px;right:-120px;top:60px;background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.28),rgba(255,255,255,.04) 45%,transparent 66%);
-  border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 80px rgba(170,205,240,.18)}
-.ice.o2{width:180px;height:180px;left:46%;top:430px;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.22),transparent 65%);border:1px solid rgba(255,255,255,.12)}
-nav{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:26px 0}
-.logo{display:flex;flex-direction:column;line-height:1;text-decoration:none}
-.logo b{font-family:var(--serif);font-weight:400;font-size:26px;letter-spacing:.14em}
-.logo small{font-size:9.5px;letter-spacing:.42em;opacity:.75;margin-top:5px;padding-left:2px}
-.links{display:flex;gap:30px;font-size:13px;opacity:.85}
-.links a{text-decoration:none}.links a:hover{opacity:1;text-decoration:underline;text-underline-offset:5px}
-.navbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 5px 5px 18px;text-decoration:none;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.06);backdrop-filter:blur(10px)}
-.navbtn .arr{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--night);display:grid;place-items:center}
-@media(max-width:900px){.links{display:none}}
-.herogrid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;padding:34px 0 20px}
-@media(max-width:980px){.herogrid{grid-template-columns:1fr}}
-.hero h1{margin:26px 0 22px;font-weight:400;line-height:.98;letter-spacing:-.01em}
-.hero h1 .up{display:block;font-family:var(--serif);font-size:clamp(46px,6.4vw,88px);text-transform:uppercase;letter-spacing:.01em}
-.hero h1 .lo{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(50px,7vw,96px);color:#dfeaf6}
-.lede{max-width:470px;font-size:16px;line-height:1.6;color:rgba(255,255,255,.78);margin:0 0 30px}
-.cta{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:34px}
-.gchip{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;padding:7px 13px;border-radius:999px;background:var(--glass);border:1px solid var(--glassb);backdrop-filter:blur(10px);color:rgba(255,255,255,.88)}
-.dots{display:flex;gap:26px;margin-top:38px;font-family:var(--serif);font-size:13px}
-.dots a{text-decoration:none;opacity:.55;padding-bottom:8px;border-bottom:1px solid transparent}
-.dots a.on,.dots a:hover{opacity:1;border-color:#fff}
+.main{min-width:0;display:flex;flex-direction:column;gap:18px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px;border-radius:var(--r-md);color:#dfe8f2;background:rgba(255,255,255,.05);border:1px solid var(--line2);backdrop-filter:blur(14px)}
+.crumb{display:flex;gap:10px;align-items:center;font-size:13px}.crumb b{font-weight:600;color:#fff}.crumb span{opacity:.45}
+.tchips{display:flex;gap:8px;flex-wrap:wrap}
+.tchip{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.04)}
+.tchip .dot{width:7px;height:7px;border-radius:50%;background:#4cc38a}
 
-/* redaction stage */
-.stage{position:relative;min-height:590px}
-.doc{position:absolute;left:4%;right:8%;top:74px;border-radius:22px;padding:24px 26px 22px;color:#eaf2fa;
-  background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.22);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden;transform:rotate(-2deg)}
-.doc .dh{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;opacity:.7;margin-bottom:14px}
-.doc .dh i{font-style:normal;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.3);letter-spacing:.14em}
-.doc .ttl{font-family:var(--serif);font-size:24px;margin:0 0 12px;letter-spacing:.04em}
-.doc .ln{font:12.6px/2.05 var(--mono);white-space:nowrap;color:rgba(234,242,250,.86)}
-.doc .ln .k{opacity:.6}
+/* ============ hero ============ */
+.hero{position:relative;overflow:hidden;border-radius:26px;color:#fff;min-height:460px;display:grid;grid-template-columns:1.02fr .98fr;gap:20px;padding:40px 44px 0;
+  background:radial-gradient(700px 420px at 85% 10%,rgba(176,208,238,.32),transparent 60%),radial-gradient(600px 500px at 0% 120%,rgba(70,122,172,.45),transparent 60%),linear-gradient(150deg,#123150,#0a1f35 55%,#07162a);
+  border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.hero:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.03) 0 2px,transparent 2px 130px);pointer-events:none}
+.orb{position:absolute;border-radius:50%;pointer-events:none;border:1px solid rgba(255,255,255,.16);background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.26),rgba(255,255,255,.03) 50%,transparent 68%)}
+.orb.a{width:460px;height:460px;right:-140px;top:-120px}.orb.b{width:150px;height:150px;left:44%;bottom:-40px}
+.kick{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.kick .rule{width:46px;height:1px;background:currentColor;opacity:.5}
+.hero h1{position:relative;margin:22px 0 16px;font-weight:400;line-height:1}
+.hero h1 .up{display:block;font:400 clamp(40px,4.3vw,62px)/1.02 var(--serif)}
+.hero h1 .lo{display:block;font:italic 400 clamp(42px,4.6vw,66px)/1.05 var(--serif);color:#dbe8f6}
+.hero p.lede{position:relative;max-width:440px;margin:0 0 24px;color:rgba(255,255,255,.76);font-size:15.5px}
+.cta{position:relative;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.btn-cream{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:12px;min-height:48px;padding:5px 5px 5px 22px;border-radius:999px;text-decoration:none;
+  background:linear-gradient(180deg,var(--cream),var(--cream2));color:var(--night);font:600 12.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 10px 26px rgba(0,0,0,.28);transition:transform .2s var(--ease),box-shadow .2s}
+.btn-cream:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(0,0,0,.34)}
+.btn-cream .ar{width:38px;height:38px;border-radius:50%;background:var(--night);color:#fff;display:grid;place-items:center;transition:transform .25s var(--ease)}
+.btn-cream:hover .ar{transform:rotate(-45deg)}
+.langs{font-size:12.5px;color:rgba(255,255,255,.7);letter-spacing:.06em}
+.hero .foot{position:relative;margin-top:34px;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.45);padding-bottom:26px}
+
+.stage{position:relative;min-height:380px}
+.doc{position:absolute;left:4%;right:4%;top:0;border-radius:20px;padding:20px 22px 16px;color:#eaf2fa;transform:rotate(-1.6deg);
+  background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:0 30px 70px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.25);overflow:hidden}
+.doc .dh{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:10px}
+.doc .dh em{font-style:normal;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.3);letter-spacing:.12em}
+.doc .ttl{font:400 21px var(--serif);margin:0 0 8px}
+.ln{font:12.3px/2 var(--mono);white-space:nowrap;color:rgba(234,242,250,.88)}.ln .k{color:rgba(234,242,250,.55)}
 .r{position:relative;display:inline-grid;vertical-align:baseline}
 .r>span{grid-area:1/1;transition:opacity .45s,filter .45s,transform .45s}
-.r .a{color:#fff;background:rgba(255,120,100,.16);border-radius:4px;padding:0 4px}
+.r .a{color:#fff;background:rgba(255,128,104,.18);border-radius:4px;padding:0 4px}
 .r .b{opacity:0;filter:blur(6px);transform:translateY(4px);color:var(--night);background:var(--cream);border-radius:5px;padding:0 6px;font-weight:700;justify-self:start}
-.doc.clean .r .a{opacity:0;filter:blur(8px);transform:translateY(-4px)}
-.doc.clean .r .b{opacity:1;filter:none;transform:none}
-.doc .beam{position:absolute;left:0;right:0;height:90px;top:-100px;background:linear-gradient(180deg,transparent,rgba(190,225,255,.28),rgba(255,255,255,.55) 52%,transparent 54%);pointer-events:none;mix-blend-mode:screen}
-.doc.scan .beam{animation:beam 1.5s cubic-bezier(.5,0,.3,1) forwards}
-@keyframes beam{to{top:110%}}
-.doc .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
-.doc .state b{font-family:var(--serif);text-transform:none;letter-spacing:0;font-size:15px;font-weight:400;font-style:italic}
-.float{position:absolute;z-index:2;border-radius:16px;padding:12px 15px;color:#fff;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(0,0,0,.3);font-size:12px;animation:bob 6s ease-in-out infinite}
-.float .big{font-family:var(--serif);font-size:22px;display:block;line-height:1.1}
-.float.f1{right:2%;top:0}.float.f2{left:-10px;bottom:40px;animation-delay:-2s}.float.f3{right:2%;bottom:0;animation-delay:-4s;display:flex;align-items:center;gap:12px;max-width:260px}
-.float .psnb{font:700 15px var(--mono);color:var(--cream)}
-@keyframes bob{50%{transform:translateY(-10px)}}
-@media(max-width:980px){.stage{min-height:560px}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.doc.clean .r .a{opacity:0;filter:blur(8px);transform:translateY(-4px)}.doc.clean .r .b{opacity:1;filter:none;transform:none}
+.doc .beam{position:absolute;left:0;right:0;height:90px;top:-100px;background:linear-gradient(180deg,transparent,rgba(190,225,255,.25),rgba(255,255,255,.55) 52%,transparent 54%);pointer-events:none;mix-blend-mode:screen}
+.doc.scan .beam{animation:beam 1.5s cubic-bezier(.5,0,.3,1) forwards}@keyframes beam{to{top:110%}}
+.doc .df{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.15);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.doc .df b{font:italic 400 15px var(--serif);letter-spacing:0;text-transform:none;color:#fff}
+.quote{position:absolute;right:0;bottom:6px;z-index:2;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(14px);font:italic 15px/1.35 var(--serif);color:#fff;animation:bob 7s ease-in-out infinite}
+.pchip{position:absolute;left:-3%;bottom:16px;z-index:2;padding:10px 14px;border-radius:14px;background:rgba(7,19,31,.55);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(14px);font-size:11.5px;color:rgba(255,255,255,.8);animation:bob 7s ease-in-out -3s infinite}
+.pchip b{display:block;font:700 14px var(--mono);color:var(--cream)}
+@keyframes bob{50%{transform:translateY(-8px)}}
 
-/* ---------- trust strip (light, editorial) ---------- */
-.trust{background:#fff;border-bottom:1px solid var(--line)}
-.trust .wrap{display:grid;grid-template-columns:1.1fr repeat(4,1fr);gap:24px;align-items:center;padding:38px 28px}
-@media(max-width:980px){.trust .wrap{grid-template-columns:1fr 1fr}}
-.trust h3{margin:0;font-family:var(--serif);font-weight:400;font-size:26px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
-.trust h3 small{display:block;font-family:var(--sans);font-size:11.5px;letter-spacing:.12em;color:var(--ink3);margin-top:10px;text-transform:uppercase}
-.metric .v{font-family:var(--serif);font-size:42px;line-height:1;letter-spacing:-.01em}
-.metric .v sup{font-size:.45em;vertical-align:super}
-.metric .l{font-size:12.5px;color:var(--ink2);margin-top:8px;max-width:170px;line-height:1.4}
+.ribbon{display:flex;justify-content:center;gap:34px;flex-wrap:wrap;padding:12px;color:rgba(223,232,242,.8);font-size:12.5px}
+.ribbon span{display:inline-flex;align-items:center;gap:8px}
 
-/* ---------- section shells ---------- */
-section.sec{padding:80px 0}
-.sechead{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:end;margin-bottom:34px}
-@media(max-width:900px){.sechead{grid-template-columns:1fr}}
-.sechead h2{margin:16px 0 0;font-weight:400;line-height:1}
-.sechead h2 .up{display:block;font-family:var(--serif);font-size:clamp(36px,4.4vw,56px);text-transform:uppercase}
-.sechead h2 .lo{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(38px,4.8vw,62px);color:var(--night3)}
-.sechead p{margin:0;color:var(--ink2);max-width:520px;font-size:15.5px}
+/* ============ light workspace ============ */
+.sheet{border-radius:26px;padding:34px 34px 30px;background:linear-gradient(180deg,#eef3f8,#e5ecf3);border:1px solid rgba(255,255,255,.6);box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.shead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+.shead .kick{color:var(--ink3)}
+.shead h2{margin:12px 0 0;font:400 40px/1.05 var(--serif)}.shead h2 i{font-style:italic;color:var(--slate)}
+.shead p{margin:0;max-width:380px;font-size:13.5px;color:var(--ink2);text-align:right}
 
-/* run panel: frosted (light) like the second reference */
-.runsec{background:
-  radial-gradient(700px 380px at 0% 0%,rgba(242,228,207,.75),transparent 60%),
-  radial-gradient(800px 500px at 100% 100%,rgba(199,212,225,.7),transparent 60%),var(--ice)}
-.panel{display:grid;grid-template-columns:.85fr 1.15fr;gap:28px;align-items:stretch}
-@media(max-width:980px){.panel{grid-template-columns:1fr}}
-.side{display:flex;flex-direction:column;gap:14px}
-.feat{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid rgba(13,27,42,.1)}
-.feat .ico{width:42px;height:42px;border-radius:50%;border:1px solid rgba(13,27,42,.22);display:grid;place-items:center;flex:none;font-family:var(--serif);font-size:15px}
-.feat b{display:block;font-size:14px}.feat span{font-size:13px;color:var(--ink2)}
-.glasscard{border-radius:26px;padding:26px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  box-shadow:0 30px 70px rgba(14,38,64,.14),inset 0 1px 0 #fff}
-.seg{display:inline-flex;padding:4px;border-radius:999px;background:rgba(13,27,42,.06);margin-bottom:18px}
-.tab{appearance:none;border:0;background:none;padding:9px 18px;border-radius:999px;font:600 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);cursor:pointer}
-.tab.on{background:var(--night);color:#fff;box-shadow:0 6px 16px rgba(8,22,39,.25)}
-.pane{display:none}.pane.on{display:block}
-.drop{position:relative;border-radius:20px;padding:34px 22px;text-align:center;overflow:hidden;
-  background:linear-gradient(160deg,#fff,rgba(238,243,248,.7));border:1.5px dashed #b9c8d8;transition:.2s}
-.drop.over{border-color:var(--night3);background:linear-gradient(160deg,#fff,#dfe9f4);transform:scale(1.005)}
-.drop .orb{width:74px;height:74px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;color:var(--night);font-size:26px;
-  background:radial-gradient(circle at 32% 28%,#fff,#d9e5f1 60%,#bccbdc);box-shadow:0 14px 30px rgba(14,38,64,.18),inset 0 -6px 14px rgba(14,38,64,.08)}
-.drop h4{margin:0 0 6px;font-family:var(--serif);font-weight:400;font-size:26px}
-.drop .hint{font-size:13px;color:var(--ink3);max-width:460px;margin:0 auto}
-.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-.btn{appearance:none;border:1px solid rgba(13,27,42,.18);background:#fff;color:var(--ink);padding:10px 18px;border-radius:999px;font:600 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block}
-.btn:hover{border-color:var(--night)}
-.chosen{margin-top:14px;color:var(--ink2);font-size:13px}
-textarea{width:100%;min-height:210px;border:1px solid var(--line);border-radius:18px;padding:16px;font:13.5px/1.6 var(--mono);resize:vertical;background:#fff}
-.examples{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0;align-items:center;font-size:12.5px;color:var(--ink2)}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--night3)}
-.chip:hover{background:var(--frost)}
-.runbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
-.runbar .spacer{flex:1}
-.status{font-size:13.5px;color:var(--ink2)}
-.err{color:var(--coral);font-weight:600}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #c9d3df;border-top-color:var(--night);border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:6px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{position:relative;overflow:hidden;border-radius:18px;padding:16px 18px;color:#fff;min-height:118px;
+  background:linear-gradient(160deg,#1a3a5a,#0d2238);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 30px rgba(12,32,52,.25)}
+.kpi:after{content:"";position:absolute;width:150px;height:150px;right:-60px;top:-70px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%)}
+.kpi .kh{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;color:rgba(255,255,255,.75)}
+.kpi .kh .ib{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.1);color:#fff}
+.kpi .kv{font:400 36px/1 var(--serif);margin:12px 0 6px;min-height:36px}
+.kpi .nil{display:inline-block;width:22px;height:2px;background:rgba(255,255,255,.7);vertical-align:middle}
+.kpi .ks{font-size:12px;color:rgba(255,255,255,.6)}
+.kpi.ok .kv{color:#a9e6c6}.kpi.warn .kv{color:#f5cd84}
+
+.stepper{display:flex;align-items:center;gap:8px;margin:22px 0 14px;font-size:13px;color:var(--ink3)}
+.stepper .s{display:inline-flex;align-items:center;gap:8px;padding:6px 4px}
+.stepper .s i{width:10px;height:10px;border-radius:50%;border:1.6px solid currentColor;transition:.2s}
+.stepper .s.on{color:var(--ink);font-weight:600}.stepper .s.on i{background:var(--night);border-color:var(--night);box-shadow:0 0 0 4px rgba(12,32,52,.12)}
+.stepper .s.done{color:var(--green)}.stepper .s.done i{background:var(--green);border-color:var(--green)}
+.stepper .bar{width:42px;height:1px;background:var(--line)}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{border-radius:20px;background:var(--card);border:1px solid #fff;box-shadow:0 18px 44px rgba(12,32,52,.12),inset 0 1px 0 #fff;padding:20px;display:flex;flex-direction:column;min-height:470px}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.ph .lab{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3)}
+.ph h3{margin:4px 0 0;font-size:17px;font-weight:600}
+.badge{font-size:11.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink2);white-space:nowrap}
+.badge.ok{background:var(--greenbg);border-color:#bfe3cf;color:var(--green)}.badge.busy{background:var(--amberbg);border-color:#f0d9a8;color:var(--amber)}
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tab{appearance:none;border:0;background:none;padding:10px 0;min-height:44px;font:600 13px var(--sans);color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--ink);border-color:var(--night)}
+.pane{display:none;flex:1;flex-direction:column}.pane.on{display:flex}
+textarea{flex:1;width:100%;min-height:230px;border:1px solid var(--line);border-radius:14px;padding:14px;font:12.8px/1.7 var(--mono);color:var(--ink);background:#fff;resize:vertical}
+textarea:focus{outline:2px solid var(--slate);outline-offset:1px}
+.samples{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--ink3)}
+.chip{appearance:none;border:1px solid var(--line);background:#fff;border-radius:10px;min-height:34px;padding:0 12px;font:500 12.5px var(--sans);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--slate)}
+.drop{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;border-radius:16px;padding:22px;border:1.5px dashed #b6c5d6;background:linear-gradient(160deg,#fff,#eef3f8);transition:.2s var(--ease);min-height:230px}
+.drop.over{border-color:var(--slate);background:linear-gradient(160deg,#fff,#dde8f3)}
+.drop .up{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:var(--night);background:radial-gradient(circle at 32% 28%,#fff,#d7e3ef 65%,#bccbdc);box-shadow:0 12px 26px rgba(12,32,52,.18)}
+.drop .up svg{width:24px;height:24px}
+.drop h4{margin:4px 0 0;font:400 23px var(--serif)}
+.drop .hint{font-size:12.5px;color:var(--ink3);max-width:340px}
+.btnrow{display:flex;gap:8px;margin-top:6px}
+.btn{appearance:none;cursor:pointer;min-height:40px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;font:600 12.5px var(--sans);color:var(--ink);display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn:hover{border-color:var(--slate)}
+.chosen{font-size:12.5px;color:var(--ink2)}
+.runbtn{appearance:none;border:0;cursor:pointer;width:100%;min-height:50px;margin-top:14px;border-radius:14px;color:#fff;font:600 14px var(--sans);letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(180deg,#1f4266,#0d2238);box-shadow:0 12px 26px rgba(12,32,52,.3);transition:transform .2s var(--ease),box-shadow .2s}
+.runbtn:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(12,32,52,.36)}
+.runbtn:disabled{opacity:.65;cursor:progress;transform:none}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
+.fine{font-size:11.5px;color:var(--ink3);text-align:center;margin-top:8px}
+.fine.err{color:var(--coral);font-weight:600}
+
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:20px}
+.paper{width:74px;height:92px;border-radius:8px;background:#fff;box-shadow:0 16px 30px rgba(12,32,52,.16);transform:rotate(-6deg);position:relative;margin-bottom:12px}
+.paper:before{content:"";position:absolute;left:14px;right:14px;top:20px;height:44px;background:repeating-linear-gradient(180deg,#d3dde8 0 3px,transparent 3px 10px)}
+.empty h4{margin:0;font:400 24px var(--serif)}.empty p{margin:0;font-size:13px;color:var(--ink3);max-width:260px}
+.rbody{display:none;flex:1;flex-direction:column;gap:12px}.rbody.on{display:flex}
+.rsum{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:linear-gradient(160deg,#16334f,#0c2034);color:#fff}
+.rsum .chk{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--night);background:radial-gradient(circle at 32% 28%,#fff,var(--cream) 70%)}
+.rsum h4{margin:0;font:400 22px var(--serif)}.rsum p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.72)}
+.rsum .btn-cream{margin-left:auto;min-height:44px;font-size:11.5px;letter-spacing:.1em;white-space:nowrap;flex:none}
+.rfmt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink3)}
+.rfmt code{font:12px var(--mono);background:var(--frost);color:var(--night);border-radius:6px;padding:2px 7px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:236px;overflow:auto;padding-right:2px}
+.tile{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;background:#fff;border:1px solid var(--line);text-decoration:none;color:var(--ink);transition:.15s}
+.tile:hover{border-color:var(--slate);box-shadow:0 8px 18px rgba(12,32,52,.1)}
+.tile .ft{width:34px;height:38px;border-radius:7px;display:grid;place-items:center;font:700 9.5px var(--mono);background:var(--frost);color:var(--slate)}
+.tile .ft.pdf{background:var(--cream);color:var(--night)}
+.tile .tn{display:block;font-weight:600;font-size:12.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tm{display:block;font-size:11.5px;color:var(--ink3)}
+.tile .ta{display:flex;gap:4px}
+.tile .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--card);color:var(--slate)}
+.tile .ic:hover{background:var(--night);color:#fff}
+.tile .ic svg{width:15px;height:15px}
+pre.rel{flex:1;margin:0;white-space:pre-wrap;word-break:break-word;font:12.6px/1.7 var(--mono),"Kohinoor Devanagari","Noto Sans Devanagari";background:#f2faf5;border:1px solid #cfe6d9;border-radius:14px;padding:14px;max-height:250px;overflow:auto}
+.tag{background:var(--frost);color:var(--night);border-radius:4px;padding:0 3px;font-weight:600}.tag.p{background:var(--cream);color:var(--night)}
+.psn{font:600 12px var(--mono);color:var(--night);background:var(--cream);padding:2px 8px;border-radius:6px;white-space:nowrap}
+.note{font-size:12px;color:var(--ink3);margin:12px 2px 0}
+
+.trio{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.box{border-radius:20px;background:var(--card);border:1px solid #fff;box-shadow:0 18px 44px rgba(12,32,52,.1);padding:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);font-weight:600;padding:10px 12px;background:#eaf0f6}
+thead th:first-child{border-radius:10px 0 0 10px}thead th:last-child{border-radius:0 10px 10px 0}
+tbody td{padding:11px 12px;border-bottom:1px solid #e6ecf2;vertical-align:top}
+tbody tr.click{cursor:pointer}tbody tr.click:hover td{background:#eef3f8}
+.tscroll{max-height:330px;overflow:auto}
+.ftype{font:700 10.5px var(--mono);color:var(--slate);background:var(--frost);border-radius:6px;padding:2px 7px}
+.pill{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.pill.ok{background:var(--greenbg);color:var(--green)}.pill.q{background:var(--amberbg);color:var(--amber)}
+.why{display:block;font-size:11.5px;color:var(--ink3);margin-top:3px}
+.act{display:inline-flex;align-items:center;gap:5px;font-weight:600;font-size:12.5px;color:var(--slate);white-space:nowrap}
+.act svg{width:14px;height:14px}
+.tempty{padding:34px 10px;text-align:center}
+.tempty svg{width:28px;height:28px;color:var(--steel)}
+.tempty h4{margin:10px 0 4px;font:400 23px var(--serif)}.tempty p{margin:0;font-size:12.8px;color:var(--ink3)}
+
+.pipe{display:flex;align-items:flex-start;justify-content:space-between;position:relative;margin:16px 4px 12px}
+.pipe:before{content:"";position:absolute;left:28px;right:28px;top:22px;height:1px;background:var(--line)}
+.pstep{position:relative;appearance:none;border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font:600 12.5px var(--sans);color:var(--ink2);min-width:64px}
+.pstep .pc{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--slate);transition:.2s var(--ease)}
+.pstep.on .pc,.pstep:hover .pc{background:var(--night);border-color:var(--night);color:#fff;box-shadow:0 8px 18px rgba(12,32,52,.25)}
+.pstep.on{color:var(--ink)}
+.pdesc{font-size:12.8px;color:var(--ink2);min-height:40px;margin:0}
+.secgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.sec{display:flex;gap:10px;align-items:flex-start}
+.sec .si{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--frost);color:var(--slate);flex:none}
+.sec b{display:block;font-size:13px}.sec span{font-size:12px;color:var(--ink3)}
+.bh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.bh .lab{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3)}
+.bh h3{margin:4px 0 0;font-size:17px;font-weight:600}
+
+.metrics{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:0;margin-top:16px;border-radius:20px;overflow:hidden;background:#fff;border:1px solid #fff;box-shadow:0 18px 44px rgba(12,32,52,.1)}
+.metrics>div{padding:20px 22px;border-right:1px solid #e6ecf2}.metrics>div:last-child{border:0}
+.metrics h4{margin:0;font:400 22px/1.1 var(--serif);text-transform:uppercase}
+.metrics h4 small{display:block;font:500 10.5px var(--sans);letter-spacing:.14em;color:var(--ink3);margin-top:8px}
+.metrics .v{font:400 36px/1 var(--serif)}.metrics .v sup{font-size:.45em}
+.metrics .l{font-size:12px;color:var(--ink2);margin-top:6px;line-height:1.4}
+
+.later{display:none;flex-direction:column;gap:16px;margin-top:16px}.later.on{display:flex}
+.bars{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;row-gap:12px;margin-top:14px}
+.bar{display:grid;grid-template-columns:130px 1fr 36px;align-items:center;gap:12px;font-size:13px}
+.track{background:var(--frost);border-radius:999px;height:9px;overflow:hidden}
+.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7393b3,var(--night));transform-origin:left;animation:grow .6s var(--ease) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.bar .n{text-align:right;font:400 18px var(--serif)}
 .muted{color:var(--ink3)}
 
-/* four moves */
-.moves{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-@media(max-width:980px){.moves{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.moves{grid-template-columns:1fr}}
-.move{position:relative;border-radius:22px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:0 14px 40px rgba(14,38,64,.07);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
-.move:hover{transform:translateY(-4px);box-shadow:0 24px 50px rgba(14,38,64,.13)}
-.vis{height:170px;position:relative;display:grid;place-items:center;overflow:hidden;
-  background:radial-gradient(circle at 30% 25%,#fff,transparent 55%),linear-gradient(160deg,#e9f0f7,#c9d8e7)}
-.vis:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;bottom:-110px;border:1px solid rgba(255,255,255,.8);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.6),transparent 60%)}
-.vis .big{position:relative;z-index:1;font-family:var(--serif);font-size:40px;color:var(--night)}
-.vis .big i{font-style:italic;color:var(--night3)}
-.vis .bars3{position:relative;z-index:1;display:flex;flex-direction:column;gap:9px;width:62%}
-.vis .bars3 span{height:11px;border-radius:6px;background:rgba(14,38,64,.16)}
-.vis .bars3 span.x{background:var(--night);width:55%}
-.vis .tok{position:relative;z-index:1;font:700 22px var(--mono);color:var(--night);padding:10px 16px;border-radius:14px;background:rgba(255,255,255,.7);border:1px solid #fff;box-shadow:0 10px 24px rgba(14,38,64,.12)}
-.move .body{padding:18px 20px 20px;flex:1;display:flex;flex-direction:column}
-.move .lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3)}
-.move h5{margin:6px 0 8px;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
-.move p{margin:0;color:var(--ink2);font-size:13.4px;flex:1}
-.move .circ{margin-top:16px;align-self:flex-end;color:var(--night)}
-
-/* ---------- results ---------- */
-#results{display:none}
-.resdark{color:#fff;background:
-  radial-gradient(800px 420px at 85% 0%,rgba(173,206,236,.25),transparent 60%),
-  radial-gradient(600px 500px at 0% 100%,rgba(64,118,170,.35),transparent 60%),
-  linear-gradient(170deg,#0c2440,#081627 70%);padding:80px 0 120px}
-.resdark .sechead h2 .lo{color:#dfeaf6}.resdark .sechead p{color:rgba(255,255,255,.75)}
-.release{border-radius:26px;padding:26px;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(18px);box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.rhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.rcheck{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:22px;color:var(--night);background:radial-gradient(circle at 32% 28%,#fff,var(--cream) 70%);box-shadow:0 10px 24px rgba(0,0,0,.25)}
-.rtitle{flex:1;min-width:240px}.rtitle h3{margin:0;font-family:var(--serif);font-weight:400;font-size:30px}
-.rtitle p{margin:4px 0 0;color:rgba(255,255,255,.75);font-size:14px}
-.rformat{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0 0;font-size:13px;color:rgba(255,255,255,.7)}
-.rformat code{font:12.5px var(--mono);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:6px;padding:2px 8px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:18px}
-.tiles:empty{display:none}
-.tile{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;border-radius:16px;padding:12px 14px;text-decoration:none;color:#fff;position:relative;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);transition:.15s}
-.tile:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.35);transform:translateY(-2px)}
-.tile .ft{grid-row:1/3;width:40px;height:46px;border-radius:8px;display:grid;place-items:center;font:700 10.5px var(--mono);letter-spacing:.3px;background:rgba(255,255,255,.12);color:#dfeaf6}
-.tile .ft.pdf{background:var(--cream);color:var(--night)}
-.tile .tn{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tile .tm{font-size:12px;color:rgba(255,255,255,.6);padding-right:60px}
-.tile .ta{position:absolute;right:10px;bottom:10px;display:flex;gap:5px}
-.tile .ic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;background:rgba(255,255,255,.12);color:#fff}
-.tile .ic:hover{background:var(--cream);color:var(--night)}
-.tile.more{grid-template-columns:1fr;border-style:dashed}
-.stats{display:grid;grid-template-columns:repeat(7,1fr);margin-top:22px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
-@media(max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}}
-.stat{padding:18px 18px 16px;border-right:1px solid rgba(255,255,255,.1)}
-.stat:last-child{border-right:0}
-.stat .v{font-family:var(--serif);font-size:34px;line-height:1}
-.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:8px}
-.stat.good .v{color:#9fe0bf}.stat.warn .v{color:#f3c77a}
-
-.lightstack{margin-top:-70px;position:relative;z-index:2}
-.card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;margin-bottom:20px;box-shadow:0 20px 50px rgba(14,38,64,.08)}
-.cardhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.cardhead h3{margin:8px 0 0;font-weight:400;font-family:var(--serif);font-size:30px;line-height:1.05}
-.cardhead h3 i{font-style:italic;color:var(--night3)}
-.cardhead p{margin:0;color:var(--ink2);font-size:13.5px;max-width:460px}
-.kick.dark{color:var(--ink3)}
-.bars{display:grid;grid-template-columns:1fr 1fr;column-gap:40px;row-gap:12px}
-@media(max-width:860px){.bars{grid-template-columns:1fr}}
-.bar{display:grid;grid-template-columns:140px 1fr 40px;align-items:center;gap:12px;font-size:13.5px}
-.track{background:var(--frost);border-radius:999px;height:10px;overflow:hidden}
-.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#6f93b7,var(--night))}
-.bar .n{text-align:right;font-family:var(--serif);font-size:18px}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th{text-align:left;color:var(--ink3);font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--line)}
-td{padding:12px;border-bottom:1px solid #eef2f6;vertical-align:top}
-tr.click{cursor:pointer}tr.click:hover td{background:#f5f8fb}
-.scroll{max-height:420px;overflow:auto;border-radius:16px;border:1px solid var(--line)}
-.pill{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 10px;white-space:nowrap}
-.pill.ok{background:var(--greenbg);color:var(--green)}.pill.q{background:var(--amberbg);color:var(--amber)}
-.openhint{font-size:12px;font-weight:600;color:var(--night3);white-space:nowrap}
-.psn{font:600 12.5px var(--mono);color:var(--night);background:var(--cream);padding:2px 8px;border-radius:6px;white-space:nowrap}
-.fchip{display:inline-block;font-size:12px;background:var(--frost);color:var(--night3);border-radius:6px;padding:1px 8px;margin:2px 4px 2px 0}
-.viewer{display:none}.viewer.on{display:block}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:860px){.cols{grid-template-columns:1fr}}
-.col .lab,.hcol .lab{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
-.col.after .lab,.hcol .lab.after{color:var(--green)}
-pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12.8px/1.6 var(--mono),"Kohinoor Devanagari","Noto Sans Devanagari";background:#f7f9fc;border:1px solid var(--line);border-radius:16px;padding:14px;max-height:460px;overflow:auto}
-.col.after pre{background:#f4fbf7;border-color:#cfe6d9}
-.tag{background:var(--frost);color:var(--night);border-radius:4px;padding:0 3px;font-weight:600}
-.tag.p{background:var(--cream);color:var(--night)}
-
-/* worked example */
-.inv{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);background:var(--amberbg);border-radius:999px;padding:5px 12px;white-space:nowrap}
-.howgrid{display:grid;grid-template-columns:1fr 54px 1fr;gap:10px;align-items:stretch}
-@media(max-width:860px){.howgrid{grid-template-columns:1fr}.harrow{transform:rotate(90deg)}}
-.harrow{display:grid;place-items:center}
-.harrow span{width:46px;height:46px;border-radius:50%;background:var(--night);color:#fff;display:grid;place-items:center;font-size:18px;box-shadow:0 10px 24px rgba(8,22,39,.25)}
-pre.ex{max-height:none;font-size:12.6px;line-height:1.8}
-pre.ex.out{background:#f4fbf7;border-color:#cfe6d9}
+.inv{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);background:var(--amberbg);border-radius:999px;padding:5px 12px;white-space:nowrap}
+.howgrid{display:grid;grid-template-columns:1fr 50px 1fr;gap:8px;margin-top:14px}
+.harrow{display:grid;place-items:center}.harrow span{width:42px;height:42px;border-radius:50%;background:var(--night);color:#fff;display:grid;place-items:center}
+.hcol .hl{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}.hcol .hl.after{color:var(--green)}
+pre.ex{margin:0;white-space:pre-wrap;font:12.3px/1.8 var(--mono),"Kohinoor Devanagari";background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+pre.ex.out{background:#f2faf5;border-color:#cfe6d9}
 pre.ex i{font-style:normal;border-radius:4px;padding:1px 3px}
-.h.n,.k.n{background:#fbe3df;color:#8f2f2c}
-.h.p,.k.p{background:#f2e4cf;color:#5b4320}
-.h.g,.k.g{background:#e3ebf3;color:#173a5c}
-.h.d,.k.d{background:#e2f3ea;color:#1f6b44}
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--ink2)}
-.legend span{display:inline-flex;align-items:center;gap:7px}
-.legend .k{width:12px;height:12px;border-radius:3px}
+.h.n,.k.n{background:#fbe3df;color:#8f2f2c}.h.p,.k.p{background:#f1e2cb;color:#5b4320}.h.g,.k.g{background:#dfe8f2;color:#16334f}.h.d,.k.d{background:#dff1e7;color:#17704a}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink2)}.legend span{display:inline-flex;align-items:center;gap:7px}.legend .k{width:11px;height:11px;border-radius:3px}
 
-/* people */
-.ppl-tools{display:flex;gap:12px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
-.ppl-tools input{flex:1;max-width:380px;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font:inherit;font-size:13.5px;background:#f7f9fc}
+.ppl-tools{display:flex;gap:12px;align-items:center;margin:14px 0 12px}
+.ppl-tools input{flex:1;max-width:380px;min-height:42px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;font-size:13.5px;background:#fff}
 .pmeta{font-size:12.5px;color:var(--ink2)}
-details.person{border:1px solid var(--line);border-radius:18px;margin-bottom:10px;background:#fff;transition:box-shadow .15s}
-details.person:hover{box-shadow:0 10px 26px rgba(14,38,64,.08)}
-details.person[open]{border-color:#c3cdd9}
+details.person{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;background:#fff;transition:box-shadow .2s}
+details.person:hover{box-shadow:0 10px 24px rgba(12,32,52,.08)}
 details.person summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 details.person summary::-webkit-details-marker{display:none}
 .prow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .facts{display:flex;gap:6px;flex-wrap:wrap}
-.fact{font-size:12.5px;background:var(--frost);color:var(--night);border-radius:999px;padding:3px 10px}
-.fact b{font-weight:600;color:var(--ink3);margin-right:5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.fact{font-size:12.3px;background:var(--frost);color:var(--night);border-radius:999px;padding:3px 10px}
+.fact b{font-weight:600;color:var(--ink3);margin-right:5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
 .rm{font-size:12px;background:var(--coralbg);color:var(--coral);border-radius:999px;padding:3px 10px}
-.rmlab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-right:2px;align-self:center}
+.rmlab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);align-self:center}
+.chev{margin-left:auto;color:var(--ink3);transition:transform .2s}details.person[open] .chev{transform:rotate(180deg)}
 .precs{padding:0 16px 16px}
-.precs table td.pv{font:12.3px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-width:640px}
-.chev{margin-left:auto;font-size:12px;color:var(--ink3);transition:transform .2s}
-details.person[open] .chev{transform:rotate(180deg)}
+.precs .scroll{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.precs td.pv{font:12.2px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word}
+.fchip{display:inline-block;font-size:12px;background:var(--frost);color:var(--slate);border-radius:6px;padding:1px 8px}
 
-/* footer */
-footer{background:var(--night);color:rgba(255,255,255,.75);padding:34px 0}
-footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:12.5px}
-footer .logo b{font-size:20px;color:#fff}
+footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 24px;border-radius:var(--r-md);color:rgba(223,232,242,.7);font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--line2)}
+footer b{font:400 21px var(--serif);color:#fff}footer b i{font-style:italic}
+
+@media(max-width:1180px){.hero{grid-template-columns:1fr}.stage{min-height:400px}.kpis{grid-template-columns:1fr 1fr}.trio,.duo{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.shead p{text-align:left}.bars{grid-template-columns:1fr}.howgrid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M7.5 12h4l5-5M11.5 12l5 5"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><path d="M16 4.5a3.2 3.2 0 0 1 0 6.3M18 14.8c1.7.7 2.8 2.5 3 5.2"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.2v.3"/></symbol>
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 20V10M10 20V5M15 20v-7M20 20v-4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3M14 9l2 2"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m6 11 6 6 6-6"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-steth" viewBox="0 0 24 24"><path d="M6 3v6a5 5 0 0 0 10 0V3"/><path d="M11 14v2a4 4 0 0 0 8 0v-2"/><circle cx="19" cy="12" r="2"/></symbol>
+</svg>
 
-<header class="hero" id="top">
-  <div class="ice o1"></div><div class="ice o2"></div>
-  <div class="wrap">
-    <nav>
-      <a class="logo" href="#top"><b>INCOGRX</b><small>PRIVACY FIREWALL</small></a>
-      <div class="links"><a href="#how">How it works</a><a href="#release">Release records</a><a href="#trust">Why it holds</a></div>
-      <a class="navbtn" href="#release">Start a release <span class="arr">&#8594;</span></a>
+<div class="app">
+  <aside class="side" aria-label="Workspace navigation">
+    <a class="brand" href="#workspace"><span class="seal">Rx</span><span><b>Incog<i>Rx</i></b><small>SECRET WARDS</small></span></a>
+    <div class="navlab">Your hospital workspace</div>
+    <nav class="nav" id="nav">
+      <a href="#workspace" class="on"><svg class="i"><use href="#i-home"/></svg>Hospital workspace</a>
+      <a href="#release"><svg class="i"><use href="#i-upload"/></svg>Release records</a>
+      <a href="#activity"><svg class="i"><use href="#i-report"/></svg>Processing reports</a>
+      <a href="#pipeline"><svg class="i"><use href="#i-flow"/></svg>Privacy pipeline</a>
+      <a href="#people-sec"><svg class="i"><use href="#i-users"/></svg>Dataset explorer</a>
+      <a href="#security"><svg class="i"><use href="#i-shield"/></svg>Security overview</a>
     </nav>
+    <div class="status" id="sys" data-s="ready" role="status" aria-live="polite">
+      <div class="shield"><svg class="i"><use href="#i-shield"/></svg></div>
+      <b>System status</b>
+      <span class="st"><span class="dot"></span><span id="sysText">Engine ready</span></span>
+      <small>Private local workspace</small>
+    </div>
+    <div class="team">Team Knull Void<br>DevForge26 · Secret Wards</div>
+  </aside>
 
-    <div class="herogrid">
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb"><b>IncogRx</b><span>/</span>Healthcare data privacy</div>
+      <div class="tchips"><span class="tchip"><span class="dot"></span>Offline engine</span><span class="tchip">No AI models</span><span class="tchip">Hospital workspace</span></div>
+    </div>
+
+    <section class="hero" id="workspace">
+      <div class="orb a"></div><div class="orb b"></div>
       <div>
-        <div class="kick"><span class="num">01</span><span class="rule"></span>English · हिन्दी · Hinglish</div>
-        <h1><span class="up">Medicine stays.</span><span class="lo">Identity goes.</span></h1>
-        <p class="lede">An offline privacy firewall for Indian hospital records. Names, numbers and addresses leave. Diagnoses, doses and the timeline of care stay exactly where they were.</p>
+        <div class="kick"><span>Hospital workspace</span><span class="rule"></span><span>English · हिन्दी · Hinglish</span></div>
+        <h1><span class="up">Protect the person.</span><span class="lo">Preserve the care.</span></h1>
+        <p class="lede">Give research the information it needs. Names, numbers and addresses leave the record. Diagnoses, doses and the timeline of care stay exactly where they were.</p>
         <div class="cta">
-          <a class="pillbtn" href="#release">Release records <span class="arr">&#8594;</span></a>
-          <a class="ghost" href="#how">See how it works</a>
+          <a class="btn-cream" href="#release">Sanitize records <span class="ar"><svg class="i"><use href="#i-arrow"/></svg></span></a>
+          <span class="langs">Runs on this computer. Nothing leaves it.</span>
         </div>
-        <div class="chips"><span class="gchip">Runs on this computer</span><span class="gchip">No internet</span><span class="gchip">No AI models</span></div>
-        <div class="dots"><a class="on" href="#top">01</a><a href="#release">02</a><a href="#how">03</a></div>
+        <div class="foot">IncogRx / Secret Wards</div>
       </div>
-
       <div class="stage" aria-label="Animated example with invented data">
-        <div class="float f1"><span class="big">0.01 s</span>to clean one note</div>
         <div class="doc" id="heroDoc">
-          <div class="dh"><span>Discharge summary</span><i>Invented data</i></div>
+          <div class="dh"><span>Discharge summary</span><em>Invented data</em></div>
           <p class="ttl">Shanti Vihar Hospital</p>
           <div class="ln"><span class="k">Patient&nbsp;&nbsp;</span> <span class="r"><span class="a">Meera Iyer</span><span class="b">[NAME]</span></span> &nbsp;<span class="k">Age</span> <span class="r"><span class="a">52 F</span><span class="b">50-59 F</span></span></div>
           <div class="ln"><span class="k">UHID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="r"><span class="a">AHC-0012345</span><span class="b">PSN-R10M7K</span></span></div>
@@ -329,141 +355,137 @@ footer .logo b{font-size:20px;color:#fff}
           <div class="ln"><span class="k">W/o&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="r"><span class="a">Suresh Iyer</span><span class="b">[RELATIVE]</span></span></div>
           <div class="ln"><span class="k">Admitted&nbsp;</span> <span class="r"><span class="a">03/03/2026</span><span class="b">05/05/2026</span></span></div>
           <div class="ln"><span class="k">Dx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> Dengue fever · Tab Paracetamol 650 mg</div>
-          <div class="foot"><span class="state" id="heroState"><b>Original</b></span><span>IncogRx</span></div>
+          <div class="df"><span id="heroState"><b>Original</b></span><span>IncogRx</span></div>
           <div class="beam"></div>
         </div>
-        <div class="float f2"><span class="psnb">PSN-R10M7K</span><br>one pseudonym, every file</div>
-        <div class="float f3"><span class="circ">&#8634;</span><span>Dates shift per patient. A 4-day stay stays 4 days.</span></div>
+        <div class="pchip"><b>PSN-R10M7K</b>one pseudonym, every file</div>
+        <div class="quote">A little more privacy.<br>A lot more possibility.</div>
       </div>
-    </div>
-  </div>
-</header>
+    </section>
 
-<div class="trust" id="trust">
-  <div class="wrap">
-    <h3>Why it<br>holds<small>On the organisers' practice data</small></h3>
-    <div class="metric"><div class="v">0</div><div class="l">of 3,230 personal details left visible in the release</div></div>
-    <div class="metric"><div class="v">1.00</div><div class="l">patient linking score across files and languages</div></div>
-    <div class="metric"><div class="v">12,554</div><div class="l">date intervals kept exactly after shifting</div></div>
-    <div class="metric"><div class="v">2.2<sup>s</sup></div><div class="l">for all 200 files on a laptop CPU</div></div>
-  </div>
-</div>
-
-<section class="sec runsec" id="release">
-  <div class="wrap">
-    <div class="sechead">
-      <div><div class="kick dark"><span class="num">02</span><span class="rule"></span>Release</div>
-        <h2><span class="up">Give it records.</span><span class="lo">Get a safe release.</span></h2></div>
-      <p>Drop files, a folder or a zip, or paste a note. Everything is processed on this computer and the result comes back in the organisers' format, with every PDF returned as a redacted PDF.</p>
+    <div class="ribbon">
+      <span><svg class="i"><use href="#i-shield"/></svg>Offline privacy engine</span>
+      <span><svg class="i"><use href="#i-link"/></svg>Consistent patient pseudonyms</span>
+      <span><svg class="i"><use href="#i-steth"/></svg>Clinical context kept</span>
+      <span><svg class="i"><use href="#i-cal"/></svg>Date intervals preserved</span>
     </div>
-    <div class="panel">
-      <div class="side">
-        <div class="feat"><span class="ico">i</span><div><b>Any format they send</b><span>CSV, TSV, JSON, JSONL, FHIR bundles, notes, text PDFs and zips.</span></div></div>
-        <div class="feat"><span class="ico">ii</span><div><b>Three scripts, one patient</b><span>Roman, Devanagari and Hinglish mentions link to the same pseudonym.</span></div></div>
-        <div class="feat"><span class="ico">iii</span><div><b>Broken files never leak</b><span>Truncated, mislabelled or scanned files are quarantined, never copied.</span></div></div>
-        <div class="feat" style="border:0"><span class="ico">iv</span><div><b>Originals never shown</b><span>This page only ever displays the cleaned release.</span></div></div>
+
+    <section class="sheet" id="release" aria-label="Upload, protect and review">
+      <div class="shead">
+        <div><div class="kick">Upload, protect &amp; review</div><h2>Your records. <i>A safer release.</i></h2></div>
+        <p>Start with a synthetic note or a batch of files. Review the result, then take it with you in the organisers' format.</p>
       </div>
-      <div class="glasscard">
-        <div class="seg" role="tablist">
-          <button class="tab on" data-pane="p-files">Upload files</button>
-          <button class="tab" data-pane="p-text">Paste text</button>
-        </div>
-        <div class="pane on" id="p-files">
-          <div class="drop" id="drop">
-            <div class="orb">&#8593;</div>
-            <h4>Drop records here</h4>
-            <div class="hint">Files, a whole folder or a .zip. Anything broken or unsupported is quarantined, never copied.</div>
-            <div class="btns">
-              <button class="btn" id="pickFiles">Choose files</button>
-              <button class="btn" id="pickFolder">Choose a folder</button>
+
+      <div class="kpis">
+        <div class="kpi" id="k1"><div class="kh"><span class="ib"><svg class="i"><use href="#i-file"/></svg></span>Files received</div><div class="kv"><span class="nil"></span></div><div class="ks">Awaiting first batch</div></div>
+        <div class="kpi" id="k2"><div class="kh"><span class="ib"><svg class="i"><use href="#i-check"/></svg></span>Sanitized</div><div class="kv"><span class="nil"></span></div><div class="ks">Awaiting first batch</div></div>
+        <div class="kpi" id="k3"><div class="kh"><span class="ib"><svg class="i"><use href="#i-alert"/></svg></span>Quarantined</div><div class="kv"><span class="nil"></span></div><div class="ks">Awaiting first batch</div></div>
+        <div class="kpi" id="k4"><div class="kh"><span class="ib"><svg class="i"><use href="#i-bars"/></svg></span>Records processed</div><div class="kv"><span class="nil"></span></div><div class="ks">Awaiting first batch</div></div>
+      </div>
+
+      <div class="stepper" aria-label="Progress"><span class="s on" id="st1"><i></i>Input</span><span class="bar"></span><span class="s" id="st2"><i></i>Process</span><span class="bar"></span><span class="s" id="st3"><i></i>Review &amp; export</span></div>
+
+      <div class="duo">
+        <div class="panel">
+          <div class="ph"><div><div class="lab">Your source</div><h3>Clinical records</h3></div><span class="badge">Synthetic data only</span></div>
+          <div class="tabs" role="tablist">
+            <button class="tab on" data-pane="p-files" role="tab">Upload files</button>
+            <button class="tab" data-pane="p-text" role="tab">Paste a record</button>
+          </div>
+          <div class="pane on" id="p-files">
+            <div class="drop" id="drop">
+              <div class="up"><svg class="i"><use href="#i-upload"/></svg></div>
+              <h4>Drop records here</h4>
+              <div class="hint">CSV, TSV, JSON, JSONL, FHIR, notes, text PDFs or a .zip. Broken files are quarantined, never copied.</div>
+              <div class="btnrow"><button class="btn" id="pickFiles"><svg class="i"><use href="#i-file"/></svg>Choose files</button><button class="btn" id="pickFolder"><svg class="i"><use href="#i-folder"/></svg>Choose a folder</button></div>
+              <input type="file" id="fileInput" multiple hidden>
+              <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+              <div class="chosen" id="chosen">No files chosen.</div>
             </div>
-            <input type="file" id="fileInput" multiple hidden>
-            <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
-            <div class="chosen" id="chosen">No files chosen.</div>
+          </div>
+          <div class="pane" id="p-text">
+            <label class="sr" for="text">Record text</label>
+            <textarea id="text" placeholder="Patient Name: ...&#10;Age: ...&#10;Phone: ...&#10;Address: ..."></textarea>
+            <div class="samples">Try a sample:
+              <button class="chip" data-ex="english">English</button><button class="chip" data-ex="hindi">हिंदी</button><button class="chip" data-ex="hinglish">Hinglish</button>
+            </div>
+          </div>
+          <button class="runbtn" id="run"><svg class="i"><use href="#i-shield"/></svg><span id="runLabel">Sanitize records</span></button>
+          <div class="fine" id="status">Processed on this computer. No external APIs.</div>
+        </div>
+
+        <div class="panel" aria-live="polite">
+          <div class="ph"><div><div class="lab">Your result</div><h3>Sanitized output</h3></div><span class="badge" id="resBadge">Awaiting input</span></div>
+          <div class="empty" id="resEmpty"><div class="paper"></div><h4>Ready when you are.</h4><p>Your sanitized files and processing report will appear here.</p></div>
+          <div class="rbody" id="resBody">
+            <div class="rsum"><span class="chk"><svg class="i"><use href="#i-check"/></svg></span><div><h4 id="rTitle">Release ready</h4><p id="rsum"></p></div>
+              <a class="btn-cream" id="zipBtn" href="#">Download all <span class="ar"><svg class="i"><use href="#i-down"/></svg></span></a></div>
+            <div class="rfmt"><span>Organisers' format:</span><code>sanitized/</code><code>report.json</code><code>records.jsonl</code><span id="rpdf"></span></div>
+            <div class="tiles" id="tiles"></div>
+            <pre class="rel" id="relText" hidden></pre>
+            <div id="textPsn"></div>
           </div>
         </div>
-        <div class="pane" id="p-text">
-          <textarea id="text" placeholder="Paste a discharge note, prescription, WhatsApp forward or any record..."></textarea>
-          <div class="examples">Try an invented example:
-            <button class="chip" data-ex="hinglish">Hinglish nursing note</button>
-            <button class="chip" data-ex="hindi">Hindi prescription</button>
-            <button class="chip" data-ex="english">English discharge note</button>
+      </div>
+      <p class="note">Review sanitized records before reuse. Clinical details may be generalised by the engine's privacy policy: ages to 10-year bands, addresses to district, rare conditions to their ICD chapter.</p>
+
+      <div class="trio">
+        <div class="box" id="activity">
+          <div class="bh"><div><div class="lab">Your latest batch</div><h3>Processing activity</h3></div><span class="badge" id="actBadge">No batch yet</span></div>
+          <div class="tscroll" style="margin-top:14px"><table><thead><tr><th>File</th><th>Type</th><th>Status</th><th>Removed</th><th>Action</th></tr></thead>
+            <tbody id="files"><tr><td colspan="5"><div class="tempty"><svg class="i"><use href="#i-report"/></svg><h4>A clear record of every file.</h4><p>Process a batch to see sanitized outputs and quarantine reasons here.</p></div></td></tr></tbody></table></div>
+        </div>
+        <div class="stack">
+          <div class="box" id="pipeline">
+            <div class="bh"><div><div class="lab">Behind the workspace</div><h3>Privacy pipeline</h3></div></div>
+            <div class="pipe" role="tablist" aria-label="Pipeline steps">
+              <button class="pstep on" data-d="Read every supported file. Anything broken, mislabelled or scanned is quarantined and never copied."><span class="pc"><svg class="i"><use href="#i-file"/></svg></span>Ingest</button>
+              <button class="pstep" data-d="Find names, relatives, phones, Aadhaar, ABHA and addresses in English, हिन्दी and Hinglish, by rules and patterns only."><span class="pc"><svg class="i"><use href="#i-search"/></svg></span>Detect</button>
+              <button class="pstep" data-d="Join one patient's records across files and scripts on strong evidence, and give them one keyed pseudonym."><span class="pc"><svg class="i"><use href="#i-link"/></svg></span>Link</button>
+              <button class="pstep" data-d="Replace identifiers, band ages, keep districts, generalise rare conditions and shift dates per patient."><span class="pc"><svg class="i"><use href="#i-lock"/></svg></span>Protect</button>
+            </div>
+            <p class="pdesc" id="pdesc">Read every supported file. Anything broken, mislabelled or scanned is quarantined and never copied.</p>
+          </div>
+          <div class="box" id="security">
+            <div class="bh"><div><div class="lab">Clear by design</div><h3>Security overview</h3></div></div>
+            <div class="secgrid">
+              <div class="sec"><span class="si"><svg class="i"><use href="#i-cpu"/></svg></span><div><b>Local engine</b><span>No external APIs, no AI models</span></div></div>
+              <div class="sec"><span class="si"><svg class="i"><use href="#i-key"/></svg></span><div><b>Keyed identities</b><span>HMAC pseudonyms per release</span></div></div>
+              <div class="sec"><span class="si"><svg class="i"><use href="#i-folder"/></svg></span><div><b>Inputs untouched</b><span>The input folder is never changed</span></div></div>
+              <div class="sec"><span class="si"><svg class="i"><use href="#i-alert"/></svg></span><div><b>Quarantine</b><span>An explicit outcome for every file</span></div></div>
+            </div>
           </div>
         </div>
-        <div class="runbar">
-          <span class="status" id="status">Ready when you are.</span>
-          <span class="spacer"></span>
-          <button class="pillbtn dark" id="run">Run IncogRx <span class="arr">&#8594;</span></button>
+      </div>
+
+      <div class="metrics" aria-label="Results on the organisers' practice data">
+        <div><h4>Why it holds<small>Organisers' practice data</small></h4></div>
+        <div><div class="v">0</div><div class="l">of 3,230 personal details left visible</div></div>
+        <div><div class="v">1.00</div><div class="l">patient linking across files and scripts</div></div>
+        <div><div class="v">12,554</div><div class="l">date intervals kept exactly</div></div>
+        <div><div class="v">2.2<sup>s</sup></div><div class="l">for all 200 files on a laptop CPU</div></div>
+      </div>
+
+      <div class="later" id="later">
+        <div class="box">
+          <div class="bh"><div><div class="lab">Removed</div><h3>What was taken out</h3></div><span class="pmeta">Placeholders written into the released files, by type</span></div>
+          <div class="bars" id="bars"></div>
+        </div>
+        <div class="box" id="people-sec">
+          <div class="bh"><div><div class="lab">Dataset explorer</div><h3>Who is in this release</h3></div><span class="pmeta">Only released values. Real names and numbers never appear here.</span></div>
+          <div class="ppl-tools"><input id="pplFilter" aria-label="Filter people" placeholder="Filter by pseudonym, age band, district or condition"><span class="pmeta" id="pplCount"></span></div>
+          <div id="people"></div>
+          <div id="unlinkedWrap" style="display:none">
+            <div class="bh" style="margin-top:16px"><div><h3>Records with no patient</h3></div><span class="pmeta">Reference files and records with too little evidence to link. Still cleaned.</span></div>
+            <div id="unlinkedList" style="margin-top:10px"></div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<section class="sec" id="how" style="background:#fff">
-  <div class="wrap">
-    <div class="sechead">
-      <div><div class="kick dark"><span class="num">03</span><span class="rule"></span>How it works</div>
-        <h2><span class="up">Four moves.</span><span class="lo">No guesswork.</span></h2></div>
-      <p>Rules and patterns only, no language model. Every move is keyed by a release secret, so the same input always gives the same release, and a new secret changes every pseudonym and date.</p>
-    </div>
-    <div class="moves">
-      <div class="move"><div class="vis"><div class="bars3"><span></span><span class="x"></span><span style="width:80%"></span><span class="x" style="width:40%"></span></div></div>
-        <div class="body"><span class="lab">Move 01</span><h5>Remove</h5><p>Names, relatives, phones, Aadhaar, ABHA and street addresses, in English, हिन्दी and Hinglish.</p><span class="circ">&#8600;</span></div></div>
-      <div class="move"><div class="vis"><span class="tok">PSN-R10M7K</span></div>
-        <div class="body"><span class="lab">Move 02</span><h5>Pseudonymise</h5><p>One keyed pseudonym per patient, the same in every file, script and language.</p><span class="circ">&#8600;</span></div></div>
-      <div class="move"><div class="vis"><span class="big">52 <i>&#8594;</i> 50-59</span></div>
-        <div class="body"><span class="lab">Move 03</span><h5>Generalise</h5><p>Age to a 10-year band, street address to district, a rare condition to its ICD chapter.</p><span class="circ">&#8600;</span></div></div>
-      <div class="move"><div class="vis"><span class="big">4 <i>days</i> = 4 <i>days</i></span></div>
-        <div class="body"><span class="lab">Move 04</span><h5>Shift dates</h5><p>One secret shift per patient, so admissions, stays and follow-ups keep their exact spacing.</p><span class="circ">&#8600;</span></div></div>
-    </div>
-  </div>
-</section>
-
-<section id="results">
-  <div class="resdark">
-    <div class="wrap">
-      <div class="sechead">
-        <div><div class="kick"><span class="num">04</span><span class="rule"></span>Your release</div>
-          <h2><span class="up">Release</span><span class="lo">ready.</span></h2></div>
-        <p>Everything below comes from the cleaned output. Download it all in the organisers' format, or open any released file on its own.</p>
-      </div>
-      <div class="release">
-        <div class="rhead">
-          <div class="rcheck" aria-hidden="true">&#10003;</div>
-          <div class="rtitle"><h3>Cleaned and packaged</h3><p id="rsum"></p></div>
-          <a class="pillbtn" id="zipBtn" href="#">Download everything <span class="arr">&#8595;</span></a>
-        </div>
-        <div class="rformat"><span>Inside the zip:</span><code>sanitized/</code><code>report.json</code><code>records.jsonl</code><span id="rpdf"></span></div>
-        <div class="tiles" id="tiles"></div>
-      </div>
-      <div class="stats" id="stats"></div>
-    </div>
-  </div>
-
-  <div class="wrap lightstack">
-    <div class="card viewer" id="textView">
-      <div class="cardhead"><div><div class="kick dark">Your text</div><h3>Before <i>and after</i></h3></div><span id="textPsn"></span></div>
-      <div class="cols">
-        <div class="col"><div class="lab">Original</div><pre id="tvBefore"></pre></div>
-        <div class="col after"><div class="lab">Released</div><pre id="tvAfter"></pre></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="cardhead"><div><div class="kick dark">Removed</div><h3>What <i>was taken out</i></h3></div><p>Placeholders written into the released files, by type.</p></div>
-      <div class="bars" id="bars"></div>
-    </div>
-
-    <div class="card">
-      <div class="cardhead"><div><div class="kick dark">Files</div><h3>Every file, <i>accounted for</i></h3></div><p>Click a released file to open its cleaned version. Originals are never shown.</p></div>
-      <div class="scroll"><table><thead><tr><th>Input file</th><th>Status</th><th>Released as</th><th>Removed</th><th></th></tr></thead><tbody id="files"></tbody></table></div>
-    </div>
-
-    <div class="card">
-      <div class="cardhead"><div><div class="kick dark">Worked example</div><h3>How IncogRx <i>cleans a record</i></h3></div><span class="inv">Invented data</span></div>
-      <div class="howgrid">
-        <div class="hcol"><div class="lab">Record as received</div>
+      <div class="box" style="margin-top:16px">
+        <div class="bh"><div><div class="lab">Worked example</div><h3>How IncogRx cleans a record</h3></div><span class="inv">Invented data</span></div>
+        <div class="howgrid">
+          <div class="hcol"><div class="hl">Record as received</div>
 <pre class="ex">Patient Name: <i class="h n">Meera Iyer</i>      Age/Sex: <i class="h g">52</i> Yrs/F
 UHID: <i class="h p">AHC-0012345</i>
 Mobile: <i class="h n">9845012345</i>   Aadhaar: <i class="h n">4821 7730 9912</i>
@@ -475,8 +497,8 @@ Date of Discharge: <i class="h d">07/03/2026</i>
 Diagnosis: <i class="h g">Dengue fever (A97.0)</i>
 <i class="h n">Meera</i> ji ko 3 din se tez bukhar hai.
 पति <i class="h n">सुरेश अय्यर</i> साथ में हैं।</pre></div>
-        <div class="harrow" aria-hidden="true"><span>&#8594;</span></div>
-        <div class="hcol"><div class="lab after">Released by IncogRx</div>
+          <div class="harrow" aria-hidden="true"><span><svg class="i"><use href="#i-arrow"/></svg></span></div>
+          <div class="hcol"><div class="hl after">Released by IncogRx</div>
 <pre class="ex out">Patient Name: <i class="h n">[NAME]</i>        Age/Sex: <i class="h g">50-59</i> Yrs/F
 UHID: <i class="h p">PSN-R10M7K</i>
 Mobile: <i class="h n">[PHONE]</i>   Aadhaar: <i class="h n">[AADHAAR]</i>
@@ -488,31 +510,17 @@ Date of Discharge: <i class="h d">09/05/2026</i>
 Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i>
 <i class="h n">[NAME]</i> ji ko 3 din se tez bukhar hai.
 पति <i class="h n">[RELATIVE]</i> साथ में हैं।</pre></div>
+        </div>
+        <div class="legend"><span><i class="k n"></i>Removed</span><span><i class="k p"></i>Pseudonymised</span><span><i class="k g"></i>Generalised</span><span><i class="k d"></i>Date shifted, 4-day stay kept</span><span class="muted">The right side is the engine's real output for this invented record.</span></div>
       </div>
-      <div class="legend"><span><i class="k n"></i>Removed</span><span><i class="k p"></i>Pseudonymised</span><span><i class="k g"></i>Generalised</span><span><i class="k d"></i>Date shifted, 4-day stay kept</span><span class="muted">The right side is the engine's real output for this invented record.</span></div>
-    </div>
+    </section>
 
-    <div class="card" id="peopleCard">
-      <div class="cardhead"><div><div class="kick dark">People</div><h3>Who is <i>in this release</i></h3></div>
-        <p>What each patient's records still say after removal, and what was taken out. Real names and numbers never appear here.</p></div>
-      <div class="ppl-tools"><input id="pplFilter" placeholder="Filter by pseudonym, age band, district or condition"><span class="pmeta" id="pplCount"></span></div>
-      <div id="people"></div>
-      <div id="unlinkedWrap" style="display:none">
-        <div class="cardhead" style="margin-top:22px"><div><h3 style="font-size:22px">Records <i>with no patient</i></h3></div><p>Reference files and records with too little evidence to link. They are still cleaned.</p></div>
-        <div id="unlinkedList"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <a class="logo" href="#top"><b>INCOGRX</b><small>PRIVACY FIREWALL</small></a>
-    <span>Team Knull Void · Track 3 Secret Wards · This page talks only to the local IncogRx process on 127.0.0.1.</span>
-  </div>
-</footer>
+    <footer><b>Incog<i>Rx</i>.</b><span>Team Knull Void · DevForge26 · Secret Wards</span><span>Independent local preview · Talks only to 127.0.0.1</span></footer>
+  </main>
+</div>
 
 <script>
+
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LABELS = {NAME:"Patient names", RELATIVE:"Relatives", PHONE:"Phone numbers", AADHAAR:"Aadhaar", ABHA:"ABHA numbers",
@@ -566,79 +574,100 @@ const toB64 = f => new Promise((res, rej) => { const r = new FileReader();
   r.onerror = rej; r.readAsArrayBuffer(f); });
 
 
+
+// ---------- workspace state: system status, stepper, run button ----------
+function sys(s, text) { $("#sys").dataset.s = s; $("#sysText").textContent = text; }
+function step(n) { [1, 2, 3].forEach(i => { const el = $("#st" + i); el.classList.toggle("on", i === n); el.classList.toggle("done", i < n); }); }
+function status(html, err) { const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
+const ICON = id => `<svg class="i"><use href="#i-${id}"/></svg>`;
+
 $("#run").onclick = async () => {
   const body = {mode};
-  if (mode === "text") { body.text = $("#text").value; if (!body.text.trim()) return status("Paste some text first.", true); }
+  if (mode === "text") { body.text = $("#text").value; if (!body.text.trim()) return status("Paste a record first, or try a sample.", true); }
   if (mode === "files") {
     if (!picked.length) return status("Choose files or a folder first.", true);
-    status('<span class="spin"></span>Reading files...');
+    status("Reading files...");
     body.files = await Promise.all(picked.map(async f => ({path: relPath(f), b64: await toB64(f)})));
   }
-  $("#run").disabled = true; status('<span class="spin"></span>Running the firewall...');
+  const btn = $("#run");
+  btn.disabled = true; $("#runLabel").textContent = "Sanitizing..."; btn.querySelector("svg").outerHTML = '<span class="spin"></span>';
+  step(2); sys("busy", "Processing batch"); $("#resBadge").className = "badge busy"; $("#resBadge").textContent = "Processing";
   try {
     const r = await fetch("/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Run failed.");
-    last = d; render(d, body); status(`Done in ${d.wall_seconds}s.`);
-  } catch (e) { status(esc(e.message), true); }
-  finally { $("#run").disabled = false; }
+    last = d; render(d, body); step(3); sys("ready", "Engine ready");
+    status(`Done in ${d.wall_seconds}s. Processed on this computer.`);
+  } catch (e) {
+    step(1); sys("err", "Run failed"); $("#resBadge").className = "badge"; $("#resBadge").textContent = "Awaiting input";
+    status(esc(e.message), true);
+  } finally {
+    btn.disabled = false; $("#runLabel").textContent = "Sanitize records";
+    const sp = btn.querySelector(".spin"); if (sp) sp.outerHTML = ICON("shield");
+  }
 };
-function status(html, err) { $("#status").innerHTML = err ? `<span class="err">${html}</span>` : html; }
 
 function mark(text) {
   return esc(text).replace(/\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]/g, '<span class="tag">[$1]</span>')
     .replace(/PSN-[0-9A-Z]{6}/g, m => `<span class="tag p">${m}</span>`);
 }
+
+function kpi(id, v, sub, cls) {
+  const el = $(id); el.classList.remove("ok", "warn"); if (cls) el.classList.add(cls);
+  el.querySelector(".kv").textContent = v; el.querySelector(".ks").textContent = sub;
+}
 function render(d, req) {
-  $("#results").style.display = "block";
   const c = d.counts, removed = Object.values(d.tags).reduce((a, b) => a + b, 0);
-  const stats = [
-    [c.files_total, "Files processed"], [c.files_sanitized, "Released", "good"], [c.files_quarantined, "Quarantined", c.files_quarantined ? "warn" : ""],
-    [c.records_processed, "Records"], [removed, "Personal details removed"], [d.patients.length, "Patients (pseudonyms)"],
-    [`${d.timing.seconds ?? d.wall_seconds}s`, "Run time"]];
-  $("#stats").innerHTML = stats.map(([v, l, k]) => `<div class="stat ${k || ""}"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("");
+  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
+  kpi("#k1", c.files_total, `${req.mode === "text" ? "pasted record" : "in this batch"} · ${d.timing.seconds ?? d.wall_seconds}s`);
+  kpi("#k2", c.files_sanitized, `${removed} personal detail(s) removed`, "ok");
+  kpi("#k3", c.files_quarantined, c.files_quarantined ? "nothing from them released" : "no file needed it", c.files_quarantined ? "warn" : "");
+  kpi("#k4", c.records_processed, `${d.patients.length} patient(s), one pseudonym each`);
+
+  // result panel
+  $("#resEmpty").style.display = "none"; $("#resBody").classList.add("on");
+  $("#resBadge").className = "badge ok"; $("#resBadge").textContent = "Release ready";
+  $("#zipBtn").href = `/api/download/${d.job}`;
+  $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} detail(s) removed`;
+  const npdf = (d.pdfs || []).length;
+  $("#rpdf").textContent = npdf ? `+ ${npdf} redacted PDF${npdf > 1 ? "s" : ""}` : "";
+  const rel = d.files.filter(f => f.status === "sanitized" && f.output).sort((a, b) => (!!b.pdf - !!a.pdf) || a.output.localeCompare(b.output));
+  const ext = n => (n.split(".").pop() || "").toUpperCase().slice(0, 4);
+  const textMode = req.mode === "text" && d.files[0];
+  $("#tiles").style.display = textMode ? "none" : "";
+  $("#tiles").innerHTML = rel.map(f => { const name = f.output.split("/").pop(), e = ext(name);
+    return `<a class="tile" href="${url(f.output)}" target="_blank" rel="noopener" title="Open ${esc(name)}"><span class="ft ${e === "PDF" ? "pdf" : ""}">${esc(e)}</span>
+      <span style="min-width:0"><span class="tn">${esc(name)}</span><span class="tm">${f.removed ?? 0} removed</span></span>
+      <span class="ta"><span class="ic" aria-label="Open">${ICON("out")}</span><span class="ic" aria-label="Download ${esc(name)}" data-dl="${url(f.output)}" data-name="${esc(name)}">${ICON("down")}</span></span></a>`; }).join("");
+  document.querySelectorAll("#tiles [data-dl]").forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation();
+    const a = document.createElement("a"); a.href = b.dataset.dl; a.download = b.dataset.name; document.body.appendChild(a); a.click(); a.remove(); });
+  const rt = $("#relText");
+  if (textMode) { rt.hidden = false; rt.innerHTML = mark(d.files[0].after || "");
+    $("#textPsn").innerHTML = (d.files[0].pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" "); }
+  else { rt.hidden = true; $("#textPsn").innerHTML = ""; }
+
+  // activity table
+  $("#actBadge").textContent = `${c.files_total} file(s)`;
+  $("#files").innerHTML = d.files.map(f => { const ok = f.status === "sanitized" && f.output;
+    const name = f.input.split("/").pop();
+    return `<tr class="${ok ? "click" : ""}" ${ok ? `data-href="${url(f.output)}" tabindex="0"` : ""}>
+      <td>${esc(f.input)}${ok && f.output.replace(/^sanitized\//, "") !== f.input ? `<span class="why">released as ${esc(f.output.replace(/^sanitized\//, ""))}</span>` : ""}</td>
+      <td><span class="ftype">${esc(ext(name))}</span></td>
+      <td>${ok ? '<span class="pill ok">Sanitized</span>' : `<span class="pill q">Quarantined</span><span class="why">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
+      <td>${f.removed ?? "-"}</td>
+      <td>${ok ? `<span class="act">${f.pdf ? "Open PDF" : "Open"} ${ICON("out")}</span>` : '<span class="muted">Not released</span>'}</td></tr>`; }).join("");
+  document.querySelectorAll("#files tr.click").forEach(tr => { const go = () => window.open(tr.dataset.href, "_blank", "noopener");
+    tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
+
+  // removed bars + people
   const tags = Object.entries(d.tags), max = Math.max(1, ...tags.map(t => t[1]));
   $("#bars").innerHTML = tags.length ? tags.map(([k, n]) => `<div class="bar"><span>${esc(LABELS[k] || k)}</span><div class="track"><div class="fill" style="width:${(100*n/max).toFixed(1)}%"></div></div><span class="n">${n}</span></div>`).join("")
     : '<span class="muted">No personal details found.</span>';
-
-  // release card: one zip, plus a tile per released file (redacted PDFs first)
-  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
-  $("#zipBtn").href = `/api/download/${d.job}`;
-  $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} personal detail(s) removed`
-    + (c.files_quarantined ? ` · ${c.files_quarantined} quarantined, nothing from them released` : "");
-  const npdf = (d.pdfs || []).length;
-  $("#rpdf").textContent = npdf ? `· plus ${npdf} redacted PDF${npdf > 1 ? "s" : ""} in the same format you uploaded` : "";
-  const rel = d.files.filter(f => f.status === "sanitized" && f.output)
-    .sort((a, b) => (!!b.pdf - !!a.pdf) || a.output.localeCompare(b.output));
-  const SHOW = 8, ext = n => (n.split(".").pop() || "").toUpperCase().slice(0, 4);
-  $("#tiles").innerHTML = rel.slice(0, SHOW).map(f => {
-    const name = f.output.split("/").pop(), e = ext(name);
-    return `<a class="tile" href="${url(f.output)}" target="_blank" title="Open ${esc(name)}">
-      <span class="ft ${e === "PDF" ? "pdf" : ""}">${esc(e)}</span>
-      <span class="tn">${esc(name)}</span>
-      <span class="tm">${f.removed ?? 0} removed</span>
-      <span class="ta"><span class="ic" title="Open">&#8599;</span><span class="ic" title="Download" data-dl="${url(f.output)}" data-name="${esc(name)}">&#8595;</span></span></a>`;
-  }).join("") + (rel.length > SHOW ? `<a class="tile more" href="/api/download/${d.job}"><span class="tn">+${rel.length - SHOW} more</span><span class="tm">all in the zip</span></a>` : "");
-  document.querySelectorAll("#tiles [data-dl]").forEach(b => b.onclick = e => {
-    e.preventDefault(); e.stopPropagation();
-    const a = document.createElement("a"); a.href = b.dataset.dl; a.download = b.dataset.name; document.body.appendChild(a); a.click(); a.remove(); });
-
-  $("#files").innerHTML = d.files.map(f => {
-    const ok = f.status === "sanitized" && f.output;
-    return `<tr class="${ok ? "click" : ""}" ${ok ? `data-href="${url(f.output)}"` : ""}><td>${esc(f.input)}</td>
-    <td>${ok ? '<span class="pill ok">Released</span>' : `<span class="pill q">Quarantined</span> <span class="muted">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
-    <td>${ok ? esc(f.output.replace(/^sanitized\//, "")) : '<span class="muted">not released</span>'}</td><td>${f.removed ?? "-"}</td>
-    <td>${ok ? `<span class="openhint">${f.pdf ? "Open redacted PDF" : "Open"} &#8599;</span>` : ""}</td></tr>`; }).join("");
-  document.querySelectorAll("#files tr.click").forEach(tr => tr.onclick = () => window.open(tr.dataset.href, "_blank"));
-
-  const tv = $("#textView");
-  if (req.mode === "text" && d.files[0]) {
-    tv.classList.add("on"); $("#tvBefore").textContent = d.files[0].before || "";
-    $("#tvAfter").innerHTML = mark(d.files[0].after || ""); $("#textPsn").innerHTML = (d.files[0].pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
-  } else tv.classList.remove("on");
+  $("#later").classList.add("on");
   renderPeople(d);
-  $("#results").scrollIntoView({behavior: "smooth", block: "start"});
+  $("#release").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
 }
+
 const SINGULAR = {NAME:"Patient name", RELATIVE:"Relative", PHONE:"Phone", AADHAAR:"Aadhaar", ABHA:"ABHA", PAN:"PAN",
   EMAIL:"Email", MRN:"Hospital ID", ID:"Other ID", INSURANCE_ID:"Insurance ID", DOB:"Date of birth", PIN:"PIN code",
   ADDRESS:"Address", HOUSE:"House no.", LOCALITY:"Locality", LANDMARK:"Landmark", VILLAGE:"Village", TEHSIL:"Tehsil"};
@@ -651,7 +680,7 @@ function personHTML(p, title) {
     + (p.more ? `<tr><td colspan="2" class="muted">and ${p.more} more record(s). The download has all of them.</td></tr>` : "");
   const hay = [p.pseudonym, ...p.age, ...p.sex, ...p.district, ...p.diagnosis, ...p.files].join(" ").toLowerCase();
   return `<details class="person" data-hay="${esc(hay)}"><summary>
-    <div class="prow">${title}<span class="pmeta">${p.records} record(s) · ${p.files.length} file(s)</span><span class="chev">▼</span></div>
+    <div class="prow">${title}<span class="pmeta">${p.records} record(s) · ${p.files.length} file(s)</span><span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></div>
     ${facts ? `<div class="facts">${facts}</div>` : ""}
     ${rm ? `<div class="facts"><span class="rmlab">Removed:</span>${rm}</div>` : `<div class="pmeta">Nothing personal was found in these records.</div>`}
   </summary><div class="precs"><div class="scroll"><table><thead><tr><th style="width:230px">Released file</th><th>Released content (after removal)</th></tr></thead><tbody>${rows}</tbody></table></div></div></details>`;
@@ -669,27 +698,31 @@ function renderPeople(d) {
     $("#pplCount").textContent = q ? `${n} of ${ppl.length} patient(s)` : `${ppl.length} patient(s)`; };
 }
 
-// hero: invented record that redacts itself in a loop (purely decorative, no user data)
+// pipeline steps
+document.querySelectorAll(".pstep").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".pstep").forEach(x => x.classList.toggle("on", x === b)); $("#pdesc").textContent = b.dataset.d; });
+
+// sidebar follows the section in view
+(function () {
+  const links = [...document.querySelectorAll("#nav a")];
+  const update = () => {
+    let on = 0;
+    links.forEach((a, i) => { const el = document.querySelector(a.getAttribute("href"));
+      if (el && el.offsetParent !== null && el.getBoundingClientRect().top < innerHeight * 0.35) on = i; });
+    links.forEach((a, i) => a.classList.toggle("on", i === on));
+  };
+  addEventListener("scroll", update, {passive: true}); update();
+})();
+
+// hero: an invented record that redacts itself in a loop (decorative, never user data)
 (function () {
   const d = document.getElementById("heroDoc"), st = document.getElementById("heroState");
-  if (!d) return;
+  if (!d || matchMedia("(prefers-reduced-motion: reduce)").matches) { if (d) { d.classList.add("clean"); st.innerHTML = "<b>Released</b>"; } return; }
   [...d.querySelectorAll(".r")].forEach((r, i) => r.querySelectorAll("span").forEach(s => { s.style.transitionDelay = (0.12 + i * 0.16) + "s"; }));
   let clean = false;
-  const cycle = () => {
-    d.classList.remove("scan"); void d.offsetWidth; d.classList.add("scan");
-    clean = !clean; d.classList.toggle("clean", clean);
-    st.innerHTML = clean ? "<b>Released</b>" : "<b>Original</b>";
-  };
+  const cycle = () => { d.classList.remove("scan"); void d.offsetWidth; d.classList.add("scan");
+    clean = !clean; d.classList.toggle("clean", clean); st.innerHTML = clean ? "<b>Released</b>" : "<b>Original</b>"; };
   setTimeout(cycle, 900); setInterval(cycle, 4200);
-})();
-// hero dots follow the section in view
-(function () {
-  const dots = [...document.querySelectorAll(".dots a")];
-  const ids = dots.map(a => a.getAttribute("href").slice(1));
-  addEventListener("scroll", () => {
-    let on = 0; ids.forEach((id, i) => { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < innerHeight * 0.4) on = i; });
-    dots.forEach((a, i) => a.classList.toggle("on", i === on));
-  }, {passive: true});
 })();
 </script>
 </body>
