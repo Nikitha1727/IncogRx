@@ -730,6 +730,11 @@ Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i
 <script>
 
 const $ = s => document.querySelector(s);
+// Where the engine runs. Served by demo/app.py the token below is replaced with "" (same server).
+// Served as a static page (Vercel), requests go to the hosted engine on Render; ?api=<url> overrides.
+const API_TOKEN = "__INCOGRX_API__";
+const API = (new URLSearchParams(location.search).get("api") ||
+  (API_TOKEN.startsWith("__INCOGRX") ? "https://incogrx-demo.onrender.com" : API_TOKEN)).replace(/\/$/, "");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LABELS = {NAME:"Patient names", RELATIVE:"Relatives", PHONE:"Phone numbers", AADHAAR:"Aadhaar", ABHA:"ABHA numbers",
   PAN:"PAN", EMAIL:"Emails", MRN:"Hospital IDs", ID:"Other IDs", INSURANCE_ID:"Insurance IDs", DOB:"Dates of birth",
@@ -830,11 +835,11 @@ $("#run").onclick = async () => {
   const empty = $("#resEmpty"); empty.classList.add("busy");
   step(2); sys("busy", "Processing batch"); ($("#resBadge") || {}).className = "badge busy"; ($("#resBadge") || {}).textContent = "Processing";
   try {
-    const r = await fetch("/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    const r = await fetch(API + "/api/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Run failed.");
     last = d; render(d, body); step(3); sys("ready", "Engine ready");
-    status(`Done in ${(d.speed && d.speed.total_seconds) || d.wall_seconds}s. Processed on this computer.`);
+    status(`Done in ${(d.speed && d.speed.total_seconds) || d.wall_seconds}s. ${API ? "Processed on the IncogRx server. No external APIs." : "Processed on this computer."}`);
   } catch (e) {
     step(1); sys("err", "Run failed"); ($("#resBadge") || {}).className = "badge"; ($("#resBadge") || {}).textContent = "Awaiting input";
     status(esc(e.message), true);
@@ -859,7 +864,7 @@ function kpi(id, v, sub, cls) {
 }
 function render(d, req) {
   const c = d.view || d.counts, removed = Object.values(d.tags).reduce((a, b) => a + b, 0);
-  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
+  const url = p => `${API}/api/file/${d.job}/${encodeURI(p)}`;
   kpi("#k1", c.files_total, `${req.mode === "text" ? "pasted record" : "in this batch"} · ${(d.speed && d.speed.total_seconds) ?? d.timing.seconds ?? d.wall_seconds}s`);
   kpi("#k2", c.files_sanitized, `${removed} personal detail(s) removed`, "ok");
   kpi("#k3", c.files_quarantined, c.files_blocked ? `${c.files_blocked} blocked by the security scan` : c.files_quarantined ? "nothing from them released" : "no file needed it", c.files_quarantined ? "warn" : "");
@@ -868,7 +873,7 @@ function render(d, req) {
   // result panel
   $("#resEmpty").style.display = "none"; $("#resBody").classList.add("on");
   ($("#resBadge") || {}).className = "badge ok"; ($("#resBadge") || {}).textContent = "Release ready";
-  $("#zipBtn").href = `/api/download/${d.job}`;
+  $("#zipBtn").href = `${API}/api/download/${d.job}`;
   $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} detail(s) removed`;
   const npdf = (d.pdfs || []).length;
   $("#rpdf").textContent = npdf ? `+ ${npdf} redacted PDF${npdf > 1 ? "s" : ""}` : "";
@@ -918,7 +923,7 @@ function render(d, req) {
 function renderChecks(d) {
   const sp = d.speed || {}, docs = d.documents || [];
   const sec = d.security || {scanned: d.files.length, blocked: [], neutralized: [], clean: d.files.length};
-  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
+  const url = p => `${API}/api/file/${d.job}/${encodeURI(p)}`;
   const pages = docs.reduce((a, x) => a + x.pages, 0), ocrPages = docs.reduce((a, x) => a + x.ocr_pages, 0);
   const ocrDocs = docs.filter(x => x.ocr_pages), review = docs.reduce((a, x) => a + (x.review_pages || []).length, 0);
   const confAvg = ocrDocs.length ? Math.round(ocrDocs.reduce((a, x) => a + x.ocr_conf * x.ocr_pages, 0) / ocrPages) : null;

@@ -505,6 +505,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")      # the static page on Vercel calls this API
         for k, v in (extra or {}).items():
             self.send_header(k, v)
         self.end_headers()
@@ -513,9 +514,18 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, code: int, obj) -> None:
         self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
+    def do_OPTIONS(self) -> None:  # noqa: N802  CORS preflight from the static page
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Max-Age", "86400")
+        self.end_headers()
+
     def do_GET(self) -> None:  # noqa: N802
         if self.path in ("/", "/index.html"):
-            self._send(200, (DEMO / "index.html").read_bytes(), "text/html; charset=utf-8")
+            page = (DEMO / "index.html").read_bytes().replace(b"__INCOGRX_API__", b"")   # same-server API
+            self._send(200, page, "text/html; charset=utf-8")
         elif self.path.startswith("/assets/"):    # page images only: a bare file name, no paths
             name = self.path[len("/assets/"):].split("?")[0]
             p = DEMO / "assets" / name

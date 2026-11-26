@@ -1,6 +1,12 @@
 {
-  "redirects": [
-    { "source": "/", "destination": "https://incogrx-demo.onrender.com/", "permanent": false },
-    { "source": "/:path*", "destination": "https://incogrx-demo.onrender.com/:path*", "permanent": false }
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/", "destination": "/demo/index.html" },
+    { "source": "/assets/:file", "destination": "/demo/assets/:file" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [ { "key": "X-Content-Type-Options", "value": "nosniff" } ] }
   ]
 }
