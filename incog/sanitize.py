@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 
 from .config import POLICY
 from . import dates, privacy, textner
@@ -18,6 +19,24 @@ PERSON_TITLE = re.compile(r"^\s*(?:Dr|Prof)\.?\s", re.I)
 class Stats:
     identifiers = 0
     generalized = 0
+    entities: Counter = Counter()   # removed identifiers by type (report.json "entities")
+
+
+ENTITY = {"NAME": "PATIENT_NAME", "INSURANCE": "INSURANCE_ID"}
+_TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|"
+                     r"LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]")
+
+
+def _ent(kind: str, n: int = 1) -> None:
+    Stats.entities[ENTITY.get(kind, kind)] += n
+
+
+def _count_new_tags(before: str, after: str) -> None:
+    """Count placeholders that this step wrote (tags already in the input are not counted again)."""
+    old = Counter(_TAG_RX.findall(before))
+    for k, v in Counter(_TAG_RX.findall(after)).items():
+        if v > old.get(k, 0):
+            _ent(k, v - old.get(k, 0))
 
 
 def age_band(age: int) -> str:
@@ -101,6 +120,7 @@ def clean_text(value, kb: Knowledge | None):
         text, m = kb.redact_tokens(text, textner.protected_spans(text))
         n += m
     Stats.identifiers += n
+    _count_new_tags(value, text)
     return text
 
 
@@ -125,20 +145,30 @@ def _sanitize(cat: str | None, value, ctx: dict, kb: Knowledge | None):
         if isinstance(value, str) and PERSON_TITLE.match(value):
             return value
         Stats.identifiers += 1
+        _ent("NAME")
         return ctx.get("pseudonym") or TAG["NAME"]
     if cat == "RELATIVE":
-        return relative_value(value)
+        out = relative_value(value)
+        if out != value:
+            _ent("RELATIVE")
+        return out
     if cat in ("MRN",):
         Stats.identifiers += 1
+        _ent("MRN")
         return ctx.get("pseudonym") or TAG["MRN"]
     if cat in ("PHONE", "AADHAAR", "ABHA", "PAN", "EMAIL", "INSURANCE"):
         Stats.identifiers += 1
+        _ent(cat)
         return TAG.get(cat, "[ID]") if not (cat == "AADHAAR" and False) else value
     if cat in ("HOUSE", "LANDMARK"):
         Stats.identifiers += 1
+        _ent(cat)
         return f"[{cat}]"
     if cat == "ADDRESS":
-        return generalize_address(value, kb)
+        out = generalize_address(value, kb)
+        if out != value:
+            _ent("ADDRESS")
+        return out
     if cat == "VILLAGE":
         Stats.generalized += 1
         return (ctx.get("tehsil") if _KEEP_TEHSIL else None) or ctx.get("district") or "[VILLAGE]"

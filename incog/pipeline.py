@@ -571,6 +571,7 @@ def run(inp: Path, out: Path) -> dict:
             "records_linked": sum(r["patient"] is not None for r in records),
             "records_generalized": Stats.generalized, "records_suppressed": 0, "records_quarantined": 0,
         },
+        "entities": dict(sorted(Stats.entities.items())),
         "privacy": {
             "policy": {
                 "pseudonyms": "HMAC-SHA256 keyed with RAKSHA_SECRET; one per patient across files and scripts",

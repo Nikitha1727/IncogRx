@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import atexit
 import base64
+import csv
 import hashlib
 import io
 import json
@@ -178,13 +179,200 @@ def summarize(job: str, inp: Path, out: Path, wall: float, pdf_out: dict | None 
     for r in records:
         if r.get("patient"):
             pats[r["patient"]]["records"] += 1
-            pats[r["patient"]]["files"].add(r["file"].removeprefix("sanitized/"))
+            shown = r["file"].removeprefix("sanitized/")
+            pats[r["patient"]]["files"].add(shown[:-4] if shown.endswith(".pdf.txt") else shown)
     patients = sorted(({"pseudonym": k, "records": v["records"], "files": sorted(v["files"])} for k, v in pats.items()),
                       key=lambda x: (-len(x["files"]), -x["records"], x["pseudonym"]))
+    try:
+        people, unlinked_people = build_people(out, records)
+    except Exception:  # noqa: BLE001  the list is a view; never fail the run over it
+        people, unlinked_people = [], []
     return {"job": job, "counts": report["counts"], "timing": report.get("timing", {}),
             "resources": report.get("resources", {}), "wall_seconds": round(wall, 2),
             "tags": dict(tags.most_common()), "files": files, "patients": patients,
-            "unlinked": sum(1 for r in records if not r.get("patient"))}
+            "unlinked": sum(1 for r in records if not r.get("patient")),
+            "people": people, "unlinked_records": unlinked_people,
+            "pdfs": [{"name": f["input"], "path": f["pdf"]} for f in files if f.get("pdf")]}
+
+
+# ---------- people list (released values only; nothing here is read from the input) ----------
+AGE_KEY = re.compile(r"(?i)^(?:patient[_ ]?)?age(?:[_ ]?(?:in[_ ]?)?(?:years?|yrs|band|group))?$|^age[_ ]?/?[_ ]?sex$|^आयु$|^उम्र$")
+BAND_RX = re.compile(r"([0-9]{1,3}\s*-\s*[0-9]{1,3}|[0-9]{2}\+)")
+SEX_KEY = re.compile(r"(?i)gender|\bsex\b|^sex|लिंग")
+DIST_KEY = re.compile(r"(?i)district|distt|जिला|जनपद")
+DX_KEY = re.compile(r"(?i)diagnos|icd|condition|disease|निदान")
+ICD_RX = re.compile(r"\b([A-TV-Z][0-9]{2}(?:\.[0-9A-Z]{1,4})?)\b")
+TXT_AGE = re.compile(r"(?i)(?:\bage(?:\s*/\s*sex)?|आयु|उम्र)\s*[:\-]\s*([0-9]{1,3}\s*-\s*[0-9]{1,3}|[0-9]{2}\+)")
+TXT_SEX = re.compile(r"(?i)(?:\bsex\b|\bgender\b|लिंग)\s*[:\-]\s*(male|female|m|f|पुरुष|महिला)\b|"
+                     r"[0-9]\s*(?:yrs?|years?|वर्ष)?\s*/\s*(male|female|m|f|पुरुष|महिला)\b|\b(पुरुष|महिला)\b")
+TXT_DIST = re.compile(r"(?i)(?:\bdistt?\.?|\bdistrict|जिला|जनपद)\s*[:\-.]?\s*([A-Za-z][A-Za-z ]{2,24}?|[ऀ-ॿ]{2,20})(?=\s*(?:[-,|\n(]|$|[0-9]))")
+TXT_DX = re.compile(r"(?i)(?:final\s+|provisional\s+)?diagnosis\s*[:\-]\s*([^\n]{3,160})|निदान\s*[:\-]\s*([^\n]{3,160})")
+SEX_NORM = {"m": "M", "male": "M", "पुरुष": "M", "f": "F", "female": "F", "महिला": "F"}
+
+
+def _flatten(node, prefix=""):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            yield from _flatten(v, f"{prefix}.{k}" if prefix else str(k))
+    elif isinstance(node, list):
+        for v in node:
+            yield from _flatten(v, prefix)
+    elif node not in (None, ""):
+        yield prefix, str(node)
+
+
+def _pointer(doc, ptr: str):
+    node = doc
+    for part in ptr.strip("/").split("/") if ptr.strip("/") else []:
+        part = part.replace("~1", "/").replace("~0", "~")
+        node = node[int(part)] if isinstance(node, list) else node[part]
+    return node
+
+
+class _Released:
+    """Reads released (sanitized) files once and returns one record's released content."""
+    def __init__(self, out: Path):
+        self.out, self.cache = out, {}
+
+    def _load(self, rel: str):
+        if rel not in self.cache:
+            p = self.out / rel
+            text = p.read_text(encoding="utf-8", errors="replace")
+            kind, data = "text", text
+            low = rel.lower()
+            try:
+                if low.endswith((".csv", ".tsv")):
+                    delim = "\t" if low.endswith(".tsv") else ","
+                    first = text.split("\n", 1)[0]
+                    if first.count("\t") > first.count(delim):
+                        delim = "\t"
+                    elif first.count(";") > first.count(delim) and delim == ",":
+                        delim = ";"
+                    kind, data = "csv", list(csv.reader(io.StringIO(text, newline=""), delimiter=delim))
+                elif low.endswith(".jsonl") or low.endswith(".ndjson"):
+                    kind, data = "json", [json.loads(x) for x in text.splitlines() if x.strip()]
+                elif low.endswith(".json"):
+                    kind, data = "json", json.loads(text)
+            except Exception:  # noqa: BLE001
+                kind, data = "text", text
+            self.cache[rel] = (kind, data)
+        return self.cache[rel]
+
+    def get(self, rec: dict):
+        """Return (pairs, text): key/value pairs for structured records, plain text for documents."""
+        kind, data = self._load(rec["file"])
+        loc = rec.get("out") or rec["loc"]
+        try:
+            if kind == "csv" and loc.startswith("row:"):
+                header, row = data[0], data[int(loc[4:]) + 1]
+                return [(h, v) for h, v in zip(header, row) if v.strip()], None
+            if kind == "json":
+                node = data if loc == "doc" else _pointer(data, loc)
+                return list(_flatten(node)), None
+        except Exception:  # noqa: BLE001
+            pass
+        if kind == "json":
+            return list(_flatten(data)), None
+        return None, data if isinstance(data, str) else ""
+
+
+def _facts(pairs, text) -> dict:
+    f = {"age": set(), "sex": set(), "district": set(), "diagnosis": set()}
+    if pairs is not None:
+        for k, v in pairs:
+            leaf = k.rsplit(".", 1)[-1]
+            if AGE_KEY.search(leaf.strip()):
+                b = BAND_RX.search(v)
+                if b:
+                    f["age"].add(re.sub(r"\s+", "", b.group(1)))
+                g = re.search(r"/\s*(m|f|male|female)\b", v, re.I)
+                if g:
+                    f["sex"].add(SEX_NORM[g.group(1).lower()])
+            elif SEX_KEY.search(leaf) and v.strip().lower() in SEX_NORM:
+                f["sex"].add(SEX_NORM[v.strip().lower()])
+            elif DIST_KEY.search(k) and len(v) <= 30 and "[" not in v:
+                f["district"].add(v.strip())
+            elif DX_KEY.search(k) or leaf.lower() in ("display",) and "condition" in k.lower():
+                if 2 < len(v) <= 160 and not v.startswith("http"):
+                    f["diagnosis"].add(v.strip())
+    else:
+        for m in TXT_AGE.finditer(text):
+            f["age"].add(re.sub(r"\s+", "", m.group(1)))
+        for m in TXT_SEX.finditer(text):
+            g = (m.group(1) or m.group(2) or m.group(3) or "").lower()
+            if g in SEX_NORM:
+                f["sex"].add(SEX_NORM[g])
+        for m in TXT_DIST.finditer(text):
+            d = m.group(1).strip()
+            if d and "[" not in d:
+                f["district"].add(d)
+        for m in TXT_DX.finditer(text):
+            d = (m.group(1) or m.group(2) or "").strip(" .;")
+            if d and "[" not in d[:3]:
+                f["diagnosis"].add(d)
+    return f
+
+
+def _tidy_dx(values) -> list:
+    """Readable condition names: split lists, drop bare codes when a name exists, de-duplicate."""
+    names, codes = {}, set()
+    for v in values:
+        for part in re.split(r"[;|]", v):
+            part = part.strip(" .,")
+            if not part:
+                continue
+            if re.fullmatch(r"[A-Z][0-9]{2}(?:\.[0-9A-Z]{1,4})?(?:\s*-\s*[A-Z][0-9]{2})?", part):
+                codes.add(part)
+                continue
+            key = re.sub(r"\s*\([^)]*\)?\s*$", "", part).lower()
+            if len(part) > 70:
+                part = part[:67].rstrip() + "..."
+            names.setdefault(key, part)
+    keys = sorted(names, key=len, reverse=True)
+    keep = [k for i, k in enumerate(keys) if not any(o.startswith(k) for o in keys[:i])]
+    out = sorted((names[k] for k in keep), key=str.lower)
+    return (out or sorted(codes))[:6]
+
+
+def _preview(pairs, text) -> str:
+    if pairs is not None:
+        return "  ·  ".join(f"{k.rsplit('.', 1)[-1]}: {v}" for k, v in pairs)[:600]
+    return (text or "").strip()[:4000]
+
+
+def build_people(out: Path, records: list) -> tuple:
+    rd = _Released(out)
+    groups: dict = defaultdict(list)
+    for r in records:
+        groups[r.get("patient")].append(r)
+
+    def block(recs: list, pseudonym):
+        facts = {"age": set(), "sex": set(), "district": set(), "diagnosis": set()}
+        removed: Counter = Counter()
+        items = []
+        for r in recs:
+            pairs, text = rd.get(r)
+            for k, v in _facts(pairs, text).items():
+                facts[k] |= v
+            content = " ".join(v for _, v in pairs) if pairs is not None else (text or "")
+            removed.update(TAG_RX.findall(content))
+            shown = r["file"].removeprefix("sanitized/")
+            if shown.endswith(".pdf.txt"):                 # a text PDF: show it as the redacted PDF it became
+                shown = shown[:-4]
+            items.append({"file": shown, "loc": r.get("out") or r["loc"],
+                          "preview": _preview(pairs, text)})
+        return {"pseudonym": pseudonym, "records": len(recs), "files": sorted({i["file"] for i in items}),
+                "age": sorted(facts["age"]), "sex": sorted(facts["sex"]), "district": sorted(facts["district"]),
+                "diagnosis": _tidy_dx(facts["diagnosis"]), "removed": dict(removed.most_common()),
+                "items": items[:15], "more": max(0, len(items) - 15)}
+
+    people = [block(v, k) for k, v in groups.items() if k]
+    people.sort(key=lambda x: (-len(x["files"]), -x["records"], x["pseudonym"]))
+    by_file: dict = defaultdict(list)
+    for r in groups.get(None, []):
+        by_file[r["file"]].append(r)
+    unlinked = [block(v, None) for _, v in sorted(by_file.items())][:40]
+    return people, unlinked
 
 
 def job_file(job: str, rel: str) -> bytes | None:

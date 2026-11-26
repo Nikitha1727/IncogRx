@@ -89,6 +89,26 @@ pre{margin:0;white-space:pre-wrap;word-break:break-word;font:12.8px/1.55 var(--m
 .tag{background:#e6edf5;color:var(--navy);border-radius:4px;padding:0 3px;font-weight:600}
 .tag.p{background:var(--redbg);color:var(--red)}
 .note{font-size:12.5px;color:var(--ink2);margin-top:8px}
+.outbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-left:4px solid var(--green)}
+.outbar .acts{display:flex;gap:10px;flex-wrap:wrap}
+a.btn{text-decoration:none;display:inline-block}
+.ppl-tools{display:flex;gap:10px;align-items:center;margin:0 0 12px}
+.ppl-tools input{flex:1;max-width:360px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13.5px}
+details.person{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fff}
+details.person[open]{border-color:#c3cdd9}
+details.person summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+details.person summary::-webkit-details-marker{display:none}
+.prow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pmeta{font-size:12.5px;color:var(--ink2)}
+.facts{display:flex;gap:6px;flex-wrap:wrap}
+.fact{font-size:12.5px;background:#eef3f9;color:var(--navy);border-radius:6px;padding:2px 8px}
+.fact b{font-weight:650;color:var(--ink2);margin-right:4px}
+.rm{font-size:12px;background:var(--redbg);color:var(--red);border-radius:6px;padding:2px 8px}
+.rmlab{font-size:12px;color:var(--ink3);margin-right:2px}
+.precs{padding:0 14px 14px}
+.precs table td.pv{font:12.3px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-width:640px}
+.chev{margin-left:auto;font-size:12px;color:var(--ink3)}
+details.person[open] .chev{transform:rotate(180deg)}
 footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
 </style>
 </head>
@@ -145,6 +165,11 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
   </section>
 
   <section id="results">
+    <div class="card outbar" id="outbar">
+      <div><h2>Your released output is ready</h2>
+        <p class="sub" style="margin:0">The full result in the organisers' format: cleaned files in <code>sanitized/</code>, plus <code>report.json</code> and <code>records.jsonl</code>.<span id="pdfnote"></span></p></div>
+      <div class="acts" id="outActs"></div>
+    </div>
     <div class="stats" id="stats"></div>
 
     <div class="card viewer" id="textView">
@@ -169,8 +194,7 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
     </div>
 
     <div class="card">
-      <div class="vhead"><div><h2>Files</h2><p class="sub" style="margin:0">Click a file to compare the original with the released version.</p></div>
-        <button class="btn navy" id="download">Download released output (.zip)</button></div>
+      <div class="vhead"><div><h2>Files</h2><p class="sub" style="margin:0">Click a file to compare the original with the released version.</p></div></div>
       <div class="scroll"><table><thead><tr><th>Input file</th><th>Status</th><th>Released as</th><th>Removed</th></tr></thead><tbody id="files"></tbody></table></div>
     </div>
 
@@ -181,6 +205,18 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
         <div class="col after"><div class="lab">Released</div><pre id="fvAfter"></pre></div>
       </div>
       <div class="note" id="fvNote"></div>
+    </div>
+
+    <div class="card" id="peopleCard">
+      <h2>People in this release</h2>
+      <p class="sub">What each patient's records still say after removal, and what was taken out. Only released values are shown: real names and numbers never appear here. Click a person to see their records.</p>
+      <div class="ppl-tools"><input id="pplFilter" placeholder="Filter by pseudonym, age band, district or condition"><span class="pmeta" id="pplCount"></span></div>
+      <div id="people"></div>
+      <div id="unlinkedWrap" style="display:none">
+        <h2 style="margin-top:18px">Records with no patient</h2>
+        <p class="sub">Reference files and records with no patient, or too little evidence to link. They are still cleaned.</p>
+        <div id="unlinkedList"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -287,8 +323,46 @@ function render(d, req) {
     tv.classList.add("on"); $("#tvBefore").textContent = d.files[0].before || "";
     $("#tvAfter").innerHTML = mark(d.files[0].after || ""); $("#textPsn").innerHTML = (d.files[0].pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
   } else tv.classList.remove("on");
-  $("#download").onclick = () => { location.href = `/api/download/${d.job}`; };
+  const acts = [`<a class="btn navy" href="/api/download/${d.job}">Download full output (.zip)</a>`];
+  (d.pdfs || []).forEach(p => {
+    const url = `/api/file/${d.job}/${encodeURI(p.path)}`, nm = p.name.split("/").pop();
+    const lab = d.pdfs.length > 1 ? ` (${esc(nm)})` : "";
+    acts.push(`<a class="btn primary" href="${url}" download="${esc(p.path.split("/").pop())}">Download redacted PDF${lab}</a>`);
+    acts.push(`<a class="btn" href="${url}" target="_blank">Open${lab}</a>`);
+  });
+  $("#outActs").innerHTML = acts.join("");
+  $("#pdfnote").textContent = (d.pdfs || []).length ? " Each PDF also comes back as a redacted PDF in the same format." : "";
+  renderPeople(d);
   $("#results").scrollIntoView({behavior: "smooth", block: "start"});
+}
+const SINGULAR = {NAME:"Patient name", RELATIVE:"Relative", PHONE:"Phone", AADHAAR:"Aadhaar", ABHA:"ABHA", PAN:"PAN",
+  EMAIL:"Email", MRN:"Hospital ID", ID:"Other ID", INSURANCE_ID:"Insurance ID", DOB:"Date of birth", PIN:"PIN code",
+  ADDRESS:"Address", HOUSE:"House no.", LOCALITY:"Locality", LANDMARK:"Landmark", VILLAGE:"Village", TEHSIL:"Tehsil"};
+const RMLAB = k => SINGULAR[k] || k;
+function personHTML(p, title) {
+  const fact = (lab, vals) => vals && vals.length ? vals.map(v => `<span class="fact"><b>${lab}</b>${esc(v)}</span>`).join("") : "";
+  const facts = fact("Age", p.age) + fact("Sex", p.sex) + fact("District", p.district) + fact("Condition", p.diagnosis);
+  const rm = Object.entries(p.removed || {}).map(([k, n]) => `<span class="rm">${esc(RMLAB(k))} ×${n}</span>`).join("");
+  const rows = p.items.map(i => `<tr><td><span class="fchip">${esc(i.file)}</span><div class="muted" style="font-size:12px">${esc(i.loc)}</div></td><td class="pv">${mark(i.preview)}</td></tr>`).join("")
+    + (p.more ? `<tr><td colspan="2" class="muted">and ${p.more} more record(s). The download has all of them.</td></tr>` : "");
+  const hay = [p.pseudonym, ...p.age, ...p.sex, ...p.district, ...p.diagnosis, ...p.files].join(" ").toLowerCase();
+  return `<details class="person" data-hay="${esc(hay)}"><summary>
+    <div class="prow">${title}<span class="pmeta">${p.records} record(s) · ${p.files.length} file(s)</span><span class="chev">▼</span></div>
+    ${facts ? `<div class="facts">${facts}</div>` : ""}
+    ${rm ? `<div class="facts"><span class="rmlab">Removed:</span>${rm}</div>` : `<div class="pmeta">Nothing personal was found in these records.</div>`}
+  </summary><div class="precs"><div class="scroll"><table><thead><tr><th style="width:230px">Released file</th><th>Released content (after removal)</th></tr></thead><tbody>${rows}</tbody></table></div></div></details>`;
+}
+function renderPeople(d) {
+  const ppl = d.people || [], un = d.unlinked_records || [];
+  $("#people").innerHTML = ppl.length ? ppl.map(p => personHTML(p, `<span class="psn">${esc(p.pseudonym)}</span>`)).join("")
+    : '<p class="muted">No patient could be linked in this input.</p>';
+  $("#pplCount").textContent = `${ppl.length} patient(s)`;
+  $("#unlinkedWrap").style.display = un.length ? "block" : "none";
+  $("#unlinkedList").innerHTML = un.map(p => personHTML(p, `<b>${esc(p.files[0] || "record")}</b>`)).join("");
+  $("#pplFilter").value = "";
+  $("#pplFilter").oninput = e => { const q = e.target.value.trim().toLowerCase(); let n = 0;
+    document.querySelectorAll("#people details.person").forEach(x => { const ok = !q || x.dataset.hay.includes(q); x.style.display = ok ? "" : "none"; n += ok; });
+    $("#pplCount").textContent = q ? `${n} of ${ppl.length} patient(s)` : `${ppl.length} patient(s)`; };
 }
 function showFile(f) {
   const v = $("#fileView"); v.classList.add("on");
