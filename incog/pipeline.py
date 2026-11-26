@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 from . import dates, link, privacy, readers, sniff, textner
+from .config import POLICY
 from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
 from .sanitize import DOB_MODE, Stats, clean_text, sanitize
@@ -193,7 +194,7 @@ def units(doc: readers.Doc, kb: Knowledge) -> list:
                     cat = cats[j]
                     if cat is None and norm_key(h) in ("patient ref", "patient id"):
                         cat = "MRN"
-                    link.add_value(ev, cat, v, link._rel_context([h]))
+                    link.add_value(ev, cat, v, link._rel_context([h]), h)
                     if cat in (None, "TEXT", "KEEP") and isinstance(v, str) and len(v) > 12:
                         link.text_evidence(v, ev, light=True)
             out.append((f"row:{i}", ev))
@@ -249,6 +250,42 @@ def json_units(data) -> list:
     return [("doc", link.single_person(ev))]
 
 
+def measure_privacy(lk) -> dict:
+    """Residual re-identification risk measured on what the release still shows per patient:
+    the (age band, gender, district) combination. Counts only, never values."""
+    from collections import Counter
+    from .sanitize import age_band
+    k = int(POLICY.get("min_group_size", 5))
+    keys, missing = [], 0
+    for r, ev in getattr(lk, "clusters", {}).items():
+        if not ev.person():
+            continue
+        band = age_band(sorted(ev.ages)[len(ev.ages) // 2]) if ev.ages else None
+        g = next(iter(ev.genders)) if len(ev.genders) == 1 else None
+        d = sorted(ev.districts)[0] if ev.districts else None
+        if band and g and d:
+            keys.append((band, g, d))
+        else:
+            missing += 1
+    groups = Counter(keys)
+    sizes = [groups[x] for x in keys]
+    n = len(keys)
+    return {
+        "patients": n + missing,
+        "quasi_identifiers": ["age_band", "gender", "district"],
+        "patients_with_all_quasi_identifiers": n,
+        "groups": len(groups),
+        "smallest_group": min(groups.values()) if groups else 0,
+        "median_group": sorted(sizes)[n // 2] if n else 0,
+        "k": k,
+        "patients_unique": sum(1 for s in sizes if s == 1),
+        "patients_below_k": sum(1 for s in sizes if s < k),
+        "share_below_k": round(sum(1 for s in sizes if s < k) / n, 3) if n else 0.0,
+        "note": "measured inside this release on the quasi-identifiers that survive; an attacker with a "
+                "population register faces larger groups",
+    }
+
+
 def link_all(items: list, kb: Knowledge) -> None:
     lk = link.Linker()
     for it in items:
@@ -263,6 +300,7 @@ def link_all(items: list, kb: Knowledge) -> None:
     ps = lk.solve()
     for it in items:
         it["ps"] = {loc: ps[i] for loc, i in it["units"]}
+    kb.privacy = measure_privacy(lk)
     for i, ev in enumerate(lk.ev):                     # rare conditions counted per patient cluster
         if not ev.person():
             continue
@@ -532,6 +570,24 @@ def run(inp: Path, out: Path) -> dict:
             "records_processed": len(records), "identifiers_detected": Stats.identifiers,
             "records_linked": sum(r["patient"] is not None for r in records),
             "records_generalized": Stats.generalized, "records_suppressed": 0, "records_quarantined": 0,
+        },
+        "privacy": {
+            "policy": {
+                "pseudonyms": "HMAC-SHA256 keyed with RAKSHA_SECRET; one per patient across files and scripts",
+                "date_shift": f"one secret offset per patient within +/-{POLICY.get('date_shift_max_days', 180)} days; "
+                              "intervals and lengths of stay preserved",
+                "age_band_years": POLICY.get("age_band_years", 10),
+                "age_top_code": POLICY.get("age_top_code", 80),
+                "location_kept": "district" if str(POLICY.get("keep_tehsil", "false")).lower() != "true" else "tehsil",
+                "pin_digits_kept": 3,
+                "dob": POLICY.get("dob", "suppress"),
+                "rare_condition_max_patients": POLICY.get("rare_condition_max_patients", 3),
+            },
+            "applied": {
+                "dates_shifted": dates.SHIFTED[0],
+                "rare_conditions_generalised": len(getattr(kb.rare, "rare_codes", {}) or {}),
+            },
+            "measured_risk": getattr(kb, "privacy", {}),
         },
         "timing": {"seconds": round(time.monotonic() - t0, 2)},
         "resources": {"peak_rss_mb": peak_rss_mb()},

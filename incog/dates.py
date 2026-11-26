@@ -85,6 +85,9 @@ def _fmt_num(n: int, like: str) -> str:
         str(n).zfill(2) if len(like) == 2 else str(n))
 
 
+SHIFTED = [0]       # dates shifted in this run (for the privacy report)
+
+
 def shift_text(text: str, days: int | None, order: str = "dmy") -> tuple:
     """Shift every recognisable calendar date in text by `days`. Returns (text, count)."""
     if not days or not isinstance(text, str) or not text:
@@ -142,6 +145,7 @@ def shift_text(text: str, days: int | None, order: str = "dmy") -> tuple:
         last = e
         n += 1
     out.append(text[last:])
+    SHIFTED[0] += n
     return "".join(out), n
 
 

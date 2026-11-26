@@ -130,6 +130,8 @@ class Ev:
     villages: set = field(default_factory=set)
     ages: set = field(default_factory=set)
     codes: set = field(default_factory=set)   # ICD-10 codes in the record (for rare-condition counts)
+    genders: set = field(default_factory=set)  # quasi-identifiers, for the measured privacy report
+    districts: set = field(default_factory=set)
 
     def person(self) -> bool:
         return bool(self.ids or self.names or self.firsts or self.unk)
@@ -150,10 +152,36 @@ def _rel_context(keys) -> bool:
     return False
 
 
-def add_value(ev: Ev, cat, value, rel_ctx: bool = False) -> None:
+GENDER_KEYS = {"gender", "sex", "ling", "लिंग"}
+DISTRICT_KEYS = {"district", "distt", "dist", "jila", "zila", "zilla", "जिला"}
+_GENDER_VAL = {"m": "M", "male": "M", "purush": "M", "पुरुष": "M", "f": "F", "female": "F", "mahila": "F", "महिला": "F"}
+
+
+def _quasi(ev: Ev, cat, s: str, key: str) -> None:
+    """Gender and district, kept only to measure residual risk (counts, never written out)."""
+    words = set(norm_key(key).split()) if key else set()
+    if words & GENDER_KEYS or cat == "AGE":
+        g = _GENDER_VAL.get(s.lower())
+        if g is None:
+            m = re.search(r"(?i)(?:/|\b)\s*(M|F|male|female|पुरुष|महिला)\s*$", s)
+            g = _GENDER_VAL.get((m.group(1) or "").lower()) if m else None
+        if g:
+            ev.genders.add(g)
+    if words & DISTRICT_KEYS and cat in (None, "KEEP"):
+        k = name_key(s)
+        if k:
+            ev.districts.add(k)
+
+
+def add_value(ev: Ev, cat, value, rel_ctx: bool = False, key: str = "") -> None:
     if value is None or isinstance(value, bool):
         return
     s = str(value).strip()
+    if s and not rel_ctx:
+        try:  # risk measurement only; must never affect linking
+            _quasi(ev, cat, s, key)
+        except Exception:
+            pass
     if not s:
         return
     if cat == "MRN":
@@ -223,13 +251,16 @@ def json_evidence(node, path: tuple, rt, ev: Ev) -> None:
         cat = sniff.path_cat(path, rt)
         if cat is None and isinstance(node, str) and path and norm_key(path[-1]) in ("patient ref", "patient id"):
             cat = "MRN"
-        add_value(ev, cat, node, _rel_context(path[:-1]) or _rel_context(path[-1:]))
+        add_value(ev, cat, node, _rel_context(path[:-1]) or _rel_context(path[-1:]), str(path[-1]) if path else "")
         if cat in (None, "TEXT", "KEEP") and isinstance(node, str) and len(node) > 12:
             text_evidence(node, ev, light=True)
 
 
 AGE_RX = re.compile(r"(?i:\bAge(?:\s*/\s*Sex)?|आयु|उम्र|\bUmar|\bUmr)\s*[:\-]?\s*([0-9०-९]{1,3})"
                     r"|(?<![\d/])([0-9]{1,3})\s*(?i:Y(?:rs?|ears?)?\b|वर्ष|साल)")
+GENDER_TXT_RX = re.compile(r"(?i)\b(?:\d{1,3}\s*(?:Y|Yrs?|Years?)?\.?\s*/\s*|Sex\s*[:\-]\s*|Gender\s*[:\-]\s*)(M|F|Male|Female)\b"
+                           r"|(पुरुष|महिला)")
+DISTRICT_TXT_RX = re.compile(r"(?i:\b(?:Distt?\.?|District))\s*[:\-]?\s*([A-Z][a-z]+(?:[ ][A-Z][a-z]+)?)|जिला\s*[:\-]?\s*([\u0900-\u097F]+)")
 ATT_LINE = re.compile(r"(?i)attendant|relative|guardian|caller|called by|परिजन|husband|father|pita|pati|bhaiya|papa|mama|chachu")
 
 
@@ -258,6 +289,19 @@ def text_evidence(text: str, ev: Ev, kb: Knowledge | None = None, light: bool = 
             if a:
                 ev.ages.add(a)
                 break
+        try:  # risk measurement only; must never affect linking
+            m = GENDER_TXT_RX.search(t)
+            if m:
+                g = _GENDER_VAL.get((m.group(1) or m.group(2) or "").lower())
+                if g:
+                    ev.genders.add(g)
+            m = DISTRICT_TXT_RX.search(text)
+            if m:
+                k = name_key(m.group(1) or m.group(2) or "")
+                if k:
+                    ev.districts.add(k)
+        except Exception:
+            pass
         for rx, kind in LABELLED_RX:
             if kind == "DOB":
                 for m in rx.finditer(t):
@@ -441,4 +485,5 @@ class Linker:
             key = "rec:" + self.nodes[r][0] + "#" + self.nodes[r][1]
             out.append(pseudonym(key))
         self.roots = [self.find(i) for i in range(n)]
+        self.clusters = cev
         return out

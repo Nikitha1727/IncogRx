@@ -69,6 +69,7 @@ class Knowledge:
     tokens: dict = field(default_factory=dict)        # single name tokens -> "NAME"/"RELATIVE"/"VILLAGE"
     admin: set = field(default_factory=set)           # tehsil/district names (kept, never redacted)
     rare: object = None                               # privacy.RareConditions, set by the pipeline
+    privacy: dict = field(default_factory=dict)       # measured residual risk (counts only)
     _mrn_rx: object = None
     _tok_rx: object = None
 
