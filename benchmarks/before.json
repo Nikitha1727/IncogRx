@@ -1,0 +1,73 @@
+{
+  "engine": "pre-optimization (commit 1ca2b28)",
+  "python": "3.10.12",
+  "machine": "aarch64",
+  "runs": {
+    "practice_dev": {
+      "files": 200,
+      "bytes": 626836,
+      "wall_seconds": [
+        2.22,
+        2.24
+      ],
+      "best_wall_seconds": 2.22,
+      "peak_rss_mb": 25.8,
+      "exit": 0,
+      "counts": {
+        "files_total": 200,
+        "files_sanitized": 192,
+        "files_quarantined": 8,
+        "records_processed": 821,
+        "identifiers_detected": 2894,
+        "records_linked": 774,
+        "records_generalized": 942,
+        "records_suppressed": 0,
+        "records_quarantined": 0
+      }
+    },
+    "scaled_2000_files": {
+      "files": 2000,
+      "bytes": 6268360,
+      "wall_seconds": [
+        20.76,
+        21.95
+      ],
+      "best_wall_seconds": 20.76,
+      "peak_rss_mb": 102.4,
+      "exit": 0,
+      "counts": {
+        "files_total": 2000,
+        "files_sanitized": 1920,
+        "files_quarantined": 80,
+        "records_processed": 8210,
+        "identifiers_detected": 28940,
+        "records_linked": 7740,
+        "records_generalized": 9420,
+        "records_suppressed": 0,
+        "records_quarantined": 0
+      }
+    },
+    "chaos": {
+      "files": 200,
+      "bytes": 627619,
+      "wall_seconds": [
+        2.11,
+        2.1
+      ],
+      "best_wall_seconds": 2.1,
+      "peak_rss_mb": 25.9,
+      "exit": 0,
+      "counts": {
+        "files_total": 200,
+        "files_sanitized": 192,
+        "files_quarantined": 8,
+        "records_processed": 821,
+        "identifiers_detected": 2870,
+        "records_linked": 774,
+        "records_generalized": 961,
+        "records_suppressed": 0,
+        "records_quarantined": 0
+      }
+    }
+  }
+}

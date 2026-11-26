@@ -128,15 +128,30 @@ Practice data (200 files, 48 patients, 4 hospitals), `RAKSHA_SECRET=practice`:
 | Pseudonym present inside its record | 774 of 774 |
 | Date intervals preserved exactly | 12,554 of 12,554 |
 | Re-identification, our re-implementation of the published A2/A3/A4 attacks | record risk 0.369 raw → 0.076; patients re-identified 47 of 48 raw → 14 of 48 |
-| Run time / peak memory | 2.0 s / 25 MB |
-| 10× the practice data (2,000 files) | 20 s / 95 MB, linear growth |
+| Run time / peak memory | 1.3 s / 26 MB |
+| 10× the practice data (2,000 files) | 9.2 s / 103 MB, linear growth |
 
 **On data we did not tune on.** We built an unseen-format copy of the practice data: 116 names replaced with invented names, about 45 column and key names renamed (`Hosp Regn ID`, `beneficiary`, `basti`, `Paidaish`, `caretaker`) and text labels reworded (`son of`, `Accompanied by:`, `रोगी:`). On that copy: 0 leaks, linking precision 1.000 and recall 0.860 (F0.5 0.969), 0 false merges. Most of the recall gap comes from the test itself, which renamed Latin spellings but not the matching Devanagari ones.
+
+**Performance work (`benchmarks/`).** Profiling showed three costs that grew with dataset size: regexes that went quadratic on very long tokens (email, Hindi landmark), one giant alternation of every learned name and identifier, and identical values (repeated headers, codes, ward names) being cleaned again in every file. Fixes: word-start anchored patterns, set lookups over word runs instead of the alternation, suffix-set lookups for learned IDs, and a cache of cleaned values once learning has finished (counters are replayed so report.json stays exact). Same machine, best of two runs, `python3 benchmarks/bench.py <repo> <label> <out.json> practice=<input dir> ...`:
+
+| Dataset | Files | Before (commit 1ca2b28) | After | Peak memory before / after |
+|---|---|---|---|---|
+| Practice | 200 | 2.22 s | 1.31 s | 25.8 / 26.4 MB |
+| Practice with injected noise (`devtools/chaos.py`) | 200 | 2.10 s | 1.22 s | 25.9 / 26.4 MB |
+| Practice ×10 | 2,000 | 20.76 s | 9.23 s | 102.4 / 102.8 MB |
+
+On the practice, noise-injected, unseen-format and broken-file sets, the output of the final engine is byte-identical to commit 1ca2b28 (records.jsonl, every sanitized file, report.json without timing and resources). No parallelism, caches are in memory only and hold no raw values on disk.
+
+**Hardening against hidden identifiers.** Our phase 2 trap suite (58 cases) and phase 5 hardening suite (20 cases, 3 runs) now pass 58/58 and 19/20 (previously 51/58 and 13/20). Added, each as a general rule: `Insurance ID:` labels; Hinglish "Patient ka naam X" without a colon; a municipal ward inside an address line; identifiers in CSV headers, JSON keys, file names and path strings (underscores read as spaces, code-shaped IDs such as `ABC-DEF-12` or `REG-483719`); base64 and hex values that decode to readable text are cleaned and re-encoded; full-width digits and zero-width characters are normalised before detection; a phone number after a word ending in a digit; ID-like columns headed "Ref", "Reference" or "क्रमांक". Practice results above are unchanged by these rules.
 
 ---
 
 ## 6. Known limitations
 * A bare name with no label, honorific, relation marker or structured field anywhere (for example "Ramesh Kumar" alone in a list) is not detected. A curated Indian name list would catch it at the cost of false positives on common words.
+* A bare name used as a JSON key with no other evidence (for example `{"Vihana_Bisht": {...}}`) is not detected; this is the one remaining phase 5 failure.
+* Phase 3 linkage edge cases (fragmented records, a shared family phone, weak names, transitive conflicts) pass 12 of 16; the engine prefers leaving records unlinked to a false merge.
+* No statistical model is trained. The public NER datasets (Naamapadam, MedDeID, COMI-LINGUA) are news or real-person data with licence and size issues for an offline 2-CPU run; rules and learned gazetteers were measured as sufficient on the practice data.
 * The first-name gazetteer removes a learned name wherever it appears, which can also remove a matching ordinary word.
 * The re-identification figures come from our own re-implementation of the published attack, run against a 240-person practice registry. The official attacker and the larger hidden datasets will give different numbers; larger populations make the same rules protect better.
 * Rare-condition generalisation lowers the number of exact diagnoses kept (3.6% of medical values on the practice data). The threshold is configurable.

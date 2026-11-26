@@ -1,6 +1,8 @@
 """Value-level sanitisers, one per privacy category."""
 from __future__ import annotations
 
+import base64
+import binascii
 import re
 from collections import Counter
 
@@ -25,6 +27,92 @@ class Stats:
 ENTITY = {"NAME": "PATIENT_NAME", "INSURANCE": "INSURANCE_ID"}
 _TAG_RX = re.compile(r"\[(NAME|RELATIVE|PHONE|AADHAAR|ABHA|PAN|EMAIL|MRN|ID|INSURANCE_ID|DOB|PIN|ADDRESS|HOUSE|"
                      r"LOCALITY|LANDMARK|VILLAGE|TEHSIL)\]")
+
+
+# ----------------------------------------------------------------------------- hardening helpers
+# Invisible characters and full-width digits are a cheap way to slip an identifier past a pattern.
+# Zero-width joiner/non-joiner are left alone: Devanagari spelling needs them.
+_INVISIBLE = "\u200b\u2060\ufeff"
+_NORM_TABLE = {ord(c): None for c in _INVISIBLE}
+_NORM_TABLE.update({0xFF10 + i: ord("0") + i for i in range(10)})
+_NORM_ANY = re.compile("[" + _INVISIBLE + "\uff10-\uff19]")
+
+
+def normalize_text(value: str) -> str:
+    return value.translate(_NORM_TABLE) if _NORM_ANY.search(value) else value
+
+
+# A whole value that is base64 or hex of readable text (an encoded attachment) is decoded, cleaned and
+# re-encoded. Hashes and binary payloads do not decode to readable text, so they are left unchanged.
+_B64_RX = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
+_HEX_RX = re.compile(r"(?:[0-9a-fA-F]{2}){12,}")
+_READABLE = re.compile(r"[A-Za-z\u0900-\u097F]{2,}")
+
+
+def _readable(t: str) -> bool:
+    return bool(t) and sum(ch.isprintable() or ch in "\n\r\t" for ch in t) >= 0.97 * len(t) \
+        and _READABLE.search(t) is not None and (" " in t or ":" in t)
+
+
+def _decode_blob(value: str):
+    if len(value) < 24 or value.strip() != value:
+        return None
+    if _HEX_RX.fullmatch(value):
+        try:
+            t = bytes.fromhex(value).decode("utf-8")
+        except ValueError:
+            t = None
+        if t and _readable(t):
+            up = value.isupper()
+            return t, (lambda c: c.encode("utf-8").hex().upper() if up else c.encode("utf-8").hex())
+    if len(value) % 4 == 0 and _B64_RX.fullmatch(value):
+        try:
+            t = base64.b64decode(value, validate=True).decode("utf-8")
+        except (binascii.Error, ValueError, UnicodeDecodeError):
+            return None
+        if _readable(t):
+            return t, (lambda c: base64.b64encode(c.encode("utf-8")).decode("ascii"))
+    return None
+
+
+# Code-shaped identifiers in file names, column headers, JSON keys and path strings
+# ("TEST-HDR-91", "REG-483719"). Two-part clinical codes such as ICD-10 or COVID-19 do not match.
+META_ID_RX = re.compile(r"(?<![A-Za-z0-9])(?=[A-Z0-9\-]*\d)[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}(?![A-Za-z0-9])"
+                        r"|(?<![A-Za-z0-9])[A-Z]{2,}[A-Z0-9]*-\d{4,}(?![A-Za-z0-9])")
+
+
+def clean_meta(value: str, kb: Knowledge | None) -> str:
+    """Clean a file name part, column header, JSON key or path segment. Underscores are read as spaces so
+    "Patient_Tavishi_Menon" is seen as words; the original separator is restored afterwards."""
+    if not isinstance(value, str) or not value:
+        return value
+    spaced = value.replace("_", " ")
+    cleaned = clean_text(spaced, kb)
+    cleaned, n = META_ID_RX.subn("[ID]", cleaned)
+    if n:
+        Stats.identifiers += n
+        _ent("ID", n)
+    if cleaned == spaced:
+        return value
+    return cleaned.replace(" ", "_") if "_" in value and " " not in value else cleaned
+
+
+_PATH_RX = re.compile(r"^[^\s/\\]*(?:[/\\][^/\\\n]+)+\.[A-Za-z][A-Za-z0-9]{0,4}$")
+
+
+def clean_path_value(value: str, kb: Knowledge | None) -> str | None:
+    """A string value that is a file path: clean each segment. Returns None when the value is not a path."""
+    if not isinstance(value, str) or "\n" in value or len(value) > 300 or not _PATH_RX.match(value.strip()):
+        return None
+    parts = re.split(r"([/\\])", value)
+    out = []
+    for p in parts:
+        if p in ("/", "\\") or not p:
+            out.append(p)
+            continue
+        stem, dot, ext = p.rpartition(".") if "." in p else (p, "", "")
+        out.append(clean_meta(stem, kb) + (dot + ext if dot else ""))
+    return "".join(out)
 
 
 def _ent(kind: str, n: int = 1) -> None:
@@ -135,6 +223,12 @@ def clean_text(value, kb: Knowledge | None):
 
 
 def _clean_text(value, kb: Knowledge | None):
+    blob = _decode_blob(value)
+    if blob is not None:
+        inner, encode = blob
+        cleaned = _clean_text(inner, kb)
+        return value if cleaned == inner else encode(cleaned)
+    value = normalize_text(value)
     text, n = textner.apply(value, lambda v: generalize_address(v, kb))
     text, m = redact(text, find_spans(text, kb))
     n += m

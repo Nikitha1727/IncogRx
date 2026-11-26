@@ -22,7 +22,8 @@ from . import dates, link, privacy, readers, sniff, textner
 from .config import POLICY
 from .detect import REL_PREFIX, Knowledge, find_spans, redact, norm_digits, RX
 from .fields import classify_key, classify_path, norm_key
-from .sanitize import DOB_MODE, Stats, clean_text, sanitize
+from .sanitize import (DOB_MODE, META_ID_RX, Stats, clean_meta, clean_path_value, clean_text, normalize_text,
+                       sanitize)
 
 ID_CATS = ("PHONE", "AADHAAR", "ABHA", "PAN", "EMAIL", "INSURANCE")
 
@@ -104,6 +105,7 @@ def learn_admin(key: str, value, kb: Knowledge) -> None:
 
 def learn_text(s: str, kb: Knowledge) -> None:
     """Learn person and village names from free text using the Phase 2 context detectors."""
+    s = normalize_text(s)
     short = len(s) <= 200                   # short values repeat a lot; long notes are unique, so not cached
     for t in (textner.admin_names_cached(s) if short else textner.admin_names(s)):
         kb.admin.add(t.lower())
@@ -332,7 +334,7 @@ def put_pseudonym(text: str, ps: str | None) -> str:
 def clean_key(key: str, kb: Knowledge) -> str:
     if classify_key(key) is not None:
         return key
-    return clean_text(key, kb)
+    return clean_meta(key, kb)
 
 
 def clean_b64(value: str, kb: Knowledge) -> str:
@@ -387,6 +389,10 @@ def sanitize_json(node, path: tuple, rt, ctx: dict, kb: Knowledge):
     if cat is None and isinstance(node, str) and path and norm_key(path[-1]) == "name":
         if kb.name_rx() is not None and kb.name_rx().fullmatch(node.strip()):
             cat = "NAME"
+    if cat is None and isinstance(node, str):
+        as_path = clean_path_value(node, kb)
+        if as_path is not None:
+            return as_path
     return sanitize(cat, node, ctx, kb)
 
 
@@ -403,7 +409,8 @@ def write_csv(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
               order: str = "dmy", rel: str = "") -> str:
     header, body = doc.rows[0], doc.rows[1:]
     cats = csv_categories(header, body, kb)
-    new_header = [h if cats[j] is not None else clean_text(h, kb) for j, h in enumerate(header)]
+    new_header = [clean_meta(h, kb) if cats[j] in (None, "KEEP", "NAME", "RELATIVE", "MRN") else h
+                  for j, h in enumerate(header)]   # a header can hold PII (a name, an ID) whatever its column holds
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=doc.delimiter, lineterminator=doc.newline)
     w.writerow(new_header)
@@ -469,7 +476,7 @@ def safe_name(rel: str, kb: Knowledge) -> str:
     for p in parts:
         stem, dot, ext = p.rpartition(".") if "." in p else (p, "", "")
         spaced = stem.replace("_", " ")
-        cleaned = clean_text(spaced, kb)
+        cleaned = META_ID_RX.sub("[ID]", clean_text(spaced, kb))
         if cleaned != spaced:
             stem = re.sub(r"\[([A-Z_]+)\]", r"\1", cleaned).replace(" ", "_")
         out.append(stem + (dot + ext if dot else ""))

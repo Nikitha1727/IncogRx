@@ -61,6 +61,8 @@ REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Na
               r"Pati\s*ka\s*Naam|Accompanied\s+by|Escort(?:ed\s+by)?|Care\s*taker|Abhibhavak|"
               r"पिता(?:\s*का\s*नाम)?|पति(?:\s*का\s*नाम)?|माता(?:\s*का\s*नाम)?|पिता/पति(?:\s*का\s*नाम)?|परिजन(?:\s*का\s*नाम)?|अभिभावक)")
 NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({ANY_NAME})")
+# Hinglish label without a colon: "Patient ka naam Kavya Mehta"
+HING_NAME_RX = re.compile(rf"(?i:\b(?:patient|mareez|mariz|marij|rogi)\s+ka\s+naam)(?:\s+(?i:hai|he))?\s+({LAT_NAME})")
 REL_LBL_RX = re.compile(rf"(?i:{REL_LABELS}){LBL_END}({ANY_NAME})")
 ADDR_LBL_RX = re.compile(r"(?:(?i:\b(?:Address|Addr\.?|Pata|Niwas|Residence))|(?<![\u0900-\u097F])(?:पता|निवासी|निवास)(?![\u0900-\u097F]))"
                          r"\s*(?:\([^()\n]{1,30}\))?\s*[:\-–]\s*([^\n]+)"
@@ -70,6 +72,8 @@ ADDR_CONT_RX = re.compile(r"(?i:\b(?:Distt?\.?|District|Tehsil|Teh\.|Pin(?:\s*co
 NEW_LABEL_RX = re.compile(r"\s*[A-Za-z\u0900-\u097F][\w\u0900-\u097F ./()]{0,30}:")
 HOUSE_RX = re.compile(r"(?i:\b(?:House|H\.?\s?No|Makan|Ghar)\.?\s*(?:No\.?|Number|#)?\s*[:\-]?\s*)\d+[A-Za-z]?(?:[/\-]\d+[A-Za-z]?)?"
                       r"|मकान\s*(?:नं|न|संख्या|नंबर)\.?\s*[:\-]?\s*[0-9०-९]+")
+# municipal ward inside an address line ("C/O Ramesh, H.No. 364, Ward 20"); a hospital ward elsewhere stays
+WARD_ADDR_RX = re.compile(r"(?i:,\s*(Ward\s*(?:No\.?\s*)?[:\-]?\s*\d{1,3}))(?![\d/])")
 MOHALLA_RX = re.compile(rf"(?i:\bMohalla|\bMohalla|\bMuhalla|\bColony\s+No)\s+{LAT_NAME}|मोहल्ला\s+{DEV_NAME}")
 LANDMARK_RX = re.compile(rf"(?i:\b(?:near|opp\.?|opposite|behind|beside|next\s+to|in\s+front\s+of))\s+(?:the\s+)?{LAT_NAME}"
                          rf"|(?<![{DEV}])(?:[{DEV}]+\s+){{1,3}}के\s+(?:पास|सामने|पीछे|बगल\s+में)")  # word start only: linear on long runs
@@ -174,6 +178,10 @@ def detect(text: str, address_fn=None) -> Finder:
             f.add(start, end, address_fn(val.replace("\n", ", ")), "ADDRESS")
     for m in HOUSE_RX.finditer(text):
         f.add(m.start(), m.end(), "[HOUSE]", "HOUSE")
+    for m in WARD_ADDR_RX.finditer(text):
+        line = text[text.rfind("\n", 0, m.start()) + 1:m.start()]
+        if HOUSE_RX.search(line) or CO_RX.search(line):
+            f.add(m.start(1), m.end(1), "[LOCALITY]")
     for m in MOHALLA_RX.finditer(text):
         f.add(m.start(), m.end(), "[LOCALITY]", "LOCALITY")
     for m in LANDMARK_RX.finditer(text):
@@ -182,6 +190,8 @@ def detect(text: str, address_fn=None) -> Finder:
         g = 1 if m.group(1) else 2
         _name_group(f, m, g, "[VILLAGE]", "VILLAGE")
     for m in NAME_LBL_RX.finditer(text):
+        _name_group(f, m, 1, "[NAME]", "NAME")
+    for m in HING_NAME_RX.finditer(text):
         _name_group(f, m, 1, "[NAME]", "NAME")
     for m in REL_LBL_RX.finditer(text):
         _name_group(f, m, 1, "[RELATIVE]", "RELATIVE")

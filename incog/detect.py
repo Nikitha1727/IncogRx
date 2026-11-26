@@ -24,6 +24,9 @@ def digits_only(s: str) -> str:
 
 SEP = r"[ \t \-./_]?"
 NOT_DIGIT_BEFORE = r"(?<!\d)(?<!\d[ \t \-./_])"
+# a phone after a word that merely ends in a digit ("SpO2 98...", "base64 98...") is still a phone
+PHONE_BEFORE = (r"(?<!\d)(?<!\d[\-./_])(?<![^A-Za-z0-9]\d[ \t\xa0])(?<!^\d[ \t\xa0])"
+                r"(?<![^A-Za-z]\d\d[ \t\xa0])(?<!^\d\d[ \t\xa0])")
 NOT_DIGIT_AFTER = r"(?![ \t \-./_]?\d)"
 
 RX = {
@@ -31,7 +34,7 @@ RX = {
     "ABHA": re.compile(NOT_DIGIT_BEFORE + r"\d{2}[ \t-]?\d{4}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR": re.compile(NOT_DIGIT_BEFORE + r"[2-9]\d{3}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR_MASKED": re.compile(r"(?i)(?<![\w])[x*•]{4}[ \t-]?[x*•]{4}[ \t-]?\d{4}(?!\d)"),
-    "PHONE": re.compile(NOT_DIGIT_BEFORE + r"(?:\+\s?91[ \t-]?|91[ \t-]|0)?[6-9](?:[ \t-]?\d){9}" + NOT_DIGIT_AFTER),
+    "PHONE": re.compile(PHONE_BEFORE + r"(?:\+\s?91[ \t-]?|91[ \t-]|0)?[6-9](?:[ \t-]?\d){9}" + NOT_DIGIT_AFTER),
     "PHONE_MASKED": re.compile(r"(?<!\w)[6-9]\d[xX*]{6}\d{2}(?!\w)"),
     "PAN": re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])"),
     "INSURANCE": re.compile(r"(?i)(?<![A-Za-z0-9])(?:PMJAY|PM-JAY|AB-?PMJAY)[ \t-]?[A-Z]{2}[ \t-]?\d{6,14}(?!\d)"
@@ -44,8 +47,8 @@ LABELLED = [
     (r"(?i)(?:\bPIN(?:\s*Code)?|Pincode|Zip|पिन(?:\s*कोड)?)\s*[:\-.]?\s*", r"\d{6}(?!\d)", "PIN"),
     (r"(?i)(?:\bUHID|\bIPD\s*No|\bIP\s*No|\bMRN|\bReg(?:istration)?\.?\s*No|\bAdm(?:ission)?\.?\s*No|"
      r"\bPatient\s*ID|\bCR\s*No|\bOPD\s*No|पंजीकरण\s*(?:सं|संख्या)|आईपीडी\s*(?:सं|संख्या|नं)|ओपीडी\s*(?:सं|संख्या|नं))\.?\s*[:#\-]?\s*",
-     r"(?=[A-Z0-9/\-]*\d{4})[A-Z]{0,6}[/\-]?[A-Z0-9][A-Z0-9/\-]{3,}", "MRN"),
-    (r"(?i)(?:Policy\s*(?:No\.?|Number|#)|Member\s*ID|Card\s*No\.?)\s*[:\-]?\s*", r"[A-Z0-9][A-Z0-9/\-]{4,}", "INSURANCE"),
+     r"(?=[A-Z0-9/\-]*\d{4})[A-Z]{0,6}[/\-]?[A-Z0-9][A-Z0-9/\-]{3,}|(?=[A-Z0-9\-]*\d)[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}", "MRN"),
+    (r"(?i)(?:Policy\s*(?:No\.?|Number|#)|Member\s*ID|Card\s*No\.?|Insurance\s*(?:ID|No\.?|Number|#))\s*[:\-]?\s*", r"[A-Z0-9][A-Z0-9/\-]{4,}", "INSURANCE"),
 ]
 LABELLED_RX = [(re.compile(lab + "(" + val + ")"), kind) for lab, val, kind in LABELLED]
 # "Distt. Rae Bareli - 229678": a PIN at the end of an address

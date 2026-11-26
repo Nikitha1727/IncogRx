@@ -26,7 +26,8 @@ ADDR_WORDS = re.compile(r"(?i)\b(?:house|h\.?\s?no|makan|ward|mohalla|vill\.?|vi
 NOT_ID_KEY = {"bill", "visit", "sample", "trip", "package", "policy", "claim", "order", "invoice", "test", "loinc",
               "code", "txn", "receipt", "batch", "lot", "ticket", "amount", "room", "bed", "ward", "version", "schema"}
 ID_KEY = {"reg", "regn", "registration", "id", "no", "num", "number", "uhid", "mrn", "hosp", "pt", "patient", "ptno",
-          "cr", "ip", "ipd", "opd", "adm", "admission", "record", "file"}
+          "cr", "ip", "ipd", "opd", "adm", "admission", "record", "file", "ref", "reference", "hospital",
+          "क्रमांक", "पंजीकरण", "अस्पताल"}
 REL_KEY = {"guardian", "relative", "attendant", "father", "husband", "mother", "spouse", "caretaker", "care", "taker",
            "abhibhavak", "kin", "escort", "pita", "pati"}
 AGE_KEY = {"yrs", "years", "yr", "age", "aayu", "umar", "umr", "vay", "आयु", "उम्र"}
