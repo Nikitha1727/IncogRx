@@ -58,6 +58,10 @@ GENERIC_TOKENS = {"kumar", "kumari", "devi", "singh", "kaur", "bano", "begum", "
 REL_PREFIX = re.compile(r"^\s*(?:[SDWC]\s?/\s?[Oo]|पुत्र|पुत्री|पत्नी)\.?\s*", re.I)
 
 
+WORD_RUN = re.compile(r"[A-Za-z\u0900-\u097F]+")
+DIGIT_RUN = re.compile(r"\d(?:[ \t \-./_]?\d){4,}")   # same digit-run pattern as before, compiled once
+
+
 @dataclass
 class Knowledge:
     """Identifiers learned from structured fields in pass 1, reused everywhere in pass 2."""
@@ -107,19 +111,20 @@ class Knowledge:
         self._tok_rx = None
 
     def token_rx(self):
-        if self._tok_rx is None and self.tokens:
-            body = "|".join(re.escape(a) for a in sorted(self.tokens, key=len, reverse=True))
-            self._tok_rx = re.compile(r"(?<![A-Za-z\u0900-\u097F])(?:" + body + r")(?![A-Za-z\u0900-\u097F])", re.I)
-        return self._tok_rx
+        # Tokens hold letters only, and a match must not touch another letter on either side, so a token
+        # can only ever match a whole run of letters. Scanning runs and looking each up in the token set
+        # finds exactly the same matches as one giant alternation, in linear time.
+        return WORD_RUN if self.tokens else None
 
     def redact_tokens(self, text: str, protected: list) -> tuple:
-        rx = self.token_rx()
-        if rx is None:
+        if not self.tokens:
             return text, 0
         out, last, n = [], 0, 0
-        for m in rx.finditer(text):
-            s, e = m.span()
+        for m in WORD_RUN.finditer(text):
             w = m.group()
+            if w.lower() not in self.tokens:
+                continue
+            s, e = m.span()
             if any(a <= s < b for a, b in protected):
                 continue
             if w.isascii() and w.isupper() and len(w) > 1:      # ASHA, ward codes: not a person mention
@@ -153,6 +158,13 @@ class Knowledge:
             kind = self.names.get(re.sub(r"[\s_]+", " ", m.group()).lower(), "NAME")
             return "[RELATIVE]" if kind == "RELATIVE" else "[NAME]"
         return rx.sub(rep, text), n
+
+    def long_ids(self) -> tuple:
+        """Learned identifiers of 6+ digits as a set, plus their distinct lengths (cached until the set grows)."""
+        if getattr(self, "_ids6_n", -1) != len(self.digit_ids):
+            ids6 = {c for c in self.digit_ids if len(c) >= 6}
+            self._ids6, self._lens6, self._ids6_n = ids6, sorted({len(c) for c in ids6}), len(self.digit_ids)
+        return self._ids6, self._lens6
 
     def add_digits(self, value: str, minimum: int = 5) -> None:
         d = digits_only(value)
@@ -219,19 +231,21 @@ def find_spans(text: str, kb: Knowledge | None = None) -> list:
                 found.append((m.start(), m.end(), "MRN"))
         if kb.digit_ids or kb.pins:
             # any digit run (with separators) whose digits equal or end with a learned identifier
-            for m in re.finditer(r"\d(?:[ \t \-./_]?\d){4,}", t):
+            ids6, lens6 = kb.long_ids()
+            for m in DIGIT_RUN.finditer(t):
                 d = re.sub(r"\D", "", m.group())
-                if d in kb.digit_ids or d in kb.pins or any(len(c) >= 6 and d.endswith(c) for c in kb.digit_ids):
+                if d in kb.digit_ids or d in kb.pins or any(d[-k:] in ids6 for k in lens6 if k <= len(d)):
                     found.append((m.start(), m.end(), "ID"))
                 else:
-                    for c in kb.digit_ids:
-                        if len(c) >= 6 and c in d:
-                            i = t.find(c, m.start(), m.end())
-                            if i >= 0:
-                                found.append((i, i + len(c), "ID"))
-                            break
+                    hit = next((d[a:a + k] for k in reversed(lens6) for a in range(len(d) - k + 1)
+                                if d[a:a + k] in ids6), None)
+                    if hit is not None:
+                        i = t.find(hit, m.start(), m.end())
+                        if i >= 0:
+                            found.append((i, i + len(hit), "ID"))
+        low_t = t.lower()
         for surf, kind in kb.exact.items():
-            if surf and surf in t.lower():
+            if surf and surf in low_t:
                 start = 0
                 low = t.lower()
                 while True:
