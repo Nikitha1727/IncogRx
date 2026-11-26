@@ -1,6 +1,2 @@
-# The starter uses only the Python standard library.
-# Add what you need, for example:
-# rapidfuzz
-# jellyfish
-# indic-transliteration
-# cryptography
+# IncogRx uses only the Python standard library (Python 3.10+).
+# No third-party packages, no network access, no LLMs or ML models.
