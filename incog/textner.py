@@ -75,8 +75,8 @@ VILLAGE_RX = re.compile(rf"(?i:\b(?:Village|Vill\.?|Gram|Gaon|Gaanv|Mauza))\s*[:
 
 # ----------------------------------------------------------------------------- context patterns
 REL_MARK_RX = re.compile(rf"(?<![A-Za-z])((?:[SDW]\s?/\s?[Oo]|[SDW]/O)\.?|(?i:son|wife|daughter|husband)\s+of|"
-                         rf"पुत्र|पुत्री|पत्नी)\s+({LAT_NAME}|{DEV_NAME})")
-CO_RX = re.compile(rf"(?<![A-Za-z])(C/[Oo]\.?)\s+({LAT_NAME})")
+                         rf"पुत्र|पुत्री|पत्नी)(?:\s*[:\-–]\s*|\s+)({LAT_NAME}|{DEV_NAME})")
+CO_RX = re.compile(rf"(?<![A-Za-z])(C/[Oo]\.?)(?:\s*[:\-–]\s*|\s+)({LAT_NAME})")
 HONOR = (r"ji|jee|sahab|saheb|sahib|didi|bhaiya|bhaiyya|bhai|behenji|behen|bahenji|amma|ammi|chacha|chachu|chachi|"
          r"mama|mami|mamaji|papa|uncle|aunty|aunti|bhabhi|dada|dadi|nana|nani|babu|kaka|kaki|tau|tai|bua")
 HONOR_RX = re.compile(rf"(?<![A-Za-z.])({LAT_TOK}(?:[ ]{LAT_TOK})?)[ ](?i:({HONOR}))(?![A-Za-z])")

@@ -430,7 +430,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(404, {"error": "File not found or expired."})
             else:
                 name = rel.rsplit("/", 1)[-1]
-                self._send(200, data, "application/pdf" if name.lower().endswith(".pdf") else "application/octet-stream",
+                low = name.lower()
+                ctype = ("application/pdf" if low.endswith(".pdf") else
+                         "text/plain; charset=utf-8" if low.endswith((".txt", ".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".md"))
+                         else "application/octet-stream")
+                self._send(200, data, ctype,
                            {"Content-Disposition": f'inline; filename="{name}"'})
         elif self.path.startswith("/api/download/"):
             data = zip_job(self.path.rsplit("/", 1)[-1])
@@ -472,7 +476,11 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Upload is larger than 80 MB.")
             else:
                 raise ValueError("Unknown mode.")
-            self._json(200, run_job(files, secret))
+            result = run_job(files, secret)
+            if mode == "files":           # uploaded originals are never sent back to the page
+                for f in result["files"]:
+                    f.pop("before", None)
+            self._json(200, result)
         except (ValueError, KeyError, json.JSONDecodeError) as exc:
             self._json(400, {"error": str(exc) or "Bad request."})
         except Exception:  # noqa: BLE001  never echo internals: they may contain file names

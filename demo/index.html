@@ -109,6 +109,49 @@ details.person summary::-webkit-details-marker{display:none}
 .precs table td.pv{font:12.3px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-width:640px}
 .chev{margin-left:auto;font-size:12px;color:var(--ink3)}
 details.person[open] .chev{transform:rotate(180deg)}
+.release{border-left:4px solid var(--green);padding:18px 20px}
+.rhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rcheck{width:40px;height:40px;border-radius:50%;background:var(--greenbg);color:var(--green);display:grid;place-items:center;font-weight:800;font-size:19px;flex:none}
+.rtitle{flex:1;min-width:220px}.rtitle h2{margin:0}.rtitle .sub{margin:2px 0 0}
+.btn.big{padding:11px 18px;font-size:15px}
+a.btn{text-decoration:none;display:inline-block}
+.rformat{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 0;font-size:13px}
+.rformat code{font:12.5px var(--mono);background:#eef3f9;color:var(--navy);border-radius:5px;padding:2px 7px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:14px}
+.tiles:empty{display:none}
+.tile{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--ink);background:#fff;position:relative;transition:.12s}
+.tile:hover{border-color:var(--navy2);box-shadow:0 2px 10px rgba(15,42,68,.08)}
+.tile .ft{grid-row:1/3;width:38px;height:44px;border-radius:6px;background:#eef3f9;color:var(--navy2);display:grid;place-items:center;font:700 10.5px var(--mono);letter-spacing:.3px}
+.tile .ft.pdf{background:var(--redbg);color:var(--red)}
+.tile .tn{font-weight:650;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tm{font-size:12px;color:var(--ink3);padding-right:56px}
+.tile .ta{position:absolute;right:10px;bottom:9px;display:flex;gap:4px}
+.tile .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:13px;color:var(--navy2);background:#f3f6fa}
+.tile .ic:hover{background:var(--navy);color:#fff}
+.tile.more{grid-template-columns:1fr;background:#fafbfd;border-style:dashed}
+.tile.more .tn{padding:0}
+.bars.two{display:grid;grid-template-columns:1fr 1fr;column-gap:36px;row-gap:8px}
+@media(max-width:860px){.bars.two{grid-template-columns:1fr}}
+.openhint{font-size:12.5px;font-weight:600;color:var(--navy2);white-space:nowrap}
+.how .howhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.inv{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--amber);background:var(--amberbg);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.howgrid{display:grid;grid-template-columns:1fr 40px 1fr;gap:10px;align-items:stretch}
+@media(max-width:860px){.howgrid{grid-template-columns:1fr}.harrow{transform:rotate(90deg)}}
+.harrow{display:grid;place-items:center;font-size:26px;color:var(--ink3)}
+.hcol .lab{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+.hcol .lab.after{color:var(--green)}
+pre.ex{max-height:none;font-size:12.6px;line-height:1.75}
+pre.ex.out{background:#f6fbf8;border-color:#cfe6d9}
+pre.ex i{font-style:normal;border-radius:4px;padding:1px 3px}
+.h.n,.k.n{background:#fbe3e1;color:#8f2f2c}
+.h.p,.k.p{background:#e3ecf8;color:#1d4268}
+.h.g,.k.g{background:#fff0cf;color:#7a4d00}
+.h.d,.k.d{background:#e2f3ea;color:#1f6b44}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+@media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+.step{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.step .k{width:12px;height:12px;border-radius:3px;margin-top:4px;flex:none}
+.step b{color:var(--navy)} .step p{margin:2px 0 0;color:var(--ink2);font-size:12.8px;line-height:1.45}
 footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
 </style>
 </head>
@@ -157,7 +200,6 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
 
 
     <div class="runbar">
-      <label class="secret" title="Same secret gives the same pseudonyms and date shifts; a new secret changes them all.">Release secret <input id="secret" value="demo-secret" autocomplete="off"></label>
       <div class="spacer"></div>
       <span class="status" id="status"></span>
       <button class="btn primary" id="run">Run IncogRx</button>
@@ -165,11 +207,17 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
   </section>
 
   <section id="results">
-    <div class="card outbar" id="outbar">
-      <div><h2>Your released output is ready</h2>
-        <p class="sub" style="margin:0">The full result in the organisers' format: cleaned files in <code>sanitized/</code>, plus <code>report.json</code> and <code>records.jsonl</code>.<span id="pdfnote"></span></p></div>
-      <div class="acts" id="outActs"></div>
+    <div class="card release">
+      <div class="rhead">
+        <div class="rcheck" aria-hidden="true">&#10003;</div>
+        <div class="rtitle"><h2>Release ready</h2><p class="sub" id="rsum"></p></div>
+        <a class="btn navy big" id="zipBtn" href="#">Download everything (.zip)</a>
+      </div>
+      <div class="rformat"><span class="muted">Organisers' format inside the zip:</span>
+        <code>sanitized/</code><code>report.json</code><code>records.jsonl</code><span class="muted" id="rpdf"></span></div>
+      <div class="tiles" id="tiles"></div>
     </div>
+
     <div class="stats" id="stats"></div>
 
     <div class="card viewer" id="textView">
@@ -180,31 +228,55 @@ footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:10px 0 30px}
       </div>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <h2>What was removed</h2>
-        <p class="sub">Placeholders written into the released files, by type.</p>
-        <div class="bars" id="bars"></div>
-      </div>
-      <div class="card">
-        <h2>Patients found</h2>
-        <p class="sub">One pseudonym per real patient, linked only on strong evidence. <span id="unlinked"></span></p>
-        <div class="scroll"><table><thead><tr><th>Pseudonym</th><th>Records</th><th>Files</th></tr></thead><tbody id="patients"></tbody></table></div>
-      </div>
+    <div class="card">
+      <h2>What was removed</h2>
+      <p class="sub">Placeholders written into the released files, by type.</p>
+      <div class="bars two" id="bars"></div>
     </div>
 
     <div class="card">
-      <div class="vhead"><div><h2>Files</h2><p class="sub" style="margin:0">Click a file to compare the original with the released version.</p></div></div>
-      <div class="scroll"><table><thead><tr><th>Input file</th><th>Status</th><th>Released as</th><th>Removed</th></tr></thead><tbody id="files"></tbody></table></div>
+      <h2>Files</h2>
+      <p class="sub">Click a released file to open its cleaned version. Originals are never shown.</p>
+      <div class="scroll"><table><thead><tr><th>Input file</th><th>Status</th><th>Released as</th><th>Removed</th><th></th></tr></thead><tbody id="files"></tbody></table></div>
     </div>
 
-    <div class="card viewer" id="fileView">
-      <div class="vhead"><h3 id="fvName"></h3><span id="fvPsn"></span></div>
-      <div class="cols">
-        <div class="col"><div class="lab">Original</div><pre id="fvBefore"></pre></div>
-        <div class="col after"><div class="lab">Released</div><pre id="fvAfter"></pre></div>
+    <div class="card how">
+      <div class="howhead"><div><h2>How IncogRx cleans a record</h2>
+        <p class="sub" style="margin:0">A fixed, invented example. The right side is the engine's real output for it.</p></div>
+        <span class="inv">Invented data</span></div>
+      <div class="howgrid">
+        <div class="hcol"><div class="lab">Record as received</div>
+<pre class="ex">Patient Name: <i class="h n">Meera Iyer</i>      Age/Sex: <i class="h g">52</i> Yrs/F
+UHID: <i class="h p">AHC-0012345</i>
+Mobile: <i class="h n">9845012345</i>   Aadhaar: <i class="h n">4821 7730 9912</i>
+Address: <i class="h n">14, Gandhi Nagar, near Hanuman
+Mandir</i>, Distt. Indore<i class="h g"> - 452001</i>
+W/o: <i class="h n">Suresh Iyer</i>
+Date of Admission: <i class="h d">03/03/2026</i>
+Date of Discharge: <i class="h d">07/03/2026</i>
+Diagnosis: <i class="h g">Dengue fever (A97.0)</i>
+<i class="h n">Meera</i> ji ko 3 din se tez bukhar hai.
+पति <i class="h n">सुरेश अय्यर</i> साथ में हैं।</pre></div>
+        <div class="harrow" aria-hidden="true">&#10142;</div>
+        <div class="hcol"><div class="lab after">Released by IncogRx</div>
+<pre class="ex out">Patient Name: <i class="h n">[NAME]</i>        Age/Sex: <i class="h g">50-59</i> Yrs/F
+UHID: <i class="h p">PSN-R10M7K</i>
+Mobile: <i class="h n">[PHONE]</i>   Aadhaar: <i class="h n">[AADHAAR]</i>
+Address: <i class="h n">[ADDRESS]</i>, Distt. Indore
+
+W/o: <i class="h n">[RELATIVE]</i>
+Date of Admission: <i class="h d">05/05/2026</i>
+Date of Discharge: <i class="h d">09/05/2026</i>
+Diagnosis: <i class="h g">Certain infectious and parasitic diseases (A00-B99)</i>
+<i class="h n">[NAME]</i> ji ko 3 din se tez bukhar hai.
+पति <i class="h n">[RELATIVE]</i> साथ में हैं।</pre></div>
       </div>
-      <div class="note" id="fvNote"></div>
+      <div class="steps">
+        <div class="step"><span class="k n"></span><div><b>Remove</b><p>Names, relatives, phones, Aadhaar, ABHA and street addresses, in English, हिन्दी and Hinglish.</p></div></div>
+        <div class="step"><span class="k p"></span><div><b>Pseudonymise</b><p>Hospital IDs become one keyed pseudonym per patient, the same in every file.</p></div></div>
+        <div class="step"><span class="k g"></span><div><b>Generalise</b><p>Age to a 10-year band, street address to district, a rare condition to its ICD chapter.</p></div></div>
+        <div class="step"><span class="k d"></span><div><b>Shift dates</b><p>One secret shift per patient. The 4-day stay stays 4 days.</p></div></div>
+      </div>
     </div>
 
     <div class="card" id="peopleCard">
@@ -277,7 +349,7 @@ const toB64 = f => new Promise((res, rej) => { const r = new FileReader();
 
 
 $("#run").onclick = async () => {
-  const body = {mode, secret: $("#secret").value.trim()};
+  const body = {mode};
   if (mode === "text") { body.text = $("#text").value; if (!body.text.trim()) return status("Paste some text first.", true); }
   if (mode === "files") {
     if (!picked.length) return status("Choose files or a folder first.", true);
@@ -310,28 +382,42 @@ function render(d, req) {
   const tags = Object.entries(d.tags), max = Math.max(1, ...tags.map(t => t[1]));
   $("#bars").innerHTML = tags.length ? tags.map(([k, n]) => `<div class="bar"><span>${esc(LABELS[k] || k)}</span><div class="track"><div class="fill" style="width:${(100*n/max).toFixed(1)}%"></div></div><span class="n">${n}</span></div>`).join("")
     : '<span class="muted">No personal details found.</span>';
-  $("#patients").innerHTML = d.patients.length ? d.patients.map(p => `<tr><td><span class="psn">${esc(p.pseudonym)}</span></td><td>${p.records}</td><td>${p.files.map(f => `<span class="fchip">${esc(f)}</span>`).join("")}</td></tr>`).join("")
-    : '<tr><td colspan="3" class="muted">No patients linked.</td></tr>';
-  $("#unlinked").textContent = d.unlinked ? `${d.unlinked} record(s) left unlinked (no patient, or evidence too weak).` : "";
-  $("#files").innerHTML = d.files.map((f, i) => `<tr class="click" data-i="${i}"><td>${esc(f.input)}</td>
-    <td>${f.status === "sanitized" ? '<span class="pill ok">Released</span>' + (f.pdf ? ` <a class="plink" href="/api/file/${d.job}/${encodeURI(f.pdf)}" target="_blank" onclick="event.stopPropagation()">redacted PDF</a>` : "") : `<span class="pill q">Quarantined</span> <span class="muted">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
-    <td>${f.output ? esc(f.output.replace(/^sanitized\//, "")) : '<span class="muted">not released</span>'}</td><td>${f.removed ?? "-"}</td></tr>`).join("");
-  document.querySelectorAll("#files tr.click").forEach(tr => tr.onclick = () => showFile(d.files[+tr.dataset.i]));
-  $("#fileView").classList.remove("on");
+
+  // release card: one zip, plus a tile per released file (redacted PDFs first)
+  const url = p => `/api/file/${d.job}/${encodeURI(p)}`;
+  $("#zipBtn").href = `/api/download/${d.job}`;
+  $("#rsum").textContent = `${c.files_sanitized} of ${c.files_total} file(s) released · ${removed} personal detail(s) removed`
+    + (c.files_quarantined ? ` · ${c.files_quarantined} quarantined, nothing from them released` : "");
+  const npdf = (d.pdfs || []).length;
+  $("#rpdf").textContent = npdf ? `· plus ${npdf} redacted PDF${npdf > 1 ? "s" : ""} in the same format you uploaded` : "";
+  const rel = d.files.filter(f => f.status === "sanitized" && f.output)
+    .sort((a, b) => (!!b.pdf - !!a.pdf) || a.output.localeCompare(b.output));
+  const SHOW = 8, ext = n => (n.split(".").pop() || "").toUpperCase().slice(0, 4);
+  $("#tiles").innerHTML = rel.slice(0, SHOW).map(f => {
+    const name = f.output.split("/").pop(), e = ext(name);
+    return `<a class="tile" href="${url(f.output)}" target="_blank" title="Open ${esc(name)}">
+      <span class="ft ${e === "PDF" ? "pdf" : ""}">${esc(e)}</span>
+      <span class="tn">${esc(name)}</span>
+      <span class="tm">${f.removed ?? 0} removed</span>
+      <span class="ta"><span class="ic" title="Open">&#8599;</span><span class="ic" title="Download" data-dl="${url(f.output)}" data-name="${esc(name)}">&#8595;</span></span></a>`;
+  }).join("") + (rel.length > SHOW ? `<a class="tile more" href="/api/download/${d.job}"><span class="tn">+${rel.length - SHOW} more</span><span class="tm">all in the zip</span></a>` : "");
+  document.querySelectorAll("#tiles [data-dl]").forEach(b => b.onclick = e => {
+    e.preventDefault(); e.stopPropagation();
+    const a = document.createElement("a"); a.href = b.dataset.dl; a.download = b.dataset.name; document.body.appendChild(a); a.click(); a.remove(); });
+
+  $("#files").innerHTML = d.files.map(f => {
+    const ok = f.status === "sanitized" && f.output;
+    return `<tr class="${ok ? "click" : ""}" ${ok ? `data-href="${url(f.output)}"` : ""}><td>${esc(f.input)}</td>
+    <td>${ok ? '<span class="pill ok">Released</span>' : `<span class="pill q">Quarantined</span> <span class="muted">${esc(f.note || REASONS[f.reason] || f.reason)}</span>`}</td>
+    <td>${ok ? esc(f.output.replace(/^sanitized\//, "")) : '<span class="muted">not released</span>'}</td><td>${f.removed ?? "-"}</td>
+    <td>${ok ? `<span class="openhint">${f.pdf ? "Open redacted PDF" : "Open"} &#8599;</span>` : ""}</td></tr>`; }).join("");
+  document.querySelectorAll("#files tr.click").forEach(tr => tr.onclick = () => window.open(tr.dataset.href, "_blank"));
+
   const tv = $("#textView");
   if (req.mode === "text" && d.files[0]) {
     tv.classList.add("on"); $("#tvBefore").textContent = d.files[0].before || "";
     $("#tvAfter").innerHTML = mark(d.files[0].after || ""); $("#textPsn").innerHTML = (d.files[0].pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
   } else tv.classList.remove("on");
-  const acts = [`<a class="btn navy" href="/api/download/${d.job}">Download full output (.zip)</a>`];
-  (d.pdfs || []).forEach(p => {
-    const url = `/api/file/${d.job}/${encodeURI(p.path)}`, nm = p.name.split("/").pop();
-    const lab = d.pdfs.length > 1 ? ` (${esc(nm)})` : "";
-    acts.push(`<a class="btn primary" href="${url}" download="${esc(p.path.split("/").pop())}">Download redacted PDF${lab}</a>`);
-    acts.push(`<a class="btn" href="${url}" target="_blank">Open${lab}</a>`);
-  });
-  $("#outActs").innerHTML = acts.join("");
-  $("#pdfnote").textContent = (d.pdfs || []).length ? " Each PDF also comes back as a redacted PDF in the same format." : "";
   renderPeople(d);
   $("#results").scrollIntoView({behavior: "smooth", block: "start"});
 }
@@ -363,16 +449,6 @@ function renderPeople(d) {
   $("#pplFilter").oninput = e => { const q = e.target.value.trim().toLowerCase(); let n = 0;
     document.querySelectorAll("#people details.person").forEach(x => { const ok = !q || x.dataset.hay.includes(q); x.style.display = ok ? "" : "none"; n += ok; });
     $("#pplCount").textContent = q ? `${n} of ${ppl.length} patient(s)` : `${ppl.length} patient(s)`; };
-}
-function showFile(f) {
-  const v = $("#fileView"); v.classList.add("on");
-  $("#fvName").textContent = f.input + (f.output ? "  →  " + f.output.replace(/^sanitized\//, "") : "");
-  $("#fvBefore").textContent = f.before ?? "(not readable)";
-  $("#fvAfter").innerHTML = f.output ? mark(f.after || "") : `<span class="muted">Quarantined: ${esc(f.note || REASONS[f.reason] || f.reason)} Nothing from this file was released.</span>`;
-  $("#fvPsn").innerHTML = (f.pdf ? `<a class="btn navy" href="/api/file/${last.job}/${encodeURI(f.pdf)}" target="_blank">Open redacted PDF</a> ` : "")
-    + (f.pseudonyms || []).map(p => `<span class="psn">${esc(p)}</span>`).join(" ");
-  $("#fvNote").textContent = [f.note || "", f.truncated ? "Long file: showing the first part only. The download contains everything." : ""].filter(Boolean).join(" ");
-  v.scrollIntoView({behavior: "smooth", block: "start"});
 }
 </script>
 </body>
