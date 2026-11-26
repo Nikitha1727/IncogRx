@@ -423,6 +423,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if self.path in ("/", "/index.html"):
             self._send(200, (DEMO / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path.startswith("/assets/"):    # page images only: a bare file name, no paths
+            name = self.path[len("/assets/"):].split("?")[0]
+            p = DEMO / "assets" / name
+            types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+            if "/" in name or "\\" in name or name.startswith(".") or p.suffix.lower() not in types or not p.is_file():
+                self._json(404, {"error": "not found"})
+            else:
+                self._send(200, p.read_bytes(), types[p.suffix.lower()], {"Cache-Control": "max-age=3600"})
         elif self.path.startswith("/api/file/"):
             job, _, rel = self.path[len("/api/file/"):].partition("/")
             data = job_file(job, rel)
