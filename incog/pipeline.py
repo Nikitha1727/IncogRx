@@ -541,6 +541,9 @@ def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
     return put_pseudonym(text, p)
 
 
+_NON_ASCII_RUN = re.compile(r"[^\x00-\x7F]+(?:[_ \-.]+[^\x00-\x7F]+)*")
+
+
 def safe_name(rel: str, kb: Knowledge) -> str:
     parts = rel.split("/")
     out = []
@@ -550,6 +553,9 @@ def safe_name(rel: str, kb: Knowledge) -> str:
         cleaned = META_ID_RX.sub("[ID]", clean_text(spaced, kb))
         if cleaned != spaced:
             stem = re.sub(r"\[([A-Z_]+)\]", r"\1", cleaned).replace(" ", "_")
+        # A file or folder name in another script (Tamil, Bengali, Devanagari) is most often a person's
+        # name that no list here covers. Replace each such run as a name; the output path stays ASCII.
+        stem = _NON_ASCII_RUN.sub("NAME", stem)
         out.append(stem + (dot + ext if dot else ""))
     return "/".join(out)
 

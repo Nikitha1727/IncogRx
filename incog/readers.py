@@ -73,6 +73,15 @@ def decode(raw: bytes) -> str:
         return raw[3:].decode("utf-8")
     if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
         return raw.decode("utf-16")
+    # UTF-16 without a byte-order mark: ASCII text then has a NUL in every other byte, which is
+    # still "valid" UTF-8, so the names inside would never be seen. Decode it as UTF-16.
+    if len(raw) >= 4 and len(raw) % 2 == 0:
+        for enc, half in (("utf-16-le", raw[1::2]), ("utf-16-be", raw[0::2])):
+            if half.count(0) > len(raw) // 4:
+                try:
+                    return raw.decode(enc)
+                except UnicodeDecodeError:
+                    raise Quarantine("corrupt_encoding") from None
     try:
         return raw.decode("utf-8")
     except UnicodeDecodeError:

@@ -211,6 +211,8 @@ class Knowledge:
                 continue
             if a.start() > 0 and text[a.start() - 1] == "[":
                 continue
+            if _is_doctor(text, a.start()):
+                continue
             out.append(text[last:a.start()])
             out.append("[NAME]")
             last = b.end()
@@ -288,6 +290,9 @@ class Knowledge:
             if end < 0:
                 pos = i + 1
                 continue
+            if _is_doctor(text, i):
+                pos = end
+                continue
             kind = self.names.get(re.sub(r"[\s_]+", " ", text[i:end]).lower(), "NAME")
             out.append(text[last:i])
             out.append("[RELATIVE]" if kind == "RELATIVE" else "[NAME]")
@@ -304,6 +309,8 @@ class Knowledge:
 
         def rep(m):
             nonlocal n
+            if _is_doctor(text, m.start()):
+                return m.group()
             n += 1
             kind = self.names.get(re.sub(r"[\s_]+", " ", m.group()).lower(), "NAME")
             return "[RELATIVE]" if kind == "RELATIVE" else "[NAME]"
@@ -435,6 +442,15 @@ def redact(text: str, spans: list) -> tuple:
         last = e
     out.append(text[last:])
     return "".join(out), len(spans)
+
+
+_DR_PREFIX = re.compile(r"(?:\bDr\.?|\bDoctor|डॉ\.?|डा\.|டாக்டர்)\s*$", re.I)
+
+
+def _is_doctor(text: str, start: int) -> bool:
+    """A name right after a doctor title is the treating doctor, a clinical fact, even when the same
+    name was also learned as a patient alias ("Dr. A. Mehta" next to a patient called "A. Mehta")."""
+    return bool(_DR_PREFIX.search(text[max(0, start - 12):start]))
 
 
 def _one_edit(a: str, b: str) -> bool:
