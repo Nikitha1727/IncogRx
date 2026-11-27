@@ -1,0 +1,7 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "incogrx-ui-redesign": false
+    }
+  }
+}
