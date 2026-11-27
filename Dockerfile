@@ -8,6 +8,7 @@ WORKDIR /app
 COPY . .
 RUN pip install --no-cache-dir -r demo/requirements-demo.txt
 ENV TESSDATA_PREFIX=/app/demo/tessdata \
+    OMP_THREAD_LIMIT=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8765
 EXPOSE 8765
