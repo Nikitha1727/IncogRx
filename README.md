@@ -162,6 +162,9 @@ On the practice, noise-injected, unseen-format and broken-file sets, the output 
 * Rare-condition generalisation lowers the number of exact diagnoses kept (3.6% of medical values on the practice data). The threshold is configurable.
 * OCR (document mode only) loses the micro sign (`µL` is read as `uL`) and sometimes a decimal point (`Hb 112`). These are never corrected by guessing: the page is flagged for review with the reason (`CHECK` lines in `demo/run_documents.py`, `clinical_checks` in the result). Names drawn in a PDF with a font that has no Unicode map cannot be read by anyone; those glyphs are blacked out and marked `[UNREADABLE]`.
 * Linking is deliberately conservative: when evidence is thin, records stay unlinked rather than risk a false merge.
+* PDFs and images are quarantined by the graded run, as the official spec expects; only document mode (`demo/run_documents.py`) reads and redacts them.
+* Handwriting is read with Tesseract, not a trained handwriting model. The organizer's 20 handwriting samples are typed fonts styled as handwriting (their own ground truth says so); on those, 0 of 80 personal values leaked and 80 of 80 clinical values were kept. Real cursive handwriting was not available and will read worse; low-confidence words are blacked out rather than guessed.
+* The intake scan detects the EICAR test signature, key material, encrypted or opaque payloads, damaged or encrypted PDFs, symlinks and unsafe archives. It is not a virus scanner with a signature database (no ClamAV or YARA). Embedded PDF JavaScript is removed because every output PDF is rebuilt, but it is not reported as suspicious.
 
 ---
 

@@ -37,6 +37,37 @@ The official validators were run unmodified.
 * Clinical values tested: 960 = 120 records x 8 fields.
 * Document mode reports 285 records = 163 page records (155 PDF pages, 8 notes) + the same 122.
 
+## Changes in the third round (27 Nov, morning)
+
+Measured on the 7,200-patient senior security test pack (46 files, graded `main.py`, `RAKSHA_SECRET=regress-key`):
+
+| Measure | Before | After |
+|---|---|---|
+| Personal values leaked (name, Hindi name, phone, email, DOB, address, hospital ID, MRN) | 0 of 57,600 | 0 of 57,600 |
+| Different patients sharing one pseudonym | 67 | 0 |
+| One patient split across pseudonyms | 0 | 0 |
+| Records with no pseudonym | 1,000 | 0 |
+| Run time | 86.8 s | 61.2 s |
+
+* Record numbers kept their letters only as digits, so `INC-00057` and `HOSP-00057` collided and chained four patients together. A distinctive prefix is now part of the key; generic labels (`MRN`, `UHID`) are still dropped so `MRN 123456` matches `123456`.
+* A JSON file that is a top-level list of patients was one record with no pseudonym. It now gives one record per patient (`/0`, `/1`, ...).
+* Name redaction scans word starts instead of one giant alternation, which is most of the speed gain.
+* Blood pressure such as `130/75` is no longer redacted as an ID.
+
+Document mode (`demo/run_documents.py`) on the organizer PDFs, handwriting and security files:
+
+| Input | Personal values leaked | Clinical values kept | Time |
+|---|---|---|---|
+| 25, 50 and 80 page PDFs (155 pages) | 0 of 695 | doses, vitals, diagnoses, length of stay all present | 5 s |
+| 20 handwriting samples (ground truth file) | 0 of 80 | 80 of 80 | about 0.5 s each |
+| EICAR signature, key file, AES-GCM payload | all 3 blocked, never released | not applicable | under 1 s |
+
+Two leaks were found by these runs and fixed: an initial-style name (`R. Das`) after a `Patient / <Hindi label>:` label whose Hindi word extracts as blanks, and a name that OCR misread by one letter (`Ira Kaur` read as `fra Kaur`) next to a common surname that is never removed on its own.
+
+Red-team PDFs built for this round, all in document mode: patient name, phone and MRN in PDF metadata (wiped, 0 leaks); name and phone in the file name (renamed `NAME_PHONE.pdf`); encrypted PDF (blocked, reported as not inspectable); damaged PDF (blocked); JavaScript `OpenAction` (output is rebuilt without it, but the scan does not flag it as suspicious); a PDF named `.csv` (detected by content); one PDF holding three patients with a rotated page (three separate pseudonyms); an "ignore all previous rules" instruction inside the text (treated as data, the name and Aadhaar on that page removed).
+
+The practice output is byte-identical before and after this round (report timing aside), and all checks above still pass.
+
 ## Changes in the second round
 
 * Ages are now 20-year bands (`config/policy.yaml`). Measured against our attacker replica: 14 of 48 re-identified patients became 8, with no change to any medical-value or leak figure. 30-year bands gave 3 of 48 but would put children and adults in one band.
