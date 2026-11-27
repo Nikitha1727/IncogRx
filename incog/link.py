@@ -410,6 +410,12 @@ class Linker:
             da, db = _births(a.dobs), _births(b.dobs)
             if da and db and not da & db:
                 return True
+            # twins and siblings share the family phone and the surname (and twins the birth date):
+            # a phone never joins two records whose first names differ
+            fa = {n.split("|")[0] for n in a.names} | a.firsts
+            fb = {n.split("|")[0] for n in b.names} | b.firsts
+            if fa and fb and not fa & fb:
+                return True
         for p in ("A:", "H:"):
             x = {i for i in a.ids if i.startswith(p)}
             y = {i for i in b.ids if i.startswith(p)}
