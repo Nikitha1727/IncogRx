@@ -65,6 +65,14 @@ REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Na
               r"Attendant(?:'s)?\s*(?:Name)?|Relative(?:'s)?\s*(?:Name)?|Next\s+of\s+Kin|NOK|Informant|Pita\s*(?:ka|/Pati\s*ka)?\s*Naam|"
               r"Pati\s*ka\s*Naam|Accompanied\s+by|Escort(?:ed\s+by)?|Care\s*taker|Abhibhavak|"
               r"पिता(?:\s*का\s*नाम)?|पति(?:\s*का\s*नाम)?|माता(?:\s*का\s*नाम)?|पिता/पति(?:\s*का\s*नाम)?|परिजन(?:\s*का\s*नाम)?|अभिभावक)")
+# Two or three capitalised words right after a person cue ("bed 7 wale patient Zorvikra Tandelmoy",
+# "for: Quenisha Bhorvaltek", "into the log: Yashvil ...") are a name even when no list knows it.
+CUE_NAME_RX = re.compile(r"(?i:\b(?:patient|pt\.?|mr\.?|mrs\.?|ms\.?|name|naam|attendant|visitor|log))"
+                         r"\s*[:\-]?\s+([A-Z][a-z]{2,}(?:[ ][A-Z][a-z]{2,}){1,2})\b")
+CUE_NOT_NAME = {"disease", "fever", "syndrome", "hospital", "ward", "lymphoma", "palsy", "thyroiditis", "tablet",
+                "injection", "clinic", "centre", "center", "lab", "desk", "medical", "sadan", "mission", "college",
+                "school", "bharat", "yojana"}
+CUE_DR_RX = re.compile(r"(?:\bDr\.?|\bDoctor|डॉ\.?)\s*$", re.I)
 NAME_LBL_RX = re.compile(rf"(?i:{NAME_LABELS}){LBL_END}({LABEL_NAME})")
 # Hinglish label without a colon: "Patient ka naam Kavya Mehta"
 HING_NAME_RX = re.compile(rf"(?i:\b(?:patient|mareez|mariz|marij|rogi)\s+ka\s+naam)(?:\s+(?i:hai|he))?\s+({LAT_NAME})")
@@ -230,6 +238,11 @@ def detect(text: str, address_fn=None) -> Finder:
         _name_group(f, m, 1, "[NAME]", "NAME")
     for m in WA_RX.finditer(text):
         _name_group(f, m, 1, "[RELATIVE]", "RELATIVE")
+    for m in CUE_NAME_RX.finditer(text):
+        words = m.group(1).lower().split()
+        if any(w in CUE_NOT_NAME or w in NOT_NAME for w in words) or CUE_DR_RX.search(text[max(0, m.start(1) - 12):m.start(1)]):
+            continue
+        _name_group(f, m, 1, "[NAME]", "NAME")
     for m in REL_NOUN_RX.finditer(text):
         _name_group(f, m, 1 if m.group(1) else 2, "[RELATIVE]", "RELATIVE")
     for m in PAIR_RX.finditer(text):
