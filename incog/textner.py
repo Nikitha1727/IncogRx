@@ -60,7 +60,7 @@ def _trim_name(v: str) -> str:
 LBL_END = r"\s*[:\-–ः]\s*"          # "नामः": OCR often reads a colon after Devanagari as a visarga
 NAME_LABELS = (r"(?:Patient(?:'s)?\s*Name|Pt\.?\s*Name|Name\s+of\s+(?:the\s+)?Patient|Mareez\s+ka\s+Naam|"
                r"Patient\s+ka\s+Naam|Rogi(?:\s+ka\s+Naam)?|Beneficiary(?:\s+Name)?|मरीज़?\s*का\s*नाम|रोगी(?:\s*का\s*नाम)?|"
-               r"(?m:^\s*)(?:Name|Naam|नाम|मरीज़?))")
+               r"(?m:^\s*)(?:Name|Naam|नाम|मरीज़?|Patient(?:\s*/[^:\n/]{0,24})?(?=\s*:)))")
 REL_LABELS = (r"(?:Father(?:'s)?\s*Name|Husband(?:'s)?\s*Name|Mother(?:'s)?\s*Name|Guardian(?:'s)?\s*(?:Name)?|"
               r"Attendant(?:'s)?\s*(?:Name)?|Relative(?:'s)?\s*(?:Name)?|Next\s+of\s+Kin|NOK|Informant|Pita\s*(?:ka|/Pati\s*ka)?\s*Naam|"
               r"Pati\s*ka\s*Naam|Accompanied\s+by|Escort(?:ed\s+by)?|Care\s*taker|Abhibhavak|"

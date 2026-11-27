@@ -261,6 +261,9 @@ def _clean_text(value, kb: Knowledge | None):
     if kb is not None and kb.token_rx() is not None:
         text, m = kb.redact_tokens(text, textner.protected_spans(text))
         n += m
+    if kb is not None and kb.names:
+        text, m = kb.redact_ocr_variants(text)
+        n += m
     text, m = textner.redact_aliases(text)
     n += m
     Stats.identifiers += n

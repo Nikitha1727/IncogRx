@@ -185,6 +185,39 @@ class Knowledge:
         out.append(text[last:])
         return "".join(out), n
 
+    def redact_ocr_variants(self, text: str) -> tuple:
+        """OCR misreads one letter of a first name ("Ira Kaur" read as "fra Kaur"). The surname is then a
+        common one (Kaur, Singh, Devi) that is never redacted on its own, so the name would survive. A word
+        one letter away from a learned first name, followed by the surname learned with it, is that name."""
+        if getattr(self, "_ocr_n", -1) != len(self.names):
+            idx: dict = {}
+            for name in self.names:
+                toks = name.lower().split()
+                if len(toks) == 2 and toks[1] in GENERIC_TOKENS and len(toks[0]) >= 3 and toks[0].isalpha():
+                    idx.setdefault(toks[1], set()).add(toks[0])
+            self._ocr_idx, self._ocr_n = idx, len(self.names)
+        idx = self._ocr_idx
+        if not idx:
+            return text, 0
+        out, last, n = [], 0, 0
+        runs = list(WORD_RUN.finditer(text))
+        for j in range(1, len(runs)):
+            a, b = runs[j - 1], runs[j]
+            firsts = idx.get(b.group().lower())
+            if not firsts or a.start() < last or not re.fullmatch(r"[ \t]{1,2}", text[a.end():b.start()]):
+                continue
+            w = a.group().lower()
+            if not w.isascii() or w in firsts or not any(_one_edit(w, f) for f in firsts):
+                continue
+            if a.start() > 0 and text[a.start() - 1] == "[":
+                continue
+            out.append(text[last:a.start()])
+            out.append("[NAME]")
+            last = b.end()
+            n += 1
+        out.append(text[last:])
+        return "".join(out), n
+
     def _caps_name(self, text: str, runs: list, idx: int) -> bool:
         """True when an ALL-CAPS word touches another learned name word (spaces or a hyphen between)."""
         for j in (idx - 1, idx + 1):
@@ -402,3 +435,17 @@ def redact(text: str, spans: list) -> tuple:
         last = e
     out.append(text[last:])
     return "".join(out), len(spans)
+
+
+def _one_edit(a: str, b: str) -> bool:
+    """True when a and b differ by exactly one substitution, insertion or deletion."""
+    if abs(len(a) - len(b)) > 1 or a == b:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) == 1
+    if len(a) > len(b):
+        a, b = b, a
+    i = 0
+    while i < len(a) and a[i] == b[i]:
+        i += 1
+    return a[i:] == b[i + 1:]
