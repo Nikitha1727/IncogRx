@@ -19,6 +19,25 @@ from .fields import classify_key, classify_path, norm_key
 from .privacy import codes_in
 from . import sniff
 
+_MRN_PREFIX = re.compile(r"^\s*([A-Za-z]{2,})")
+_GENERIC_PREFIX = {"MRN", "UHID", "ID", "PID", "NO", "NUM", "REG", "REGNO", "CR", "CRNO", "IP", "IPD", "OP", "OPD",
+                   "PATIENT", "PT", "UID", "RECORD", "REC"}
+
+
+def mrn_key(s: str) -> str | None:
+    """Record numbers from different numbering systems must not collide: INC-00057 and HOSP-00057 belong
+    to different patients. A distinctive letter prefix is kept; a generic label (MRN, UHID) is dropped so
+    'MRN 123456' still matches a bare '123456'."""
+    d = digits_only(s)
+    if len(d) < 4:
+        return None
+    m = _MRN_PREFIX.match(norm_digits(s))
+    if m:
+        pre = m.group(1).upper()
+        if pre not in _GENERIC_PREFIX:
+            return "M:" + pre + d
+    return "M:" + d
+
 # ----------------------------------------------------------------------------- phonetic keys
 _V = {"अ": "a", "आ": "a", "इ": "i", "ई": "i", "उ": "u", "ऊ": "u", "ए": "e", "ऐ": "ai", "ओ": "o", "औ": "au", "ऋ": "ri"}
 _M = {"ा": "a", "ि": "i", "ी": "i", "ु": "u", "ू": "u", "े": "e", "ै": "ai", "ो": "o", "ौ": "au", "ृ": "ri",
@@ -197,9 +216,9 @@ def add_value(ev: Ev, cat, value, rel_ctx: bool = False, key: str = "") -> None:
     if not s:
         return
     if cat == "MRN":
-        d = digits_only(s)
-        if len(d) >= 4:
-            ev.ids.add("M:" + d)
+        mk = mrn_key(s)
+        if mk:
+            ev.ids.add(mk)
     elif cat == "PHONE" and not rel_ctx:
         d = digits_only(s)
         if len(d) >= 10:
@@ -285,7 +304,7 @@ def text_evidence(text: str, ev: Ev, kb: Knowledge | None = None, light: bool = 
             for s, e, kind in find_spans(line, kb):
                 d = digits_only(line[s:e])
                 if kind == "MRN" and len(d) >= 4:
-                    ev.ids.add("M:" + d)
+                    ev.ids.add(mrn_key(line[s:e]))
                 elif kind == "PHONE" and not rel_line and len(d) >= 10:
                     ev.ids.add("P:" + d[-10:])
                 elif kind == "AADHAAR" and not rel_line:

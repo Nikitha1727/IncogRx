@@ -38,8 +38,14 @@ _NORM_TABLE.update({0xFF10 + i: ord("0") + i for i in range(10)})
 _NORM_ANY = re.compile("[" + _INVISIBLE + "\uff10-\uff19]")
 
 
+_GLUED = re.compile("(?<=[a-z])[" + _INVISIBLE + "]+(?=[A-Z])")
+
+
 def normalize_text(value: str) -> str:
-    return value.translate(_NORM_TABLE) if _NORM_ANY.search(value) else value
+    if not _NORM_ANY.search(value):
+        return value
+    # "Aarav\u200bSharma": an invisible break between two capitalised words was a space
+    return _GLUED.sub(" ", value).translate(_NORM_TABLE)
 
 
 # A whole value that is base64 or hex of readable text (an encoded attachment) is decoded, cleaned and

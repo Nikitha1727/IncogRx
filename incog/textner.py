@@ -8,6 +8,7 @@ are protected."""
 from __future__ import annotations
 
 import functools
+import bisect
 import re
 
 DEV = "\u0900-\u097F"
@@ -104,6 +105,9 @@ LOG_RX = re.compile(rf"(?m)^\s*\d{{1,2}}[:.]\d{{2}}\s*[-–]\s*({LAT_NAME})(?=\s
 LEAD_REL_RX = re.compile(rf"(?m)^\s*({LAT_NAME}|{DEV_NAME}),?\s*(?=[SDW]\s?/\s?[Oo]|(?i:son|wife|daughter)\s+of\b|(?:पुत्र|पुत्री|पत्नी|पति)(?![{DEV}]))")
 PAIR_RX = re.compile(rf"(?<![A-Za-z.])({LAT_TOK}(?:[ ]{LAT_TOK}){{1,2}})\s*\(\s*([{DEV}]+(?:[ ][{DEV}]+){{1,2}})\s*\)"
                      rf"|(?<![{DEV}])([{DEV}]+(?:[ ][{DEV}]+){{1,2}})\s*\(\s*({LAT_TOK}(?:[ ]{LAT_TOK}){{1,2}})\s*\)")
+DEV_VERBS = {"आए", "आया", "आई", "आये", "गए", "गया", "गई", "थे", "था", "थी", "हुए", "हुआ", "हुई", "रहे", "रहा", "रही",
+             "हालत", "ठीक", "बीमार", "भर्ती", "स्वस्थ"}
+DEV_TITLE_RX = re.compile(rf"(?<![{DEV}])(?:मरीज़|मरीज|रोगी|श्रीमती|श्री|सुश्री)\s*:?\s+({LAT_NAME}|{DEV_NAME})")
 TITLE_RX = re.compile(rf"(?<![A-Za-z])(?:Mr|Mrs|Ms|Smt|Shri|Sri|Kumari|Km|Master|Report\s+of|Patient|Pt)\.?\s*:?\s+({LAT_NAME})")
 WA_RX = re.compile(rf"(?m)^\[[^\]]+\]\s*({LAT_NAME}(?:[ ](?i:{HONOR}))?)\s*:")
 
@@ -132,13 +136,30 @@ class Finder:
         self.text = text
         self.edits: list = []
         self.found: list = []          # (surface, kind) for learning
+        self._iv: list = []            # sorted (start, end) of self.edits, for overlap checks in log time
+        self._maxlen = 0
+
+    def _sync(self) -> None:
+        if len(self._iv) != len(self.edits):       # edits were also extended directly (protected spans)
+            self._iv = sorted((a, b) for a, b, _ in self.edits)
+            self._maxlen = max((b - a for a, b in self._iv), default=0)
 
     def free(self, s: int, e: int) -> bool:
-        return all(e <= a or s >= b for a, b, _ in self.edits)
+        # same answer as checking every edit: only edits starting in [s - longest edit, e) can overlap
+        self._sync()
+        j = bisect.bisect_left(self._iv, (e, -1)) - 1
+        while j >= 0 and self._iv[j][0] >= s - self._maxlen:
+            a, b = self._iv[j]
+            if not (e <= a or s >= b):
+                return False
+            j -= 1
+        return True
 
     def add(self, s: int, e: int, rep: str, kind: str | None = None) -> None:
         if s < e and self.free(s, e):
             self.edits.append((s, e, rep))
+            bisect.insort(self._iv, (s, e))
+            self._maxlen = max(self._maxlen, e - s)
             if kind:
                 self.found.append((self.text[s:e], kind))
 
@@ -217,6 +238,18 @@ def detect(text: str, address_fn=None) -> Finder:
                 and _trim_name(m.group(a)) == m.group(a) and _trim_name(m.group(b)) == m.group(b):
             _name_group(f, m, a, "[NAME]", "NAME")
             _name_group(f, m, b, "[NAME]", "NAME")
+    for m in DEV_TITLE_RX.finditer(text):         # "मरीज Aarav Sharma का", never "मरीज़ की हालत"
+        toks = m.group(1).split(" ")
+        if toks[0] in DEV_STOP:
+            continue
+        keep = []
+        for t in toks:
+            if t in DEV_STOP or t in DEV_VERBS:
+                break
+            keep.append(t)
+        name = " ".join(keep)
+        if _valid(name):
+            f.add(m.start(1), m.start(1) + len(name), "[NAME]", "NAME")
     for rx in (HONOR_RX, DEV_HONOR_RX, POSS_RX, CUE_RX, LOG_RX, TITLE_RX):
         for m in rx.finditer(text):
             _name_group(f, m, 1, "[NAME]", "NAME")

@@ -34,7 +34,10 @@ RX = {
     "ABHA": re.compile(NOT_DIGIT_BEFORE + r"\d{2}[ \t-]?\d{4}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR": re.compile(NOT_DIGIT_BEFORE + r"[2-9]\d{3}[ \t-]?\d{4}[ \t-]?\d{4}" + NOT_DIGIT_AFTER),
     "AADHAAR_MASKED": re.compile(r"(?i)(?<![\w])[x*•]{4}[ \t-]?[x*•]{4}[ \t-]?\d{4}(?!\d)"),
-    "PHONE": re.compile(PHONE_BEFORE + r"(?:\+\s?91[ \t-]?|91[ \t-]|0)?[6-9](?:[ \t-]?\d){9}" + NOT_DIGIT_AFTER),
+    # a mobile (6-9 first) with or without +91 / 0; any 10 digits after an explicit "+91" (landlines,
+    # placeholder or test numbers written in international form are still phone numbers)
+    "PHONE": re.compile(PHONE_BEFORE + r"(?:(?:\+\s?91[ \t-]?|91[ \t-]|0)?[6-9](?:[ \t-]?\d){9}"
+                        r"|\+\s?91[ \t-]?\d(?:[ \t-]?\d){9})" + NOT_DIGIT_AFTER),
     "PHONE_MASKED": re.compile(r"(?<!\w)[6-9]\d[xX*]{6}\d{2}(?!\w)"),
     "PAN": re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}\d{4}[A-Z](?![A-Za-z0-9])"),
     "INSURANCE": re.compile(r"(?i)(?<![A-Za-z0-9])(?:PMJAY|PM-JAY|AB-?PMJAY)[ \t-]?[A-Z]{2}[ \t-]?\d{6,14}(?!\d)"
@@ -64,6 +67,9 @@ LABELLED_RX = [(re.compile(lab + "(" + val + ")"), kind) for lab, val, kind in L
 # "Distt. Rae Bareli - 229678": a PIN at the end of an address
 PIN_TAIL = re.compile(r"(?<=[A-Za-z\u0900-\u097F\.]\s[-–]\s)\d{6}(?!\d)|(?<=[A-Za-z\u0900-\u097F],\s)\d{6}(?!\d)")
 
+
+_RATIO = re.compile(r"\d{1,3}(?:/\d{1,3})+")
+_LETTER = re.compile(r"[A-Za-z\u0900-\u097F]")
 
 # generic name parts: never identifying on their own, so never redacted as a single token
 GENERIC_TOKENS = {"kumar", "kumari", "devi", "singh", "kaur", "bano", "begum", "khatoon", "khatun", "bai", "lal", "ram",
@@ -122,6 +128,25 @@ class Knowledge:
         self.tokens[t] = kind
         self._tok_rx = None
 
+    def exact_candidates(self, low: str) -> list:
+        """The learned exact surfaces (emails, PAN, policy numbers) that occur in `low`, in insertion order.
+        Same result as testing every surface, via an index on each surface's first 12 characters (emails
+        share long prefixes such as "patient", so short keys would not narrow anything down)."""
+        if getattr(self, "_ex_n", -1) != len(self.exact):
+            idx: dict = {}
+            for n, surf in enumerate(self.exact):
+                if surf:
+                    idx.setdefault(surf[:12], []).append((n, surf))
+            self._ex_idx, self._ex_n = idx, len(self.exact)
+            self._ex_lens = sorted({len(k) for k in idx})
+        idx, lens, hits = self._ex_idx, self._ex_lens, {}
+        for i in range(len(low) - lens[0] + 1 if lens else 0):
+            for k in lens:
+                for n, surf in idx.get(low[i:i + k], ()):
+                    if n not in hits and low.startswith(surf, i):
+                        hits[n] = surf
+        return [(hits[n], self.exact[hits[n]]) for n in sorted(hits)]
+
     def finalize(self) -> None:
         """After pass 1: tehsil and district names are kept for utility, so drop them as tokens."""
         for a in self.admin:
@@ -176,7 +201,69 @@ class Knowledge:
             self._name_rx = re.compile(r"(?<![A-Za-z\u0900-\u097F])(?:" + body + r")(?![A-Za-z\u0900-\u097F])", re.I)
         return self._name_rx
 
+    def _name_index(self):
+        """Learned full names grouped by first character, in the same order the alternation tried them."""
+        if getattr(self, "_nidx_n", -1) != len(self.names):
+            idx: dict = {}
+            for name in sorted(self.names, key=len, reverse=True):
+                toks = name.split(" ")
+                if name and all(toks):
+                    idx.setdefault(name[0], []).append((name, toks))
+            self._nidx, self._nidx_n = idx, len(self.names)
+            first = "".join(sorted(idx))
+            self._nstart = re.compile(r"(?<![A-Za-z\u0900-\u097F])[" + re.escape(first) + "]") if first else None
+        return self._nidx, self._nstart
+
     def redact_names(self, text: str) -> tuple:
+        """Every learned full name as a whole word sequence (case-insensitive, spaces or underscores between
+        words). Same matches as the single alternation of all names (longest first), found by trying only
+        the names that start with the letter at each word start: fast with thousands of patients."""
+        if not self.names:
+            return text, 0
+        low = text.lower()
+        if len(low) != len(text):                  # rare characters change length when lowered
+            return self._redact_names_rx(text)
+        idx, start = self._name_index()
+        if start is None:
+            return text, 0
+        out, last, n, pos = [], 0, 0, 0
+        L = len(low)
+        while True:
+            m = start.search(low, pos)
+            if m is None:
+                break
+            i = m.start()
+            end = -1
+            for name, toks in idx.get(low[i], ()):
+                j = i
+                ok = True
+                for k, tok in enumerate(toks):
+                    if not low.startswith(tok, j):
+                        ok = False
+                        break
+                    j += len(tok)
+                    if k < len(toks) - 1:
+                        g = j
+                        while j < L and (low[j] == "_" or low[j].isspace()):
+                            j += 1
+                        if j == g:
+                            ok = False
+                            break
+                if ok and (j == L or not _LETTER.match(low[j])):
+                    end = j
+                    break
+            if end < 0:
+                pos = i + 1
+                continue
+            kind = self.names.get(re.sub(r"[\s_]+", " ", text[i:end]).lower(), "NAME")
+            out.append(text[last:i])
+            out.append("[RELATIVE]" if kind == "RELATIVE" else "[NAME]")
+            last = pos = end
+            n += 1
+        out.append(text[last:])
+        return "".join(out), n
+
+    def _redact_names_rx(self, text: str) -> tuple:
         rx = self.name_rx()
         if rx is None:
             return text, 0
@@ -263,6 +350,8 @@ def find_spans(text: str, kb: Knowledge | None = None) -> list:
             # any digit run (with separators) whose digits equal or end with a learned identifier
             ids6, lens6 = kb.long_ids()
             for m in DIGIT_RUN.finditer(t):
+                if _RATIO.fullmatch(m.group()):      # "130/75" (BP), "1/2": a reading, not an identifier
+                    continue
                 d = re.sub(r"\D", "", m.group())
                 if d in kb.digit_ids or d in kb.pins or any(d[-k:] in ids6 for k in lens6 if k <= len(d)):
                     found.append((m.start(), m.end(), "ID"))
@@ -273,11 +362,10 @@ def find_spans(text: str, kb: Knowledge | None = None) -> list:
                         i = t.find(hit, m.start(), m.end())
                         if i >= 0:
                             found.append((i, i + len(hit), "ID"))
-        low_t = t.lower()
-        for surf, kind in kb.exact.items():
-            if surf and surf in low_t:
+        if kb.exact:
+            low = t.lower()
+            for surf, kind in kb.exact_candidates(low):
                 start = 0
-                low = t.lower()
                 while True:
                     i = low.find(surf, start)
                     if i < 0:

@@ -252,6 +252,14 @@ def json_units(data) -> list:
                     out += [(f"/{_ptr(k)}/{i}", e) for i, e in enumerate(evs)]
         if out:
             return out
+    if isinstance(data, list) and data and all(isinstance(x, dict) for x in data):
+        evs = []                                  # a top-level array of patient objects: one record each
+        for x in data:
+            ev = link.Ev()
+            link.json_evidence(x, (), None, ev)
+            evs.append(ev)
+        if any(e.ids or e.names for e in evs) or _record_like(data):
+            return [(f"/{i}", e) for i, e in enumerate(evs)]
     ev = link.Ev()
     link.json_evidence(data, (), None, ev)
     return [("doc", link.single_person(ev))]
@@ -477,6 +485,19 @@ def write_doc(doc: readers.Doc, kb: Knowledge, out_rel: str, records: list, ps: 
               order: str = "dmy", rel: str = "") -> str:
     if doc.kind == "csv":
         return write_csv(doc, kb, out_rel, records, ps, order, rel)
+    if doc.kind == "json" and isinstance(doc.data, list) and any(k != "doc" and k.count("/") == 1 for k in ps):
+        sniff.CURRENT = sniff.json_map(doc.data, kb)
+        try:
+            items = []
+            for i, o in enumerate(doc.data):
+                loc = f"/{i}"
+                p = ps.get(loc)
+                records.append({"file": out_rel, "loc": loc, "patient": p})
+                items.append(sanitize_json(o, (), None, {"pseudonym": p, "shift": shift_for(p, rel, loc),
+                                                          "order": order}, kb))
+        finally:
+            sniff.CURRENT = {}
+        return json.dumps(items, ensure_ascii=False, indent=2) + ("\n" if doc.text.endswith("\n") else "")
     if doc.kind == "json":
         rec: dict = {}
         for loc, p in ps.items():
