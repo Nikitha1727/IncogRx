@@ -524,7 +524,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path in ("/", "/index.html"):
+        if self.path.split("?")[0] == "/health":       # tiny keep-alive target for an uptime pinger
+            self._send(200, b"ok", "text/plain; charset=utf-8")
+        elif self.path in ("/", "/index.html"):
             page = (DEMO / "index.html").read_bytes().replace(b"__INCOGRX_API__", b"")   # same-server API
             self._send(200, page, "text/html; charset=utf-8")
         elif self.path.startswith("/assets/"):    # page images only: a bare file name, no paths
