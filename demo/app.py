@@ -34,6 +34,7 @@ DEMO = Path(__file__).resolve().parent
 ROOT = DEMO.parent
 MAIN = ROOT / "main.py"
 CLOUD = "PORT" in os.environ          # set by hosting platforms (Render, Railway): serve publicly there
+CLOUD_MAX = int(os.environ.get("INCOGRX_CLOUD_MAX_MB", "10")) * 1048576   # per-run cap on a 512 MB host
 HOST = os.environ.get("INCOGRX_DEMO_HOST", "0.0.0.0" if CLOUD else "127.0.0.1")
 PORT = int(os.environ.get("PORT") or os.environ.get("INCOGRX_DEMO_PORT", "8765"))
 MAX_UPLOAD = 80 * 1024 * 1024          # bytes of decoded upload per run
@@ -591,6 +592,12 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("Choose at least one file.")
                 if total > MAX_UPLOAD:
                     raise ValueError("Upload is larger than 80 MB.")
+                if CLOUD and total > CLOUD_MAX:      # measured: 20 MB of records peaks at about 530 MB
+                    raise ValueError(
+                        f"This batch is {total / 1048576:.1f} MB once unpacked. The free hosted demo has 512 MB "
+                        f"of memory and takes up to {CLOUD_MAX // 1048576} MB per run, so larger batches would "
+                        "crash it. Upload it in parts, or run the full batch locally with python3 demo/app.py "
+                        "(the graded engine, main.py, has no such limit).")
             else:
                 raise ValueError("Unknown mode.")
             result = run_job(files, secret, scans if mode == "files" else None)
