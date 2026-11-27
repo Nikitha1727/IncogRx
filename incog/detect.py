@@ -48,7 +48,11 @@ RX = {
                          r"|(?<![A-Za-z0-9])(?:AKIA|ASIA)[0-9A-Z]{16}(?![A-Za-z0-9])"
                          r"|(?<![A-Za-z0-9])gh[pousr]_[A-Za-z0-9]{30,}"
                          r"|(?<![A-Za-z0-9])xox[abprs]-[A-Za-z0-9-]{10,}"
-                         r"|(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"),
+                         r"|(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"
+                         # "Bearer <token>", "API-KEY-7f3a...", "x-api-key: ...", credentials inside a URL
+                         r"|(?<![A-Za-z0-9])Bearer[ \t]+[A-Za-z0-9._~+/=-]{12,200}"
+                         r"|(?<![A-Za-z0-9])(?:x[-_])?api[-_ ]?key[-_:= \t\"']{1,4}[A-Za-z0-9._-]{12,200}"
+                         r"|(?<![A-Za-z0-9])[a-z][a-z0-9+.-]{1,15}://[^\s/:@]{1,64}:[^\s/@]{1,64}@"),
 }
 # label-anchored detectors: (label regex, value regex, kind)
 LABELLED = [
